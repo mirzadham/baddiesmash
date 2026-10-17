@@ -4,8 +4,10 @@
 - One active session per group.
 - Start flow selects attendees and creates session in one streamlined operation.
 - Date/time defaults to current Malaysia local date/time and is editable before creation.
-- Use `Asia/Kuala_Lumpur`; store timestamps consistently in UTC where appropriate.
-- Assign the active season at creation. Assignment remains fixed. If no active season exists, session contributes to all-time only.
+- Use `Asia/Kuala_Lumpur`; store timestamps consistently in UTC where appropriate (`session_started_at`).
+- Creating a backdated session dated before an existing session containing rated matches requires Admin/Owner authorization and must warn that historical ratings may be recalculated.
+- The active session controller may edit an active session's start time with a required reason and audit log. Editing a completed session's start time requires Admin/Owner authorization and an audit trail; if the edit changes chronological ordering relative to rated matches, trigger deterministic rating recalculation.
+- Assign the active season at creation. Assignment remains fixed even if the session start time is later edited. If no active season exists (including throughout Stage 1), session contributes to all-time only (`season_id = NULL`).
 - If a session has no matches, recorder may cancel with reason and audit record.
 - Opening the app with an active session surfaces it with Resume and status review.
 
@@ -37,5 +39,6 @@
 - Incomplete match can be saved/resumed/voided; excluded from official stats and Elo.
 - Before finalization, show a review and require every unfinished match to be completed or explicitly voided.
 - Completed sessions are locked by default. Reopening requires authorised action, reason, and audit record.
+- In Stage 1, forgotten matches added to a reopened session are appended at the end of that session (`MAX(sequence_number) + 1`). Sequence-number insertion or reuse is never permitted.
 - Season closure does not reassign sessions. Late finalized matches remain tied to the session's original season; warn if that season is closed.
 - Closed season may be recalculated after eligible late matches/corrections with audit.

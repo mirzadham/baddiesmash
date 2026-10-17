@@ -36,9 +36,10 @@ Fields/concepts:
 - Normal operations do not silently rewrite append-only audit history.
 
 ## Ordering and transactions
-- Stable session sequence number orders matches within session.
-- Define a deterministic cross-session ordering for all-time and season replay; same-time ties cannot be left ambiguous.
-- Correction triggers replay of all affected histories in that deterministic order.
-- Use transaction or versioned recalculation approach based on evidence; invariant is atomic publication of a consistent result set.
-- Recalculate identity merges and rating changes in a controlled transaction or versioned process.
-- Build rating version tied to match-data state and calculation-rules version.
+- Immutable per-session `sequence_number` (assigned when a match transitions to `completed`, never reused or inserted into) orders matches within a session. Forgotten matches added to a reopened session in Stage 1 are appended at `MAX(sequence_number) + 1`.
+- Cross-session and intra-session chronological replay uses the strict total-order tuple:
+  `(sessions.session_started_at ASC, sessions.created_at ASC, sessions.id ASC, matches.sequence_number ASC)`.
+- Every authoritative match-history mutation (match completion, 10s undo, score correction, void, session time change affecting rated matches, or guest merge) increments `groups.required_match_state_seq`.
+- Each published `rating_version` records the `match_state_seq` and `rules_version` it was built from.
+- Replay executes inside a subtransaction savepoint (`BEGIN ... EXCEPTION WHEN OTHERS`) so any calculation failure rolls back partial candidate rating rows while the outer transaction commits the match mutation, preserves the previous `groups.published_rating_version_id`, and records `recalculation_status = 'failed'`.
+- Readers compare `published_rating_version.match_state_seq` against `groups.required_match_state_seq` and `groups.recalculation_status` to surface `Current`, `Recalculating`, or `Stale/Failed` states accurately.

@@ -3,9 +3,11 @@
 ## Authentication and membership
 - Require individual accounts; no public group discovery, public viewing, or open join requests.
 - Support verified email/password and Google sign-in, subject to current provider support.
+- Prefer Google sign-in for convenient initial V1 onboarding because Google OAuth provides a verified email claim without consuming Supabase's built-in SMTP quota (2 emails/hour on the Free Plan).
+- When email/password authentication is enabled, document that verification and password-reset emails are limited to 2 emails/hour on Supabase's built-in email provider unless a custom SMTP service or Send Email hook is configured prior to pilot onboarding.
 - Google sign-in authenticates an account but does not grant group access.
-- Only owner/admins issue invitation links.
-- Each invitation is bound to one email, single-use, revocable, and expires after 7 days.
+- Only owner/admins issue invitation links. In V1, admins copy the generated single-use invitation link and share it manually with the invitee (no outbound invitation email is required).
+- Each invitation is bound to one normalized email address (`lower(trim(email))`), single-use, revocable, and expires after 7 days.
 - Invitee must authenticate and prove a verified email matching the invitation.
 - Redemption does not grant access until an admin approves membership.
 - Rejection invalidates the invitation; a new invitation may later be issued.
@@ -31,8 +33,8 @@
 - Display names can change; stable IDs preserve history.
 - Duplicate display names are allowed. Admin UI must distinguish them using stable IDs and useful context.
 - Never merge by name alone.
-- Admin/owner merge guest into permanent profile only after previewing affected matches, stats, and ratings. Merge is transactional or safely versioned, auditable, and reversible.
-- Guest may participate immediately in session, season, and all-time stats/ratings. Later merge preserves continuity.
+- Admin/owner merge guest into permanent profile only after previewing affected matches, stats, and ratings. Merge is transactional or safely versioned, auditable, and reversible, and triggers deterministic rating recalculation from the earliest affected match forward.
+- Guest may participate immediately in session, season, and all-time stats/ratings. Unmerged guests are included in the all-time leaderboard with a visible `Guest` label. Later merge preserves continuity.
 - Inactive profiles retain history/rating; admin manually sets active/inactive. Inactivity does not alter rating.
 - Membership access and sporting activity are separate concepts.
 
