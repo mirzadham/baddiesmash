@@ -6,8 +6,10 @@ import {
   type ReplaySessionRecord,
 } from '../domain/elo.ts';
 import type {
+  AdminMembershipDirectoryEntry,
   DbGroupMembershipRow,
   DbGroupRow,
+  DbInvitationRow,
   DbMatchParticipantRow,
   DbMatchRatingChangeRow,
   DbMatchRow,
@@ -17,6 +19,13 @@ import type {
   DbSessionRow,
   RatingPublicationStateResponse,
 } from '../types/database.ts';
+
+export type InvitationMetadataRow = Omit<DbInvitationRow, 'token_hash'>;
+
+export interface AdminGovernanceSnapshot {
+  readonly invitations: readonly InvitationMetadataRow[];
+  readonly memberships: readonly AdminMembershipDirectoryEntry[];
+}
 
 export const DEMO_GROUP_ID = '00000000-0000-4000-8000-000000000101';
 export const DEMO_RATING_VERSION_ID = '00000000-0000-4000-8000-000000000901';
@@ -522,3 +531,111 @@ export function buildDeterministicDemoSnapshot(): GroupReadSnapshot {
     matchRatingChanges,
   };
 }
+
+export const DEMO_INVITATION_IDS = {
+  pendingMember: '00000000-0000-4000-8000-000000000601',
+  redeemedPendingApproval: '00000000-0000-4000-8000-000000000602',
+} as const;
+
+export const DEMO_MEMBERSHIP_IDS = {
+  ownerAaron: '00000000-0000-4000-8000-000000000501',
+  adminBrenda: '00000000-0000-4000-8000-000000000502',
+  recorderChong: '00000000-0000-4000-8000-000000000503',
+  pendingHannah: '00000000-0000-4000-8000-000000000504',
+} as const;
+
+/**
+ * Deterministic read-only Admin Governance snapshot for Demo Mode.
+ * Never exposes raw invitation tokens or `token_hash`.
+ */
+export function buildDeterministicDemoAdminGovernanceSnapshot(): AdminGovernanceSnapshot {
+  return {
+    invitations: [
+      {
+        id: DEMO_INVITATION_IDS.pendingMember,
+        group_id: DEMO_GROUP_ID,
+        invited_email_normalized: 'newplayer@example.com',
+        intended_role: 'member',
+        proposed_player_id: null,
+        status: 'pending',
+        expires_at: '2026-10-25T10:00:00Z',
+        created_by_user_id: DEMO_VIEWER_USER_ID,
+        redeemed_by_user_id: null,
+        redeemed_at: null,
+        revoked_by_user_id: null,
+        revoked_at: null,
+        revoke_reason: null,
+        created_at: '2026-10-18T10:00:00Z',
+        updated_at: '2026-10-18T10:00:00Z',
+      },
+      {
+        id: DEMO_INVITATION_IDS.redeemedPendingApproval,
+        group_id: DEMO_GROUP_ID,
+        invited_email_normalized: 'hannah@example.com',
+        intended_role: 'member',
+        proposed_player_id: null,
+        status: 'redeemed',
+        expires_at: '2026-10-24T10:00:00Z',
+        created_by_user_id: DEMO_VIEWER_USER_ID,
+        redeemed_by_user_id: '00000000-0000-4000-8000-000000000004',
+        redeemed_at: '2026-10-18T11:00:00Z',
+        revoked_by_user_id: null,
+        revoked_at: null,
+        revoke_reason: null,
+        created_at: '2026-10-17T10:00:00Z',
+        updated_at: '2026-10-18T11:00:00Z',
+      },
+    ],
+    memberships: [
+      {
+        membership_id: DEMO_MEMBERSHIP_IDS.ownerAaron,
+        user_id: DEMO_VIEWER_USER_ID,
+        account_email: 'aaron.owner@example.com',
+        role: 'owner',
+        status: 'approved',
+        linked_player_id: DEMO_PLAYER_IDS.aaron,
+        requested_player_id: null,
+        requested_new_player_name: null,
+        profile_link_status: 'linked',
+        created_at: '2026-10-01T10:00:00Z',
+      },
+      {
+        membership_id: DEMO_MEMBERSHIP_IDS.adminBrenda,
+        user_id: '00000000-0000-4000-8000-000000000002',
+        account_email: 'brenda.admin@example.com',
+        role: 'admin',
+        status: 'approved',
+        linked_player_id: DEMO_PLAYER_IDS.brenda,
+        requested_player_id: null,
+        requested_new_player_name: null,
+        profile_link_status: 'linked',
+        created_at: '2026-10-01T10:05:00Z',
+      },
+      {
+        membership_id: DEMO_MEMBERSHIP_IDS.recorderChong,
+        user_id: '00000000-0000-4000-8000-000000000003',
+        account_email: 'chong.recorder@example.com',
+        role: 'recorder',
+        status: 'approved',
+        linked_player_id: DEMO_PLAYER_IDS.chong,
+        requested_player_id: null,
+        requested_new_player_name: null,
+        profile_link_status: 'linked',
+        created_at: '2026-10-01T10:10:00Z',
+      },
+      {
+        membership_id: DEMO_MEMBERSHIP_IDS.pendingHannah,
+        user_id: '00000000-0000-4000-8000-000000000004',
+        account_email: 'hannah@example.com',
+        role: 'member',
+        status: 'pending_approval',
+        linked_player_id: null,
+        requested_player_id: null,
+        requested_new_player_name: 'Hannah Tan',
+        profile_link_status: 'pending_link_approval',
+        created_at: '2026-10-18T11:00:00Z',
+      },
+    ],
+  };
+}
+

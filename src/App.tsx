@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatusBadge } from './components/StatusBadge.tsx';
 import {
+  captureAndStripInviteTokenFromUrl,
+  clearCapturedInviteToken,
+} from './lib/inviteToken.ts';
+import {
   getSupabaseBrowserClient,
   type SupabaseEnvironmentConfig,
 } from './lib/supabase.ts';
@@ -11,6 +15,7 @@ import {
   type TrackerRepository,
   type ViewerGateState,
 } from './services/trackerRepository.ts';
+import { AdminGovernanceView } from './views/AdminGovernanceView.tsx';
 import { AuthMembershipGateView } from './views/AuthMembershipGateView.tsx';
 import { HomeView } from './views/HomeView.tsx';
 import { LeaderboardView } from './views/LeaderboardView.tsx';
@@ -50,6 +55,9 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [gateState, setGateState] = useState<ViewerGateState | null>(null);
+  const [capturedInviteToken, setCapturedInviteToken] = useState<string | null>(
+    () => captureAndStripInviteTokenFromUrl(),
+  );
   const [activeTab, setActiveTab] = useState<BottomNavTab>('home');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(
     null,
@@ -134,8 +142,8 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     );
   }
 
-  // 2. Loading state
-  if (isLoading || !gateState || !repository) {
+  // 2. Initial loading state (keep active views mounted during background state refreshes)
+  if ((isLoading && !gateState) || !gateState || !repository) {
     return (
       <div className="app-shell">
         <header className="app-header">
@@ -193,9 +201,20 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
           <AuthMembershipGateView
             gateState={gateState}
             isDemoMode={false}
+            capturedInviteToken={capturedInviteToken}
+            onClearCapturedInviteToken={() => {
+              clearCapturedInviteToken();
+              setCapturedInviteToken(null);
+            }}
             onSignInGoogle={() => repository.signInWithGoogle()}
             onSignInEmailPassword={(email, pwd) =>
               repository.signInWithEmailPassword(email, pwd)
+            }
+            onRedeemInvitation={(input) =>
+              repository.redeemGroupInvitation(input)
+            }
+            onBootstrapGroup={(input) =>
+              repository.bootstrapInitialGroup(input)
             }
             onSignOut={async () => {
               await repository.signOut();
@@ -282,6 +301,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               className="touch-target"
               aria-expanded={showAdminContextualModal}
               onClick={() => setShowAdminContextualModal((prev) => !prev)}
+              data-testid="toggle-admin-tools-btn"
             >
               ⚙ Admin Tools
             </button>
@@ -322,58 +342,35 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
       </header>
 
       <main className="app-main">
-        {showAdminContextualModal && (
-          <section
-            className="card"
-            aria-labelledby="admin-contextual-heading"
-            data-testid="admin-contextual-panel"
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
-              <h2 id="admin-contextual-heading" style={{ margin: 0, fontSize: '1.1rem' }}>
-                Admin &amp; Membership Tools (Checkpoint 3B Scope)
-              </h2>
-              <button
-                type="button"
-                className="touch-target"
-                onClick={() => setShowAdminContextualModal(false)}
-              >
-                Close ✕
-              </button>
-            </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              Invitation issuance/revocation, pending membership approvals,
-              permanent/guest profile creation, and guest-to-player merge
-              previews/executions are gated for <strong>Checkpoint 3B</strong>{' '}
-              following owner review of Checkpoint 3A.
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <button type="button" className="touch-target" disabled>
-                Issue Invitation (Checkpoint 3B)
-              </button>
-              <button type="button" className="touch-target" disabled>
-                Review Pending Approvals (Checkpoint 3B)
-              </button>
-              <button type="button" className="touch-target" disabled>
-                Preview &amp; Merge Guest (Checkpoint 3B)
-              </button>
-            </div>
-          </section>
-        )}
+        {showAdminContextualModal &&
+          (snapshot.viewerMembership.role === 'admin' ||
+            snapshot.viewerMembership.role === 'owner') && (
+            <AdminGovernanceView
+              snapshot={snapshot}
+              repository={repository}
+              onRefreshGroupState={loadGateState}
+              onClose={() => setShowAdminContextualModal(false)}
+            />
+          )}
 
         {isDemoMode && showDemoSignInPreview ? (
           <AuthMembershipGateView
             gateState={{ status: 'unauthenticated' }}
             isDemoMode={true}
+            capturedInviteToken={capturedInviteToken}
+            onClearCapturedInviteToken={() => {
+              clearCapturedInviteToken();
+              setCapturedInviteToken(null);
+            }}
             onSignInGoogle={() => repository.signInWithGoogle()}
             onSignInEmailPassword={(email, pwd) =>
               repository.signInWithEmailPassword(email, pwd)
+            }
+            onRedeemInvitation={(input) =>
+              repository.redeemGroupInvitation(input)
+            }
+            onBootstrapGroup={(input) =>
+              repository.bootstrapInitialGroup(input)
             }
             onSignOut={() => repository.signOut()}
             onRetryCheck={loadGateState}

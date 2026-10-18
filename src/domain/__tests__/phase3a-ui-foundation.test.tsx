@@ -33,7 +33,9 @@ function createMockRepository(
   initialGateState: ViewerGateState,
   overrides: Partial<TrackerRepository> = {},
 ): TrackerRepository {
+  const baseDemoRepo = createDemoTrackerRepository();
   return {
+    ...baseDemoRepo,
     isDemoMode: initialGateState.status === 'demo_mode',
     loadViewerGateState: vi.fn().mockResolvedValue(initialGateState),
     signInWithGoogle: vi.fn().mockResolvedValue(undefined),
