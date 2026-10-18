@@ -70,7 +70,21 @@ The simulation models **40 weekly sessions** (`8` doubles matches per session = 
 
 ---
 
-## 5. Recommendation for Owner Approval
+## 5. Limitations of the Current Single-Seed Study
 
-- **Recommended Production Constant**: **`K = 24`** (stored on `rating_versions.k_factor = 24` and defaulted in the replay RPC).
-- **Status in `docs/00-project/decision-register.md`**: `DEC-009` awaits explicit owner confirmation to move from `Provisional` (`K = 24`) to `Confirmed`.
+1. **Single-Seed Trajectory Variance (`seed = 20261017`)**:
+   - The metrics above are derived from a single deterministic pseudorandom trajectory of 40 sessions (`320` matches). Specific partner draws, attendance realizations, and upset timing in a single seed can influence short-horizon rank correlation and newcomer convergence counts.
+2. **Stationary True Skill & Simplified Matchmaking**:
+   - The synthetic cohort models fixed latent skills (`790`–`1240`) and uniform random court pairing among session attendees. Real recreational groups experience time-varying player skill, streaky attendance, intentional court balancing or social partner clustering, and fatigue/form variance.
+3. **Equal-Delta Doubles Identifiability**:
+   - Because doubles team Elo assigns identical deltas to both partners based on average team rating, individual ratings cannot separate two players who play *exclusively* as a fixed pair without partner rotation.
+4. **Required Pre-Rollout Multi-Seed Expansion**:
+   - Before wider production rollout beyond the initial private pilot, the simulation suite must be extended across multiple random seeds (Monte Carlo runs) and varied attendance distributions, skill skews, recurring partnership cliques, and upset regimes.
+
+---
+
+## 6. Owner Decision (`DEC-009` — 2026-10-18)
+
+- **Approved Initial Pilot Default**: **`K = 24`** is approved as the initial pilot default (`groups.default_k_factor = 24`), not as permanently validated production behaviour.
+- **Configurability & Versioning**: `k_factor` and `rules_version` (`'elo-v1-num10_4'`) are stored on `groups` and recorded on every `rating_versions` row so future K-factor or formula adjustments remain auditable and deterministically replayable.
+

@@ -10,8 +10,8 @@ Each player on a team receives the same team adjustment; opposing team players r
 ## Candidate parameters
 - Initial all-time rating: `1000.0000` (`NUMERIC(10,4)`).
 - New season baseline: `1000.0000` (`NUMERIC(10,4)`), independent from all-time.
-- K candidates: 16, 24, 32.
-- K=32 is not production-approved until synthetic tests and owner review.
+- K candidates compared in Phase 0: 16, 24, 32 (`docs/02-engineering/elo-simulation-report.md`).
+- **Initial pilot default (`DEC-009`)**: `K = 24` is approved as the initial pilot default (not permanently validated production behaviour). Keep `k_factor` configurable per group (`groups.default_k_factor`) and record both `k_factor` and `rules_version` on every `rating_versions` row. Extend simulation across multiple random seeds and varied scenarios before wider production rollout.
 - Display rounding: `before` and `after` ratings rounded to whole numbers (`ROUND(rating, 0)`); `change` (`delta`) rounded to one decimal place (`ROUND(delta, 1)`). Display values are rounded independently from internal decimals and must be documented as such in UI copy.
 - Provisional label until 3 eligible completed matches, explicitly described as a simple threshold.
 - Outcome-only; score margin does not affect rating.

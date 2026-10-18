@@ -76,14 +76,17 @@
 
 ## Provisional technical decisions
 - **Rating method:** doubles Elo using average team ratings and outcome-only updates; score margin has no effect.
-- **K-factor:** compare K=16, 24, 32 using synthetic histories in Phase 0. K=32 is a candidate, not production-approved.
+- **K-factor (`DEC-009` — Initial Pilot Default Approved):** `K = 24` is approved as the **initial pilot default**, not as permanently validated production behaviour. `k_factor` and `rules_version` must remain configurable and recorded on every `rating_versions` row. Before wider production rollout, the synthetic simulation must be extended across multiple random seeds and varied attendance, skill, partnership, and upset scenarios.
 - **Rating baseline:** 1000 (`1000.0000` internal `NUMERIC(10,4)`); whole-number display for before/after and 1-decimal display for rating change.
 - **Provisional rating label:** until 3 eligible completed matches. This is a label threshold, not proof of reliability.
-- **Physical schema:** logical entity baseline is approved; physical SQL migrations and RLS policies will be reviewed and approved in Phase 1.
+- **Physical schema & Phase 1 security safeguards:** Approved for local Phase 1 implementation with mandatory safeguards:
+  - Store only cryptographic SHA-256 hashes (`token_hash`) of high-entropy invitation tokens; never persist or log raw tokens.
+  - Use `SET search_path = ''` with fully schema-qualified object references on all `SECURITY DEFINER` functions, plus explicit function ownership and `EXECUTE` grants for intended roles only.
+  - Enforce default-deny RLS across all tables, protect member emails and invitations from unauthorized access, and require atomic, audited transactions for ownership transfer, invitation redemption, membership decisions, and explicit UUID-based profile linking.
 
 ## Open decisions / validation tasks
-- Confirm exact production Elo K-factor after owner review of the Phase 0 synthetic simulation report.
-- Choose physical database schema, indexing, and RLS policy definitions in Phase 1.
+- Extend synthetic Elo simulation across multiple random seeds and varied attendance, skill, partnership, and upset scenarios before wider production rollout beyond the initial pilot.
+- Review Phase 1 local database migration and automated RLS/security test evidence before approving Phase 2.
 - Decide any technical detail that affects privacy, security, data integrity, costs, or user-visible behaviour through explicit proposal/approval.
 - If requirements conflict or evidence shows a requirement is unsafe/impossible, stop affected work and ask the owner.
 
@@ -101,3 +104,7 @@ When a material decision changes:
   - *Confirmed Rating Precision, Display & Stale State:* Approved `NUMERIC(10,4)` fixed-point policy with half-away-from-zero rounding, whole-number before/after display, 1-decimal delta display, independent-rounding disclosure, and explicit `Current` / `Recalculating` / `Stale/Failed` state indicators backed by `required_match_state_seq` vs `published_rating_version_id`.
   - *Confirmed Identity & Auth Onboarding:* Confirmed unmerged temporary guests appear on All-Time Leaderboard with a `Guest` label; manual invite link sharing in V1; Google Sign-In preferred for initial V1 onboarding with documented Supabase Free-Tier SMTP limits (2 emails/hour).
   - *Affected Files:* `docs/00-project/decision-register.md`, `docs/01-product/access-and-identity.md`, `docs/01-product/sessions-attendance.md`, `docs/01-product/ratings-leaderboards.md`, `docs/02-engineering/data-model-and-invariants.md`, `docs/02-engineering/elo-validation-and-replay.md`, `docs/02-engineering/failure-and-concurrency.md`, `docs/03-delivery/release-gates.md`, `docs/references/official-sources.md`.
+- **2026-10-18 (Owner approval — Phase 0 completion & Phase 1 authorization):**
+  - *Elo K-Factor (`DEC-009`):* Approved `K = 24` as the **initial pilot default** (not permanently validated production behaviour). Kept `k_factor` configurable (`groups.default_k_factor`, `rating_versions.k_factor`) and recorded calculation version (`rules_version`). Documented single-seed simulation limitations and required multi-seed simulation expansion prior to wider production rollout.
+  - *Phase 1 Security Safeguards:* Authorized Phase 1 local database schema, RLS, and identity/invitation RPCs with mandatory hash-only invitation tokens (`token_hash`), `SET search_path = ''` with fully schema-qualified references in `SECURITY DEFINER` functions, explicit function grants, private email/invitation protection, and atomic audited ownership transfer and UUID-based profile linking.
+  - *Affected Files:* `docs/00-project/decision-register.md`, `docs/02-engineering/elo-simulation-report.md`, `docs/02-engineering/elo-validation-and-replay.md`, `docs/03-delivery/acceptance-and-traceability.md`, `supabase/config.toml`, `supabase/migrations/20261018000001_phase1_foundation_schema_and_rls.sql`.

@@ -1,0 +1,4 @@
+-- Local development seed file for Badminton Group Tracker.
+-- Intentionally leaves the database empty so that initial one-time bootstrap
+-- (`public.bootstrap_initial_group`) and automated security tests run against
+-- a clean, deterministic state. Never seed synthetic test data into production.
