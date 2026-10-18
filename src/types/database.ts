@@ -251,3 +251,80 @@ export interface AdminMembershipDirectoryEntry {
   profile_link_status: ProfileLinkStatus;
   created_at: string;
 }
+
+export interface RatingPublicationStateResponse {
+  group_id: string;
+  publication_health: 'current' | 'recalculating' | 'stale_or_failed';
+  is_current: boolean;
+  recalculation_status: RecalculationStatus;
+  required_match_state_seq: number;
+  published_rating_version_id: string | null;
+  published_match_state_seq: number | null;
+  last_recalculation_error: string | null;
+}
+
+export interface RecalculationExecutionOutcome {
+  recalculation_succeeded: boolean;
+  recalculation_status: RecalculationStatus;
+  published_rating_version_id: string | null;
+  required_match_state_seq: number;
+  recalculation_run_id: string;
+  error_message?: string;
+}
+
+export interface StartGroupSessionResponse {
+  session_id: string;
+  group_id: string;
+  controller_user_id: string;
+  controller_lease_version: number;
+  is_backdated_before_rated: boolean;
+}
+
+export interface SessionControllerHandoverResponse {
+  session_id: string;
+  controller_user_id: string;
+  controller_lease_version: number;
+  action_type:
+    | 'session_controller_handed_over'
+    | 'session_controller_taken_over';
+}
+
+export interface SessionInactivityStatusResponse {
+  session_id: string;
+  status: SessionStatus;
+  last_meaningful_activity_at: string;
+  inactive_seconds: number;
+  is_stale_12h_warning: boolean;
+}
+
+export interface RecordCompletedMatchResponse {
+  match_id: string;
+  session_id: string;
+  sequence_number: number;
+  status: MatchStatus;
+  idempotent_retry: boolean;
+  recalculation?: RecalculationExecutionOutcome;
+}
+
+export interface GuestMergePreviewResponse {
+  group_id: string;
+  source_guest_player_id: string;
+  source_guest_display_name: string;
+  target_permanent_player_id: string;
+  target_permanent_display_name: string;
+  can_merge: boolean;
+  conflicting_match_ids: string[];
+  affected_match_count: number;
+  affected_session_attendance_count: number;
+  overlapping_attendance_session_count: number;
+}
+
+export interface GuestMergeExecutionResponse {
+  source_guest_player_id: string;
+  target_permanent_player_id: string;
+  deduplicated_attendance_count: number;
+  reattributed_attendance_count: number;
+  reattributed_match_count: number;
+  published_rating_version_id: string;
+}
+
