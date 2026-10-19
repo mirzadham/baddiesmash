@@ -552,7 +552,7 @@ export function buildDeterministicDemoSnapshot(): GroupReadSnapshot {
     last_recalculation_error: null,
   };
 
-  return {
+  const snapshot: GroupReadSnapshot = {
     isDemoMode: true,
     group,
     viewerMembership,
@@ -566,6 +566,29 @@ export function buildDeterministicDemoSnapshot(): GroupReadSnapshot {
     ratingSnapshots,
     matchRatingChanges,
   };
+
+  if (typeof window !== 'undefined') {
+    const scenario = new URLSearchParams(window.location.search).get('scenario');
+    if (scenario === 'long_name') {
+      return {
+        ...snapshot,
+        players: snapshot.players.map((p, idx) =>
+          idx === 0
+            ? { ...p, display_name: 'Maximilianus Christopher-Montgomery III' }
+            : p,
+        ),
+      };
+    }
+    if (scenario === 'two_players') {
+      return {
+        ...snapshot,
+        players: snapshot.players.slice(0, 2),
+        ratingSnapshots: snapshot.ratingSnapshots.slice(0, 2),
+      };
+    }
+  }
+
+  return snapshot;
 }
 
 export const DEMO_INVITATION_IDS = {

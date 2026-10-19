@@ -2,13 +2,15 @@ import { useState } from 'react';
 import {
   ChevronDown,
   ChevronUp,
+  Crown,
   Info,
-  TrendingUp,
+  Trophy,
 } from 'lucide-react';
 import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
-import { TournamentPodiumStage } from '../components/TournamentPodiumStage.tsx';
-import { LaurelWreathShield } from '../components/icons/DesignerBadmintonIcons.tsx';
+import { LeaderboardPodium } from '../components/leaderboard/LeaderboardPodium.tsx';
+import { RankingRow } from '../components/leaderboard/RankingRow.tsx';
+import { PlayerAvatar } from '../components/leaderboard/PlayerAvatar.tsx';
 import type { GroupReadSnapshot } from '../services/demoData.ts';
 import {
   deriveLeaderboardFromSnapshot,
@@ -24,26 +26,17 @@ export interface LeaderboardViewProps {
   onSelectPlayer: (playerId: string) => void;
 }
 
-type LeaderboardFilterMode = 'all_time' | 'current_session' | 'season';
-
-function getPlayerInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0];
-  const second = parts[1];
-  if (first && second && first[0] && second[0]) {
-    return (first[0] + second[0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
+export type LeaderboardFilterMode = 'all_time' | 'current_session' | 'season';
 
 /**
- * Leaderboard view (`RATE-01`..`RATE-06`, `ATT-01`, `DEC-009`, `DEC-010`, `DEC-016`, `DEC-036`):
- * - Features authentic 3D Stepped Tournament Podium Stage floating on canvas.
- * - Single seamless ranking panel with hairline row dividers (zero card-on-card nesting).
- * - Custom Designer Laurel Wreath Shields for metallic ranks (Gold, Silver, Bronze, Slate).
- * - Ranks strictly by full internal `NUMERIC(10,4)` precision (`ratingScaled`), sharing competition
- *   rank (`1, 1, 3`) only on exact internal ties.
- * - Clearly labels `Guest` (`DEC-010`) and `Provisional (<3 matches)` (`RATE-06`).
+ * Redesigned Leaderboard view matching the attached reference aesthetic:
+ * - Premium sports analytics × modern mobile app × distinctive custom illustration
+ * - Signature purple accents (#7045C6) and refined light/dark surfaces
+ * - Sculptural 3D podium for top 3 players with metallic rank treatments
+ * - Clean ranking list for rank 4 and below with readable Elo, wins, win rate & matches
+ * - Highlighted state for the authenticated player profile ("You")
+ * - Support for All-Time, Current Session, and Season (Stage 2) tabs
+ * - Preserves full data model, NUMERIC(10,4) rankings, and fail-closed security gates
  */
 export function LeaderboardView({
   snapshot,
@@ -60,18 +53,22 @@ export function LeaderboardView({
     snapshot.sessions[0]?.id ?? '',
   );
 
+  const viewerLinkedPlayerId = snapshot.viewerMembership.linked_player_id;
   const allTimeRows = deriveLeaderboardFromSnapshot(snapshot, includeInactive);
   const sessionDetail = selectedSessionId
     ? deriveSessionDetailFromSnapshot(snapshot, selectedSessionId)
     : null;
 
-  // Podium top 3 players
+  // Top 3 for custom podium stage
   const top1 = allTimeRows[0] ?? null;
   const top2 = allTimeRows[1] ?? null;
   const top3 = allTimeRows[2] ?? null;
+  // Rank 4 and below for ordinary list
+  const listRows = allTimeRows.slice(3);
 
   return (
-    <div data-testid="view-leaderboard">
+    <div data-testid="view-leaderboard" className="pb-8">
+      {/* Publication / Recalculation Status Banner */}
       <PublicationStatusBanner
         publication={publication}
         viewerRole={snapshot.viewerMembership.role}
@@ -79,472 +76,316 @@ export function LeaderboardView({
         onRetryRecalculation={onRetryRecalculation}
       />
 
-      {/* 3D Stepped Tournament Podium Stage (Floating directly on dark canvas - no card box!) */}
-      {filterMode === 'all_time' && allTimeRows.length >= 3 && (
-        <TournamentPodiumStage
-          top1={top1}
-          top2={top2}
-          top3={top3}
-          onSelectPlayer={onSelectPlayer}
-        />
-      )}
+      {/* Page Heading Section (Reference layout) */}
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--text-primary)] m-0">
+          Leaderboard
+        </h1>
+        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5 m-0 font-medium">
+          See who&apos;s leading the court
+        </p>
+      </div>
 
-      {/* Single Seamless Ranking Panel (Zero Card-on-Card Nesting) */}
-      <section className="seamless-ranking-panel" aria-labelledby="leaderboard-heading">
-        {/* Panel Header & Scope Filter */}
-        <div className="seamless-header">
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '0.85rem',
-            }}
+      {/* Scope and Metric Filters (Reference layout: All Time / Current Session / Season + Elo Rating Chip) */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 mb-5">
+        {/* Scope Segmented Control */}
+        <div
+          role="group"
+          aria-label="Leaderboard scope filter"
+          className="inline-flex max-w-full overflow-x-auto p-1 bg-[var(--bg-surface-subtle)] border border-[var(--border-color)] rounded-xl gap-1 text-xs font-semibold"
+        >
+          <button
+            type="button"
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
+              filterMode === 'all_time'
+                ? 'bg-[#7045c6] text-white font-bold shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            aria-pressed={filterMode === 'all_time'}
+            onClick={() => setFilterMode('all_time')}
           >
-            <div>
-              <h2 id="leaderboard-heading" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>
-                Group Standings
-              </h2>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Doubles Elo ratings &amp; session match performance
-              </span>
-            </div>
-
-            <div
-              role="group"
-              aria-label="Leaderboard scope filter"
-              className="filter-tab-group"
-            >
-              <button
-                type="button"
-                className="filter-tab-btn"
-                aria-pressed={filterMode === 'all_time'}
-                onClick={() => setFilterMode('all_time')}
-              >
-                All-Time Elo
-              </button>
-              <button
-                type="button"
-                className="filter-tab-btn"
-                aria-pressed={filterMode === 'current_session'}
-                onClick={() => setFilterMode('current_session')}
-              >
-                Current / Session Standings
-              </button>
-              <button
-                type="button"
-                className="filter-tab-btn"
-                aria-pressed={filterMode === 'season'}
-                onClick={() => setFilterMode('season')}
-              >
-                Season (Stage 2)
-              </button>
-            </div>
-          </div>
-
-          {/* Subheader: Policy Drawer Button & Inactive Filter */}
-          {filterMode === 'all_time' && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
-              <button
-                type="button"
-                className="touch-target"
-                style={{
-                  minHeight: '36px',
-                  padding: '0.25rem 0.65rem',
-                  fontSize: '0.78rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface-subtle)',
-                }}
-                onClick={() => setShowPolicyInfo((prev) => !prev)}
-                aria-expanded={showPolicyInfo}
-              >
-                <Info size={13} />
-                <span>Policy &amp; Methodology</span>
-                {showPolicyInfo ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-              </button>
-
-              <label
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={includeInactive}
-                  onChange={(e) => setIncludeInactive(e.target.checked)}
-                />
-                Include inactive profiles
-              </label>
-            </div>
-          )}
-
-          {showPolicyInfo && filterMode === 'all_time' && (
-            <div
-              style={{
-                marginTop: '0.75rem',
-                padding: '0.85rem 1rem',
-                background: 'var(--bg-surface-subtle)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '0.65rem',
-                fontSize: '0.8rem',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.5,
-              }}
-            >
-              <p style={{ margin: '0 0 0.35rem 0' }}>
-                <strong>Rounding &amp; Ranking Policy:</strong> Displayed ratings
-                are rounded to whole numbers and per-match changes to 0.1
-                independently from internal <code>NUMERIC(10,4)</code> values.
-                Competition ranks (1, 1, 3) are sorted on full 4-decimal
-                precision; identical rounded integers may not be an exact tie.
-              </p>
-              <p style={{ margin: 0 }}>
-                Elo estimates relative strength within this group&apos;s doubles
-                match history and is not an objective proof of skill.
-              </p>
-            </div>
-          )}
+            All Time
+          </button>
+          <button
+            type="button"
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
+              filterMode === 'current_session'
+                ? 'bg-[#7045c6] text-white font-bold shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            aria-pressed={filterMode === 'current_session'}
+            onClick={() => setFilterMode('current_session')}
+          >
+            Current / Session Standings
+          </button>
+          <button
+            type="button"
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
+              filterMode === 'season'
+                ? 'bg-[#7045c6] text-white font-bold shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            aria-pressed={filterMode === 'season'}
+            onClick={() => setFilterMode('season')}
+          >
+            This Season
+          </button>
         </div>
 
-        {/* Panel Content: All-Time Elo (Seamless Rows) */}
-        {filterMode === 'all_time' && (
-          <div data-testid="leaderboard-all-time-panel">
-            {allTimeRows.length === 0 ? (
-              <p style={{ padding: '1.5rem', color: 'var(--text-muted)', margin: 0 }}>
-                No player profiles available for the leaderboard.
+        {/* Metric Chip: Elo Rating (Static indicator matching reference design) */}
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] text-xs font-bold text-[var(--text-primary)] shadow-sm"
+          title="Ranking primarily determined by doubles Elo rating"
+        >
+          <Crown size={14} className="text-[#f59e0b]" aria-hidden="true" />
+          <span>Elo Rating</span>
+        </div>
+      </div>
+
+      {/* ================= ALL-TIME ELO PANEL ================= */}
+      {filterMode === 'all_time' && (
+        <div data-testid="leaderboard-all-time-panel">
+          {allTimeRows.length === 0 ? (
+            /* Empty State for Newly Created Group */
+            <div className="card text-center py-12 px-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#7045c6]/10 flex items-center justify-center text-[#7045c6]">
+                <Trophy size={32} />
+              </div>
+              <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1">
+                No Rankings Yet
+              </h2>
+              <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto mb-0">
+                Play and record matches in your first session to see players take their places on the podium and leaderboard!
               </p>
-            ) : (
-              <div>
-                {allTimeRows.map((row) => (
-                  <div
-                    key={row.playerId}
-                    data-testid={`leaderboard-row-${row.playerId}`}
-                    className="seamless-row"
-                  >
-                    <div className="player-card-left">
-                      {/* Designer Laurel Wreath Shield */}
-                      <div style={{ display: 'inline-flex', alignItems: 'center' }}>
-                        <LaurelWreathShield
-                          rank={row.rank}
-                          isTied={row.isTiedRank}
-                          size={44}
-                        />
-                        {/* Hidden semantic node for competition rank matchers */}
-                        <span style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
-                          #{row.rank}
-                        </span>
-                      </div>
-
-                      {/* Player Avatar */}
-                      <div className="player-card-avatar">
-                        {getPlayerInitials(row.displayName)}
-                      </div>
-
-                      {/* Player Info */}
-                      <div className="player-card-info">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => onSelectPlayer(row.playerId)}
-                            className="player-card-name-btn"
-                          >
-                            {row.displayName}
-                          </button>
-                          {row.isGuest && <StatusBadge variant="guest" />}
-                          {row.isProvisional && (
-                            <StatusBadge variant="provisional" />
-                          )}
-                        </div>
-
-                        <div className="player-card-meta">
-                          <span>
-                            {row.wins}W - {row.losses}L ({row.winRatePercentDisplay})
-                          </span>
-                          <span>•</span>
-                          <span>
-                            Att:{' '}
-                            {row.attendanceRatePercentDisplay ??
-                              `${row.sessionsAttendedCount}/0`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Rating Section */}
-                    <div className="player-card-right">
-                      <div className="player-rating-display">
-                        <div className="rating-score-volt">
-                          <TrendingUp size={14} />
-                          <span className="rating-mono">
-                            {row.ratingDisplay}
-                          </span>
-                        </div>
-                        <span
-                          className="rating-mono"
-                          style={{
-                            fontSize: '0.74rem',
-                            color: 'var(--text-muted)',
-                          }}
-                        >
-                          {row.ratingNumeric4}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Current / Session Standings Panel */}
-        {filterMode === 'current_session' && (
-          <div data-testid="leaderboard-session-panel" style={{ padding: '1rem 1.25rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.75rem',
-                marginBottom: '1rem',
-              }}
-            >
-              <div>
-                <label
-                  htmlFor="leaderboard-session-select"
-                  style={{ fontWeight: 600, marginRight: '0.5rem', fontSize: '0.88rem' }}
-                >
-                  Select Session:
-                </label>
-                <select
-                  id="leaderboard-session-select"
-                  value={selectedSessionId}
-                  onChange={(e) => setSelectedSessionId(e.target.value)}
-                  style={{
-                    minHeight: '42px',
-                    padding: '0.35rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {snapshot.sessions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {formatMalaysiaDate(s.session_started_at)} ({s.status})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {sessionDetail &&
-                sessionDetail.standings.isProvisionalUntilFinalized && (
-                  <StatusBadge
-                    variant="provisional"
-                    customLabel="Provisional until session finalization"
-                  />
-                )}
             </div>
+          ) : (
+            <>
+              {/* Custom Sculptural 3D Podium for Top 3 Players */}
+              <LeaderboardPodium
+                top1={top1}
+                top2={top2}
+                top3={top3}
+                viewerLinkedPlayerId={viewerLinkedPlayerId}
+                onSelectPlayer={onSelectPlayer}
+              />
 
-            <p
-              style={{
-                fontSize: '0.82rem',
-                color: 'var(--text-secondary)',
-                marginTop: 0,
-                marginBottom: '1rem',
-              }}
-            >
-              Session standings rank players by <strong>Wins</strong>, then{' '}
-              <strong>Win Rate</strong>, then <strong>Point Difference</strong>.
-            </p>
+              {/* Seamless Ranking List (Rank 4 and Below) */}
+              <div className="seamless-ranking-panel mt-3">
+                {/* Ranking Panel Subheader (Policy Drawer & Inactive Toggle) */}
+                <div className="px-4 py-3 border-b border-[var(--border-color)]/60 bg-[var(--bg-surface-subtle)]/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[var(--text-secondary)]">
+                      {allTimeRows.length} {allTimeRows.length === 1 ? 'Player' : 'Players'}
+                    </span>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors"
+                      onClick={() => setShowPolicyInfo((prev) => !prev)}
+                      aria-expanded={showPolicyInfo}
+                    >
+                      <Info size={12} />
+                      <span>Policy</span>
+                      {showPolicyInfo ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                  </div>
 
-            {!sessionDetail ? (
-              <p style={{ color: 'var(--text-muted)' }}>No session selected.</p>
-            ) : (
-              <>
-                {sessionDetail.standings.playedRows.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)' }}>
-                    No completed matches in this session yet.
-                  </p>
+                  <label className="inline-flex items-center gap-1.5 font-medium text-[var(--text-secondary)] cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeInactive}
+                      onChange={(e) => setIncludeInactive(e.target.checked)}
+                      className="rounded border-[var(--border-color)] text-[#7045c6] focus:ring-[#7045c6]"
+                    />
+                    <span>Include inactive</span>
+                  </label>
+                </div>
+
+                {/* Policy Information Drawer */}
+                {showPolicyInfo && (
+                  <div className="p-3.5 bg-[var(--bg-surface-subtle)]/80 border-b border-[var(--border-color)] text-xs text-[var(--text-secondary)] leading-relaxed space-y-1.5">
+                    <p className="m-0">
+                      <strong>Elo Methodology:</strong> Ratings are calculated chronologically using K=24 doubles Elo baseline 1000 at full <code>NUMERIC(10,4)</code> precision.
+                    </p>
+                    <p className="m-0">
+                      <strong>Competition Ties:</strong> Players with identical 4-decimal ratings share rank (e.g. 1, 1, 3). Two players with identical rounded integers may not be an exact tie.
+                    </p>
+                    <p className="m-0">
+                      <strong>Provisional Status:</strong> Players with fewer than 3 completed matches display a provisional badge.
+                    </p>
+                  </div>
+                )}
+
+                {/* List Rows */}
+                {listRows.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-[var(--text-muted)]">
+                    {allTimeRows.length <= 3
+                      ? 'All ranked players are featured on the podium above.'
+                      : 'No additional players to display.'}
+                  </div>
                 ) : (
                   <div>
-                    {sessionDetail.standings.playedRows.map((row) => (
-                      <div
+                    {listRows.map((row) => (
+                      <RankingRow
                         key={row.playerId}
-                        data-testid={`session-standing-row-${row.playerId}`}
-                        className="seamless-row"
-                        style={{ paddingLeft: 0, paddingRight: 0 }}
-                      >
-                        <div className="player-card-left">
-                          <LaurelWreathShield
-                            rank={row.rank}
-                            isTied={row.isTiedRank}
-                            size={42}
-                          />
-                          <span style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
-                            #{row.rank}
-                          </span>
-
-                          <div className="player-card-avatar">
-                            {getPlayerInitials(row.displayName)}
-                          </div>
-
-                          <div className="player-card-info">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <button
-                                type="button"
-                                onClick={() => onSelectPlayer(row.playerId)}
-                                className="player-card-name-btn"
-                              >
-                                {row.displayName}
-                              </button>
-                              {row.isGuest && <StatusBadge variant="guest" />}
-                            </div>
-                            <div className="player-card-meta">
-                              <span>
-                                {row.wins}W - {row.losses}L ({row.winRatePercentDisplay})
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="player-card-right">
-                          <div
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'flex-end',
-                            }}
-                          >
-                            <span
-                              className="rating-mono"
-                              style={{
-                                color:
-                                  row.pointDifference > 0
-                                    ? 'var(--accent-volt)'
-                                    : row.pointDifference < 0
-                                      ? 'var(--status-stale-fg)'
-                                      : 'var(--text-secondary)',
-                                fontWeight: 800,
-                                fontSize: '1.05rem',
-                              }}
-                            >
-                              {row.pointDifference > 0
-                                ? `+${row.pointDifference}`
-                                : row.pointDifference}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '0.74rem',
-                                color: 'var(--text-muted)',
-                              }}
-                            >
-                              ({row.pointsScored}–{row.pointsConceded})
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                        row={row}
+                        isCurrentUser={viewerLinkedPlayerId === row.playerId}
+                        onSelectPlayer={onSelectPlayer}
+                      />
                     ))}
                   </div>
                 )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-                {/* Separate Bench / 0-Match Attendance Section (`ATT-01`) */}
-                <div
-                  style={{
-                    marginTop: '1.5rem',
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    background: 'var(--bg-surface-subtle)',
-                    border: '1px solid var(--border-color)',
-                  }}
-                  data-testid="session-bench-attendance"
-                >
-                  <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '0.92rem' }}>
-                    Attended Session — 0 Completed Matches Played (Bench)
-                  </h3>
-                  <p
-                    style={{
-                      margin: '0 0 0.65rem 0',
-                      fontSize: '0.8rem',
-                      color: 'var(--text-muted)',
-                    }}
-                  >
-                    Attendance is recorded separately from match participation
-                    (ATT-01). Attending without playing counts toward session
-                    attendance without altering standings or Elo ratings.
-                  </p>
-                  {sessionDetail.standings.nonPlayingAttendees.length === 0 ? (
-                    <span
-                      style={{
-                        fontSize: '0.84rem',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      All session attendees have played at least one completed
-                      match.
-                    </span>
-                  ) : (
-                    <ul
-                      style={{
-                        margin: 0,
-                        paddingLeft: '1.25rem',
-                        fontSize: '0.88rem',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {sessionDetail.standings.nonPlayingAttendees.map((att) => (
-                        <li key={att.playerId} style={{ marginBottom: '0.2rem' }}>
-                          <strong style={{ color: 'var(--text-primary)' }}>
-                            {att.displayName}
-                          </strong>{' '}
-                          {att.isGuest ? '(Guest) ' : ''}— Present (0 matches
-                          played)
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </>
+      {/* ================= CURRENT / SESSION STANDINGS PANEL ================= */}
+      {filterMode === 'current_session' && (
+        <div data-testid="leaderboard-session-panel" className="card">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="leaderboard-session-select"
+                className="font-bold text-sm text-[var(--text-primary)]"
+              >
+                Select Session:
+              </label>
+              <select
+                id="leaderboard-session-select"
+                value={selectedSessionId}
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+                className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#7045c6]"
+              >
+                {snapshot.sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {formatMalaysiaDate(s.session_started_at)} ({s.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {sessionDetail && sessionDetail.standings.isProvisionalUntilFinalized && (
+              <StatusBadge
+                variant="provisional"
+                customLabel="Provisional until finalized"
+              />
             )}
           </div>
-        )}
 
-        {/* Season Panel */}
-        {filterMode === 'season' && (
-          <div
-            data-testid="leaderboard-season-panel"
-            style={{
-              padding: '1.5rem',
-              background: 'var(--bg-surface-subtle)',
-            }}
-          >
-            <h3 style={{ marginTop: 0, fontSize: '1.05rem' }}>Seasonal Ratings Paused in Stage 1</h3>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-              No active season is configured (`season_id = NULL`). In accordance
-              with the approved Stage 1 roadmap (`DEC-014`), all completed
-              matches contribute to the All-Time Elo leaderboard, while Season
-              management UI is scheduled for Stage 2.
+          <p className="text-xs text-[var(--text-secondary)] mb-4">
+            Session standings rank players by <strong>Wins</strong>, then{' '}
+            <strong>Win Rate</strong>, then <strong>Point Difference</strong>.
+          </p>
+
+          {!sessionDetail ? (
+            <p className="text-sm text-[var(--text-muted)]">No session selected.</p>
+          ) : sessionDetail.standings.playedRows.length === 0 ? (
+            <p className="text-sm text-[var(--text-muted)]">
+              No completed matches in this session yet.
             </p>
+          ) : (
+            <div className="divide-y divide-[var(--border-color)]/50">
+              {sessionDetail.standings.playedRows.map((row) => (
+                <div
+                  key={row.playerId}
+                  data-testid={`session-standing-row-${row.playerId}`}
+                  className="flex items-center justify-between py-2.5 px-2 hover:bg-[var(--bg-surface-subtle)]/50 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-6 text-center font-bold text-sm text-[var(--text-secondary)]">
+                      #{row.rank}
+                    </span>
+                    <PlayerAvatar
+                      displayName={row.displayName}
+                      playerId={row.playerId}
+                      size={36}
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onSelectPlayer(row.playerId)}
+                          className="font-bold text-sm text-[var(--text-primary)] hover:text-[#7045c6] truncate"
+                        >
+                          {row.displayName}
+                        </button>
+                        {row.isGuest && <StatusBadge variant="guest" />}
+                      </div>
+                      <span className="text-xs text-[var(--text-secondary)]">
+                        {row.wins}W - {row.losses}L ({row.winRatePercentDisplay})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span
+                      className={`rating-mono font-black text-sm sm:text-base ${
+                        row.pointDifference > 0
+                          ? 'text-emerald-500'
+                          : row.pointDifference < 0
+                            ? 'text-rose-500'
+                            : 'text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      {row.pointDifference > 0 ? `+${row.pointDifference}` : row.pointDifference}
+                    </span>
+                    <span className="block text-[10px] text-[var(--text-muted)]">
+                      ({row.pointsScored}–{row.pointsConceded})
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Bench Attendance Section (ATT-01) */}
+          {sessionDetail && (
+            <div
+              className="mt-6 p-4 rounded-xl bg-[var(--bg-surface-subtle)]/60 border border-[var(--border-color)]"
+              data-testid="session-bench-attendance"
+            >
+              <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider mb-1">
+                Attended Session — 0 Matches Played (Bench)
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mb-3">
+                Attendance is recorded separately from match participation (ATT-01). Attending without playing counts toward session attendance without altering standings or Elo ratings.
+              </p>
+              {sessionDetail.standings.nonPlayingAttendees.length === 0 ? (
+                <p className="text-xs text-[var(--text-secondary)] m-0">
+                  All session attendees have played at least one completed match.
+                </p>
+              ) : (
+                <ul className="space-y-1 text-xs text-[var(--text-secondary)] pl-4 list-disc m-0">
+                  {sessionDetail.standings.nonPlayingAttendees.map((att) => (
+                    <li key={att.playerId}>
+                      <strong className="text-[var(--text-primary)]">
+                        {att.displayName}
+                      </strong>{' '}
+                      {att.isGuest ? '(Guest) ' : ''}— Present (0 matches played)
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= SEASON PANEL (Coming in Stage 2) ================= */}
+      {filterMode === 'season' && (
+        <div data-testid="leaderboard-season-panel" className="card p-6 text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#7045c6]/10 flex items-center justify-center text-[#7045c6]">
+            <Trophy size={24} />
           </div>
-        )}
-      </section>
+          <h2 className="text-base font-bold text-[var(--text-primary)] mb-1">
+            Seasonal Ratings Paused in Stage 1
+          </h2>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-md mx-auto m-0 leading-relaxed">
+            No active season is configured (<code>season_id = NULL</code>). In accordance with the approved Stage 1 roadmap (<code>DEC-014</code>), all completed matches contribute directly to the All-Time Elo leaderboard. Custom seasons and seasonal ratings will launch in Stage 2.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -66,10 +66,10 @@ export function PublicationStatusBanner({
   return (
     <section
       aria-label="Rating publication status"
-      className={bannerClass}
+      className={`${bannerClass} max-w-full overflow-hidden`}
       data-testid="publication-status-banner"
     >
-      <div style={{ flex: '1 1 320px' }}>
+      <div style={{ flex: '1 1 auto', minWidth: 0, wordBreak: 'break-word' }}>
         <div
           style={{
             display: 'flex',
@@ -80,7 +80,7 @@ export function PublicationStatusBanner({
           }}
         >
           <StatusBadge variant={badgeVariant} />
-          <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, wordBreak: 'break-word' }}>
             Match State #{publication.publishedSeq ?? 'none'} / Required #
             {publication.requiredSeq} • Rules: {publication.rulesVersion} (K=
             {publication.kFactor} pilot default)

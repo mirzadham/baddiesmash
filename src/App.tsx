@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Calendar, Home, Settings, Trophy, User } from 'lucide-react';
+import { Calendar, Home, Moon, Settings, Sun, Trophy, User } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
+import { ShuttlecockBrandMark } from './components/icons/BrandMark.tsx';
 import {
   captureAndStripInviteTokenFromUrl,
   clearCapturedInviteToken,
@@ -9,6 +10,12 @@ import {
   getSupabaseBrowserClient,
   type SupabaseEnvironmentConfig,
 } from './lib/supabase.ts';
+import {
+  applyThemeToDocument,
+  getInitialThemePreference,
+  persistThemePreference,
+  type ThemePreference,
+} from './lib/theme.ts';
 import {
   createDemoTrackerRepository,
   createSupabaseTrackerRepository,
@@ -24,7 +31,7 @@ import { ProfileView } from './views/ProfileView.tsx';
 import { SessionsView } from './views/SessionsView.tsx';
 
 export type BottomNavTab = 'home' | 'leaderboard' | 'sessions' | 'profile';
-export type ThemePreference = 'system' | 'light' | 'dark';
+export type { ThemePreference };
 
 export interface AppProps {
   repository?: TrackerRepository;
@@ -59,7 +66,15 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
   const [capturedInviteToken, setCapturedInviteToken] = useState<string | null>(
     () => captureAndStripInviteTokenFromUrl(),
   );
-  const [activeTab, setActiveTab] = useState<BottomNavTab>('home');
+  const [activeTab, setActiveTab] = useState<BottomNavTab>(() => {
+    if (typeof window !== 'undefined') {
+      const qTab = new URLSearchParams(window.location.search).get('tab');
+      if (qTab === 'leaderboard' || qTab === 'sessions' || qTab === 'profile' || qTab === 'home') {
+        return qTab;
+      }
+    }
+    return 'home';
+  });
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(
     null,
   );
@@ -70,18 +85,13 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     useState<boolean>(false);
   const [showAdminContextualModal, setShowAdminContextualModal] =
     useState<boolean>(false);
-  const [theme, setTheme] = useState<ThemePreference>('system');
+  const [theme, setTheme] = useState<ThemePreference>(() =>
+    getInitialThemePreference(),
+  );
 
   useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    const root = document.documentElement;
-    if (theme === 'system') {
-      root.removeAttribute('data-theme');
-    } else {
-      root.setAttribute('data-theme', theme);
-    }
+    applyThemeToDocument(theme);
+    persistThemePreference(theme);
   }, [theme]);
 
   const loadGateState = useCallback(async () => {
@@ -175,9 +185,12 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     return (
       <div className="app-shell">
         <header className="app-header">
-          <h1 style={{ margin: 0, fontSize: '1.2rem' }}>
-            Badminton Group Tracker
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <ShuttlecockBrandMark size={28} />
+            <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>
+              Badminton Tracker
+            </h1>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <label htmlFor="theme-select-gate" style={{ fontSize: '0.82rem' }}>
               Theme:
@@ -244,12 +257,12 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     <div className="app-shell">
       {isDemoMode && (
         <div
-          className="demo-mode-banner"
+          className="demo-mode-banner max-w-full overflow-hidden"
           role="region"
           aria-label="Demo mode notice"
           data-testid="demo-mode-banner"
         >
-          <div>
+          <div style={{ flex: '1 1 auto', minWidth: 0, wordBreak: 'break-word' }}>
             <span>
               ◈ DEMO MODE — DETERMINISTIC MOCK DATA (READ-ONLY). No Supabase
               backend is configured; sign-in, invitations, approvals, merges,
@@ -260,9 +273,11 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             type="button"
             className="touch-target"
             style={{
-              minHeight: '44px',
+              minHeight: '40px',
               padding: '0.3rem 0.75rem',
-              fontSize: '0.8rem',
+              fontSize: '0.78rem',
+              maxWidth: '100%',
+              textAlign: 'center',
             }}
             onClick={() => setShowDemoSignInPreview((prev) => !prev)}
           >
@@ -274,16 +289,18 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
       )}
 
       <header className="app-header">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h1 style={{ margin: 0, fontSize: '1.2rem' }}>
-              {snapshot.group.name}
-            </h1>
-            {isDemoMode && <StatusBadge variant="demo_mode" />}
-          </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Role: <code>{snapshot.viewerMembership.role}</code> • Timezone:{' '}
-            <code>{snapshot.group.timezone}</code>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flexWrap: 'wrap' }}>
+          <ShuttlecockBrandMark size={30} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Badminton Tracker
+              </span>
+              {isDemoMode && <StatusBadge variant="demo_mode" />}
+            </div>
+            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {snapshot.group.name} • <code>{snapshot.viewerMembership.role}</code>
+            </div>
           </div>
         </div>
 
@@ -309,19 +326,55 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             </button>
           )}
 
-          <label htmlFor="theme-select" style={{ fontSize: '0.82rem' }}>
+          {/* Quick Sun/Moon Theme Toggle Pill matching reference image */}
+          <button
+            type="button"
+            onClick={() => {
+              const next: ThemePreference = theme === 'dark' ? 'light' : 'dark';
+              setTheme(next);
+            }}
+            style={{
+              minHeight: '38px',
+              padding: '0.25rem 0.65rem',
+              borderRadius: '999px',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-surface-subtle)',
+              color: 'var(--text-secondary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.78rem',
+            }}
+            aria-label={`Toggle theme (currently ${theme})`}
+            title={`Toggle light/dark theme (currently ${theme})`}
+          >
+            {theme === 'dark' ? (
+              <Moon size={14} style={{ color: '#a78bfa' }} />
+            ) : (
+              <Sun size={14} style={{ color: '#f59e0b' }} />
+            )}
+            <span style={{ textTransform: 'capitalize' }}>
+              {theme === 'system' ? 'Auto' : theme}
+            </span>
+          </button>
+
+          <label htmlFor="theme-select" style={{ fontSize: '0.82rem' }} className="hidden sm:inline">
             Theme:
           </label>
           <select
             id="theme-select"
             value={theme}
             onChange={(e) => setTheme(e.target.value as ThemePreference)}
+            className="hidden sm:inline-block"
             style={{
-              minHeight: '44px',
+              minHeight: '38px',
               padding: '0.25rem 0.5rem',
               borderRadius: '0.4rem',
               border: '1px solid var(--border-color)',
               background: 'var(--bg-surface)',
+              fontSize: '0.82rem',
             }}
           >
             <option value="system">System</option>
