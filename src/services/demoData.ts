@@ -58,6 +58,7 @@ export interface GroupReadSnapshot {
   isDemoMode: boolean;
   group: DbGroupRow;
   viewerMembership: DbGroupMembershipRow;
+  groupMemberships?: readonly DbGroupMembershipRow[];
   publicationState: RatingPublicationStateResponse | null;
   players: readonly DbPlayerRow[];
   sessions: readonly DbSessionRow[];
@@ -506,6 +507,40 @@ export function buildDeterministicDemoSnapshot(): GroupReadSnapshot {
     updated_at: '2026-10-01T10:00:00Z',
   };
 
+  const groupMemberships: DbGroupMembershipRow[] = [
+    viewerMembership,
+    {
+      id: '00000000-0000-4000-8000-000000000502',
+      group_id: DEMO_GROUP_ID,
+      user_id: '00000000-0000-4000-8000-000000000002',
+      role: 'admin',
+      status: 'approved',
+      linked_player_id: DEMO_PLAYER_IDS.brenda,
+      requested_player_id: null,
+      requested_new_player_name: null,
+      profile_link_status: 'linked',
+      approved_by_user_id: DEMO_VIEWER_USER_ID,
+      approved_at: '2026-10-01T10:05:00Z',
+      created_at: '2026-10-01T10:05:00Z',
+      updated_at: '2026-10-01T10:05:00Z',
+    },
+    {
+      id: '00000000-0000-4000-8000-000000000503',
+      group_id: DEMO_GROUP_ID,
+      user_id: '00000000-0000-4000-8000-000000000003',
+      role: 'recorder',
+      status: 'approved',
+      linked_player_id: DEMO_PLAYER_IDS.chong,
+      requested_player_id: null,
+      requested_new_player_name: null,
+      profile_link_status: 'linked',
+      approved_by_user_id: DEMO_VIEWER_USER_ID,
+      approved_at: '2026-10-01T10:10:00Z',
+      created_at: '2026-10-01T10:10:00Z',
+      updated_at: '2026-10-01T10:10:00Z',
+    },
+  ];
+
   const publicationState: RatingPublicationStateResponse = {
     group_id: DEMO_GROUP_ID,
     publication_health: 'current',
@@ -521,6 +556,7 @@ export function buildDeterministicDemoSnapshot(): GroupReadSnapshot {
     isDemoMode: true,
     group,
     viewerMembership,
+    groupMemberships,
     publicationState,
     players,
     sessions,

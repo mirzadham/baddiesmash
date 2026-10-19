@@ -7,6 +7,8 @@ import { sanitizeInvitationRpcError } from '../lib/inviteToken.ts';
 import type {
   AdminMembershipDirectoryEntry,
   BootstrapInitialGroupResponse,
+  CorrectOrVoidMatchResponse,
+  CreateIncompleteMatchDraftResponse,
   DbGroupMembershipRow,
   DbGroupRow,
   DbMatchParticipantRow,
@@ -17,6 +19,7 @@ import type {
   DbSessionAttendeeRow,
   DbSessionRow,
   DecideMembershipRequestResponse,
+  FinalizeGroupSessionResponse,
   GuestMergeExecutionResponse,
   GuestMergePreviewResponse,
   IssueGroupInvitationResponse,
@@ -24,7 +27,14 @@ import type {
   MembershipStatus,
   RatingPublicationStateResponse,
   RecalculationExecutionOutcome,
+  RecordCompletedMatchResponse,
   RedeemGroupInvitationResponse,
+  ReopenCompletedSessionResponse,
+  SessionControllerHandoverResponse,
+  SessionInactivityStatusResponse,
+  StartGroupSessionResponse,
+  UndoMatchWithinWindowResponse,
+  UpdateSessionStartTimeResponse,
 } from '../types/database.ts';
 import {
   type AdminGovernanceSnapshot,
@@ -167,6 +177,85 @@ export interface TransferGroupOwnershipInput {
   reason: string;
 }
 
+export interface StartGroupSessionInput {
+  groupId: string;
+  sessionStartedAt?: string | null;
+  initialAttendeePlayerIds?: readonly string[];
+  acknowledgeBackdatedRecalcWarning?: boolean;
+}
+
+export interface UpdateSessionAttendanceInput {
+  sessionId: string;
+  playerId: string;
+  present: boolean;
+  expectedLeaseVersion?: number | null;
+}
+
+export interface TransferOrTakeoverSessionControllerInput {
+  sessionId: string;
+  newControllerUserId?: string | null;
+  reason?: string | null;
+  expectedLeaseVersion?: number | null;
+}
+
+export interface UpdateSessionStartTimeInput {
+  sessionId: string;
+  newStartedAt: string;
+  reason: string;
+  expectedLeaseVersion?: number | null;
+  acknowledgeRecalcWarning?: boolean;
+}
+
+export interface FinalizeGroupSessionInput {
+  sessionId: string;
+  expectedLeaseVersion?: number | null;
+}
+
+export interface ReopenCompletedSessionInput {
+  sessionId: string;
+  reason: string;
+}
+
+export interface RecordCompletedMatchInput {
+  sessionId: string;
+  clientSubmissionId: string;
+  teamAPlayer1: string;
+  teamAPlayer2: string;
+  teamBPlayer1: string;
+  teamBPlayer2: string;
+  teamAScore: number;
+  teamBScore: number;
+  expectedLeaseVersion?: number | null;
+}
+
+export interface CreateIncompleteMatchDraftInput {
+  sessionId: string;
+  clientSubmissionId: string;
+  teamAPlayer1: string;
+  teamAPlayer2: string;
+  teamBPlayer1: string;
+  teamBPlayer2: string;
+  expectedLeaseVersion?: number | null;
+}
+
+export interface UndoMatchWithinWindowInput {
+  matchId: string;
+  expectedLeaseVersion?: number | null;
+}
+
+export interface CorrectOrVoidMatchInput {
+  matchId: string;
+  action: 'correct' | 'void';
+  reason: string;
+  teamAScore?: number | null;
+  teamBScore?: number | null;
+  teamAPlayer1?: string | null;
+  teamAPlayer2?: string | null;
+  teamBPlayer1?: string | null;
+  teamBPlayer2?: string | null;
+  expectedLeaseVersion?: number | null;
+}
+
 /**
  * Resolves the UI publication health state from a `GroupReadSnapshot`.
  * Fail-closed (Condition 1B): If `publicationState` could not be verified from the backend RPC,
@@ -274,6 +363,39 @@ export interface TrackerRepository {
     input: ExecuteGuestMergeInput,
   ): Promise<GuestMergeExecutionResponse>;
   transferGroupOwnership(input: TransferGroupOwnershipInput): Promise<void>;
+
+  // Phase 4 — Live Session Control, Attendance, Match Entry, Undo & Corrections RPCs
+  startGroupSession(
+    input: StartGroupSessionInput,
+  ): Promise<StartGroupSessionResponse>;
+  updateSessionAttendance(input: UpdateSessionAttendanceInput): Promise<void>;
+  transferOrTakeoverSessionController(
+    input: TransferOrTakeoverSessionControllerInput,
+  ): Promise<SessionControllerHandoverResponse>;
+  updateSessionStartTime(
+    input: UpdateSessionStartTimeInput,
+  ): Promise<UpdateSessionStartTimeResponse>;
+  finalizeGroupSession(
+    input: FinalizeGroupSessionInput,
+  ): Promise<FinalizeGroupSessionResponse>;
+  reopenCompletedSession(
+    input: ReopenCompletedSessionInput,
+  ): Promise<ReopenCompletedSessionResponse>;
+  getSessionInactivityStatus(
+    sessionId: string,
+  ): Promise<SessionInactivityStatusResponse>;
+  recordCompletedMatch(
+    input: RecordCompletedMatchInput,
+  ): Promise<RecordCompletedMatchResponse>;
+  createIncompleteMatchDraft(
+    input: CreateIncompleteMatchDraftInput,
+  ): Promise<CreateIncompleteMatchDraftResponse>;
+  undoMatchWithinWindow(
+    input: UndoMatchWithinWindowInput,
+  ): Promise<UndoMatchWithinWindowResponse>;
+  correctOrVoidMatch(
+    input: CorrectOrVoidMatchInput,
+  ): Promise<CorrectOrVoidMatchResponse>;
 }
 
 /**
@@ -379,6 +501,78 @@ export function createDemoTrackerRepository(
         'Demo Mode is read-only and cannot transfer group ownership.',
       );
     },
+    async startGroupSession(): Promise<StartGroupSessionResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot start a group session.',
+      );
+    },
+    async updateSessionAttendance(): Promise<void> {
+      throw new Error(
+        'Demo Mode is read-only and cannot modify session attendance.',
+      );
+    },
+    async transferOrTakeoverSessionController(): Promise<SessionControllerHandoverResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot transfer or take over session control.',
+      );
+    },
+    async updateSessionStartTime(): Promise<UpdateSessionStartTimeResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot edit session start time.',
+      );
+    },
+    async finalizeGroupSession(): Promise<FinalizeGroupSessionResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot finalize a group session.',
+      );
+    },
+    async reopenCompletedSession(): Promise<ReopenCompletedSessionResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot reopen a completed session.',
+      );
+    },
+    async getSessionInactivityStatus(
+      sessionId: string,
+    ): Promise<SessionInactivityStatusResponse> {
+      const target = snapshot.sessions.find((s) => s.id === sessionId);
+      if (!target) {
+        throw new Error(`Session not found: ${sessionId}`);
+      }
+      const lastActivityMs = Date.parse(target.last_meaningful_activity_at);
+      const elapsedSeconds = Math.max(
+        0,
+        Math.floor((Date.now() - lastActivityMs) / 1000),
+      );
+      return {
+        session_id: target.id,
+        status: target.status,
+        last_meaningful_activity_at: target.last_meaningful_activity_at,
+        inactive_seconds: elapsedSeconds,
+        is_stale_12h_warning:
+          (target.status === 'active' || target.status === 'reopened') &&
+          elapsedSeconds >= 43200,
+      };
+    },
+    async recordCompletedMatch(): Promise<RecordCompletedMatchResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot record completed matches.',
+      );
+    },
+    async createIncompleteMatchDraft(): Promise<CreateIncompleteMatchDraftResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot save incomplete match drafts.',
+      );
+    },
+    async undoMatchWithinWindow(): Promise<UndoMatchWithinWindowResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot undo recorded matches.',
+      );
+    },
+    async correctOrVoidMatch(): Promise<CorrectOrVoidMatchResponse> {
+      throw new Error(
+        'Demo Mode is read-only and cannot correct or void matches.',
+      );
+    },
   };
 }
 
@@ -403,6 +597,7 @@ export function createSupabaseTrackerRepository(
     const [
       groupRes,
       pubStateRes,
+      membershipsRes,
       playersRes,
       sessionsRes,
       attendeesRes,
@@ -413,6 +608,11 @@ export function createSupabaseTrackerRepository(
       client.rpc('get_group_rating_publication_state', {
         p_group_id: groupId,
       }),
+      client
+        .from('group_memberships')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('status', 'approved'),
       client
         .from('players')
         .select('*')
@@ -435,6 +635,11 @@ export function createSupabaseTrackerRepository(
     if (groupRes.error || !groupRes.data) {
       throw new Error(
         groupRes.error?.message ?? 'Failed to load group record from Supabase.',
+      );
+    }
+    if (membershipsRes.error) {
+      throw new Error(
+        `Failed to load group memberships: ${membershipsRes.error.message}`,
       );
     }
     if (playersRes.error) {
@@ -505,6 +710,7 @@ export function createSupabaseTrackerRepository(
       isDemoMode: false,
       group,
       viewerMembership: membership,
+      groupMemberships: (membershipsRes.data ?? []) as DbGroupMembershipRow[],
       publicationState,
       players: (playersRes.data ?? []) as DbPlayerRow[],
       sessions: (sessionsRes.data ?? []) as DbSessionRow[],
@@ -898,6 +1104,216 @@ export function createSupabaseTrackerRepository(
       if (error) {
         throw new Error(error.message);
       }
+    },
+
+    async startGroupSession(
+      input: StartGroupSessionInput,
+    ): Promise<StartGroupSessionResponse> {
+      const { data, error } = await client.rpc('start_group_session', {
+        p_group_id: input.groupId,
+        p_session_started_at: input.sessionStartedAt ?? null,
+        p_initial_attendee_player_ids: input.initialAttendeePlayerIds ?? [],
+        p_acknowledge_backdated_recalc_warning:
+          input.acknowledgeBackdatedRecalcWarning ?? false,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm session creation.');
+      }
+      return data as StartGroupSessionResponse;
+    },
+
+    async updateSessionAttendance(
+      input: UpdateSessionAttendanceInput,
+    ): Promise<void> {
+      const { error } = await client.rpc('update_session_attendance', {
+        p_session_id: input.sessionId,
+        p_player_id: input.playerId,
+        p_present: input.present,
+        p_expected_lease_version: input.expectedLeaseVersion ?? null,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+
+    async transferOrTakeoverSessionController(
+      input: TransferOrTakeoverSessionControllerInput,
+    ): Promise<SessionControllerHandoverResponse> {
+      const { data, error } = await client.rpc(
+        'transfer_or_takeover_session_controller',
+        {
+          p_session_id: input.sessionId,
+          p_new_controller_user_id: input.newControllerUserId ?? null,
+          p_reason: input.reason ?? null,
+          p_expected_lease_version: input.expectedLeaseVersion ?? null,
+        },
+      );
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm controller transfer.');
+      }
+      return data as SessionControllerHandoverResponse;
+    },
+
+    async updateSessionStartTime(
+      input: UpdateSessionStartTimeInput,
+    ): Promise<UpdateSessionStartTimeResponse> {
+      const { data, error } = await client.rpc('update_session_start_time', {
+        p_session_id: input.sessionId,
+        p_new_started_at: input.newStartedAt,
+        p_reason: input.reason,
+        p_expected_lease_version: input.expectedLeaseVersion ?? null,
+        p_acknowledge_recalc_warning: input.acknowledgeRecalcWarning ?? false,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm session start time update.');
+      }
+      return data as UpdateSessionStartTimeResponse;
+    },
+
+    async finalizeGroupSession(
+      input: FinalizeGroupSessionInput,
+    ): Promise<FinalizeGroupSessionResponse> {
+      const { data, error } = await client.rpc('finalize_group_session', {
+        p_session_id: input.sessionId,
+        p_expected_lease_version: input.expectedLeaseVersion ?? null,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm session finalization.');
+      }
+      return data as FinalizeGroupSessionResponse;
+    },
+
+    async reopenCompletedSession(
+      input: ReopenCompletedSessionInput,
+    ): Promise<ReopenCompletedSessionResponse> {
+      const { data, error } = await client.rpc('reopen_completed_session', {
+        p_session_id: input.sessionId,
+        p_reason: input.reason,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm session reopening.');
+      }
+      return data as ReopenCompletedSessionResponse;
+    },
+
+    async getSessionInactivityStatus(
+      sessionId: string,
+    ): Promise<SessionInactivityStatusResponse> {
+      const { data, error } = await client.rpc(
+        'get_session_inactivity_status',
+        {
+          p_session_id: sessionId,
+        },
+      );
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not return session inactivity status.');
+      }
+      return data as SessionInactivityStatusResponse;
+    },
+
+    async recordCompletedMatch(
+      input: RecordCompletedMatchInput,
+    ): Promise<RecordCompletedMatchResponse> {
+      const { data, error } = await client.rpc('record_completed_match', {
+        p_session_id: input.sessionId,
+        p_client_submission_id: input.clientSubmissionId,
+        p_team_a_player_1: input.teamAPlayer1,
+        p_team_a_player_2: input.teamAPlayer2,
+        p_team_b_player_1: input.teamBPlayer1,
+        p_team_b_player_2: input.teamBPlayer2,
+        p_team_a_score: input.teamAScore,
+        p_team_b_score: input.teamBScore,
+        p_expected_lease_version: input.expectedLeaseVersion ?? null,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm match save.');
+      }
+      return data as RecordCompletedMatchResponse;
+    },
+
+    async createIncompleteMatchDraft(
+      input: CreateIncompleteMatchDraftInput,
+    ): Promise<CreateIncompleteMatchDraftResponse> {
+      const { data, error } = await client.rpc(
+        'create_incomplete_match_draft',
+        {
+          p_session_id: input.sessionId,
+          p_client_submission_id: input.clientSubmissionId,
+          p_team_a_player_1: input.teamAPlayer1,
+          p_team_a_player_2: input.teamAPlayer2,
+          p_team_b_player_1: input.teamBPlayer1,
+          p_team_b_player_2: input.teamBPlayer2,
+          p_expected_lease_version: input.expectedLeaseVersion ?? null,
+        },
+      );
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm incomplete match draft.');
+      }
+      return data as CreateIncompleteMatchDraftResponse;
+    },
+
+    async undoMatchWithinWindow(
+      input: UndoMatchWithinWindowInput,
+    ): Promise<UndoMatchWithinWindowResponse> {
+      const { data, error } = await client.rpc('undo_match_within_window', {
+        p_match_id: input.matchId,
+        p_expected_lease_version: input.expectedLeaseVersion ?? null,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm match undo.');
+      }
+      return data as UndoMatchWithinWindowResponse;
+    },
+
+    async correctOrVoidMatch(
+      input: CorrectOrVoidMatchInput,
+    ): Promise<CorrectOrVoidMatchResponse> {
+      const { data, error } = await client.rpc('correct_or_void_match', {
+        p_match_id: input.matchId,
+        p_action: input.action,
+        p_reason: input.reason,
+        p_team_a_score: input.teamAScore ?? null,
+        p_team_b_score: input.teamBScore ?? null,
+        p_team_a_player_1: input.teamAPlayer1 ?? null,
+        p_team_a_player_2: input.teamAPlayer2 ?? null,
+        p_team_b_player_1: input.teamBPlayer1 ?? null,
+        p_team_b_player_2: input.teamBPlayer2 ?? null,
+        p_expected_lease_version: input.expectedLeaseVersion ?? null,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error('Server did not confirm match correction or void.');
+      }
+      return data as CorrectOrVoidMatchResponse;
     },
   };
 }

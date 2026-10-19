@@ -306,6 +306,44 @@ export interface RecordCompletedMatchResponse {
   recalculation?: RecalculationExecutionOutcome;
 }
 
+export interface UpdateSessionStartTimeResponse {
+  session_id: string;
+  session_started_at: string;
+  recalculation: RecalculationExecutionOutcome | null;
+}
+
+export interface FinalizeGroupSessionResponse {
+  session_id: string;
+  status: 'completed';
+  session_ended_at: string;
+}
+
+export interface ReopenCompletedSessionResponse {
+  session_id: string;
+  status: 'reopened';
+  controller_user_id: string;
+  controller_lease_version: number;
+}
+
+export interface CreateIncompleteMatchDraftResponse {
+  match_id: string;
+  status: 'incomplete';
+}
+
+export interface UndoMatchWithinWindowResponse {
+  match_id: string;
+  sequence_number: number | null;
+  status: 'voided';
+  recalculation: RecalculationExecutionOutcome;
+}
+
+export interface CorrectOrVoidMatchResponse {
+  match_id: string;
+  sequence_number: number | null;
+  status: 'completed' | 'voided';
+  recalculation: RecalculationExecutionOutcome | null;
+}
+
 export interface GuestMergePreviewResponse {
   group_id: string;
   source_guest_player_id: string;
@@ -327,4 +365,5 @@ export interface GuestMergeExecutionResponse {
   reattributed_match_count: number;
   published_rating_version_id: string;
 }
+
 

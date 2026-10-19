@@ -403,12 +403,16 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             {activeTab === 'sessions' && (
               <SessionsView
                 snapshot={snapshot}
+                publication={publication}
+                repository={repository}
                 selectedSessionId={selectedSessionId}
                 onSelectSession={(sessionId) => setSelectedSessionId(sessionId)}
                 onSelectPlayer={(playerId) => {
                   setSelectedPlayerId(playerId);
                   setActiveTab('profile');
                 }}
+                onRefreshGroupState={loadGateState}
+                onRetryRecalculation={handleRetryRecalculation}
               />
             )}
 

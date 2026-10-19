@@ -88,6 +88,24 @@ export function HomeView({
                 ).length
               }
             </p>
+            {(activeOrLatestSession.status === 'active' ||
+              activeOrLatestSession.status === 'reopened') &&
+              Date.now() -
+                Date.parse(activeOrLatestSession.last_meaningful_activity_at) >=
+                43200 * 1000 && (
+                <p
+                  style={{
+                    margin: '0.35rem 0',
+                    fontSize: '0.84rem',
+                    color: 'var(--text-warning)',
+                    fontWeight: 600,
+                  }}
+                  data-testid="home-stale-session-indicator"
+                >
+                  ⚠ Active session has been inactive for ≥ 12 hours (never
+                  auto-closed — review or finalize in Sessions).
+                </p>
+              )}
             <div style={{ marginTop: '0.75rem' }}>
               <button
                 type="button"
@@ -102,9 +120,18 @@ export function HomeView({
             </div>
           </div>
         ) : (
-          <p style={{ color: 'var(--text-muted)' }}>
-            No sessions have been recorded for this group yet.
-          </p>
+          <div>
+            <p style={{ color: 'var(--text-muted)' }}>
+              No sessions have been recorded for this group yet.
+            </p>
+            <button
+              type="button"
+              className="touch-target touch-target-primary"
+              onClick={() => onNavigateTab('sessions')}
+            >
+              Open Sessions &amp; Start First Session →
+            </button>
+          </div>
         )}
       </section>
 
