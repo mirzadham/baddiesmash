@@ -483,6 +483,101 @@ export function ProfileView({
           </p>
         </section>
       )}
+
+      {/* Data Privacy & Account Lifecycle (PRIV-02) */}
+      <section
+        className="card"
+        data-testid="privacy-lifecycle-card"
+        aria-labelledby="privacy-lifecycle-heading"
+        style={{ marginTop: '1.25rem' }}
+      >
+        <h3
+          id="privacy-lifecycle-heading"
+          style={{ margin: '0 0 0.5rem 0', fontSize: '1.05rem' }}
+        >
+          Data Privacy &amp; Account Lifecycle (PRIV-02)
+        </h3>
+        <p
+          style={{
+            margin: '0 0 0.75rem 0',
+            fontSize: '0.84rem',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          This tracker is built for a trusted badminton group with strict privacy
+          separation, deterministic ratings, and audited data integrity.
+        </p>
+
+        <div style={{ display: 'grid', gap: '0.65rem', fontSize: '0.83rem' }}>
+          <div
+            style={{
+              padding: '0.6rem 0.75rem',
+              borderRadius: '0.45rem',
+              background: 'var(--bg-surface-subtle)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <strong>1. Rating Ledger &amp; Match History Immutability</strong>
+            <p
+              style={{
+                margin: '0.25rem 0 0 0',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Completed doubles matches, scores, and sequential order numbers are
+              immutable historical facts. Because all Elo ratings and leaderboard
+              standings are mathematically derived from past matches, match history
+              cannot be silently erased without corrupting all subsequent ratings.
+            </p>
+          </div>
+
+          <div
+            style={{
+              padding: '0.6rem 0.75rem',
+              borderRadius: '0.45rem',
+              background: 'var(--bg-surface-subtle)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <strong>2. Account Deletion &amp; Player Profile Unlinking</strong>
+            <p
+              style={{
+                margin: '0.25rem 0 0 0',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              If a member departs or requests account deletion, their login
+              authentication record is removed and their membership status
+              transitions to <code>departed</code>. The player profile remains with{' '}
+              <code>linked_player_id = NULL</code>, preserving historical match
+              scorecards and group rating integrity while severing all personal
+              authentication credentials.
+            </p>
+          </div>
+
+          <div
+            style={{
+              padding: '0.6rem 0.75rem',
+              borderRadius: '0.45rem',
+              background: 'var(--bg-surface-subtle)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <strong>3. Confidentiality of Contact Details &amp; Invitations</strong>
+            <p
+              style={{
+                margin: '0.25rem 0 0 0',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Member email addresses and raw invitation tokens are never displayed
+              to other players or sent in client-side data bundles (PRIV-01).
+              Invitation links are single-use and hashed (SHA-256) before database
+              storage.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

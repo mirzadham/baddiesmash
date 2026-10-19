@@ -245,6 +245,9 @@ export function SessionsView({
   const [resumingDraftMatchId, setResumingDraftMatchId] = useState<
     string | null
   >(null);
+  const [failedVoidDraftId, setFailedVoidDraftId] = useState<string | null>(
+    null,
+  );
   const [isSavingMatch, setIsSavingMatch] = useState<boolean>(false);
   const [matchSaveError, setMatchSaveError] = useState<string | null>(null);
 
@@ -771,15 +774,20 @@ export function SessionsView({
 
       // If this completed match was resumed from an incomplete draft, void the draft row so it no longer blocks finalization (SES-03)
       if (resumingDraftMatchId) {
+        const draftIdToVoid = resumingDraftMatchId;
         try {
           await repository.correctOrVoidMatch({
-            matchId: resumingDraftMatchId,
+            matchId: draftIdToVoid,
             action: 'void',
             reason: `Incomplete draft superseded by completed Match #${res.sequence_number}`,
             expectedLeaseVersion: detail.session.controller_lease_version,
           });
-        } catch {
-          // Even if draft cleanup fails, the completed match was confirmed; refresh will show remaining state
+          setFailedVoidDraftId(null);
+        } catch (voidErr) {
+          setFailedVoidDraftId(draftIdToVoid);
+          setActionError(
+            `Match #${res.sequence_number} was successfully recorded, but voiding the superseded draft failed (${voidErr instanceof Error ? voidErr.message : 'network error'}). The draft remains incomplete and will block session finalization (SES-03). Please click 'Retry Voiding Draft' below.`,
+          );
         }
         setResumingDraftMatchId(null);
       }
@@ -902,6 +910,9 @@ export function SessionsView({
       });
       if (resumingDraftMatchId === draftMatchId) {
         setResumingDraftMatchId(null);
+      }
+      if (failedVoidDraftId === draftMatchId) {
+        setFailedVoidDraftId(null);
       }
       setStatusNotice('Incomplete match draft voided.');
       await onRefreshGroupState();
@@ -2367,27 +2378,62 @@ export function SessionsView({
                       {draft.teamB[1].displayName}
                     </div>
                     {canViewerMutateSession && (
-                      <div style={{ display: 'flex', gap: '0.45rem' }}>
-                        <button
-                          type="button"
-                          className="touch-target touch-target-primary"
-                          data-testid={`resume-draft-btn-${draft.match.id}`}
-                          onClick={() => handleResumeDraftInForm(draft)}
-                          style={{ minHeight: '38px', fontSize: '0.8rem' }}
-                        >
-                          Resume Draft in Form
-                        </button>
-                        <button
-                          type="button"
-                          className="touch-target"
-                          data-testid={`void-draft-btn-${draft.match.id}`}
-                          onClick={() =>
-                            handleVoidIncompleteDraft(draft.match.id)
-                          }
-                          style={{ minHeight: '38px', fontSize: '0.8rem' }}
-                        >
-                          Void Incomplete Draft
-                        </button>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.45rem',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {failedVoidDraftId === draft.match.id ? (
+                          <>
+                            <span
+                              style={{
+                                fontSize: '0.78rem',
+                                color: 'var(--status-stale-fg)',
+                                fontWeight: 600,
+                              }}
+                              data-testid={`failed-void-notice-${draft.match.id}`}
+                            >
+                              ⚠ Void Failed
+                            </span>
+                            <button
+                              type="button"
+                              className="touch-target touch-target-primary"
+                              data-testid={`retry-void-draft-btn-${draft.match.id}`}
+                              onClick={() =>
+                                handleVoidIncompleteDraft(draft.match.id)
+                              }
+                              style={{ minHeight: '38px', fontSize: '0.8rem' }}
+                            >
+                              Retry Voiding Draft
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="touch-target touch-target-primary"
+                              data-testid={`resume-draft-btn-${draft.match.id}`}
+                              onClick={() => handleResumeDraftInForm(draft)}
+                              style={{ minHeight: '38px', fontSize: '0.8rem' }}
+                            >
+                              Resume Draft in Form
+                            </button>
+                            <button
+                              type="button"
+                              className="touch-target"
+                              data-testid={`void-draft-btn-${draft.match.id}`}
+                              onClick={() =>
+                                handleVoidIncompleteDraft(draft.match.id)
+                              }
+                              style={{ minHeight: '38px', fontSize: '0.8rem' }}
+                            >
+                              Void Incomplete Draft
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

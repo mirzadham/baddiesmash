@@ -75,6 +75,7 @@ This pack contains the following files:
 - [`src/domain/__tests__/phase3b-admin-onboarding-ui.test.tsx`](src/domain/__tests__/phase3b-admin-onboarding-ui.test.tsx)
 - [`src/domain/__tests__/phase4-sessions-match-entry-ui.test.tsx`](src/domain/__tests__/phase4-sessions-match-entry-ui.test.tsx)
 - [`src/domain/__tests__/phase5-leaderboard-redesign.test.tsx`](src/domain/__tests__/phase5-leaderboard-redesign.test.tsx)
+- [`src/domain/__tests__/phase6-release-readiness.test.tsx`](src/domain/__tests__/phase6-release-readiness.test.tsx)
 - [`src/domain/__tests__/scoring.test.ts`](src/domain/__tests__/scoring.test.ts)
 - [`src/domain/__tests__/standings.test.ts`](src/domain/__tests__/standings.test.ts)
 - [`src/lib/inviteToken.ts`](src/lib/inviteToken.ts)
