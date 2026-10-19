@@ -120,6 +120,15 @@ export function evaluateSupabaseEnvironment(
         diagnosticMessage: `Invalid VITE_SUPABASE_URL protocol '${parsedUrl.protocol}'. Expected https: or http: (for local Supabase CLI).`,
       };
     }
+
+    // Normalize URL to origin (stripping accidental subpaths like /rest/v1 or trailing slashes)
+    const normalizedUrl = parsedUrl.origin;
+    return {
+      status: 'configured',
+      supabaseUrl: normalizedUrl,
+      supabaseAnonKey: rawAnonKey,
+      diagnosticMessage: null,
+    };
   } catch {
     return {
       status: 'invalid_env',
@@ -129,13 +138,6 @@ export function evaluateSupabaseEnvironment(
         'Invalid VITE_SUPABASE_URL format. Expected a valid URL such as https://<project-ref>.supabase.co or http://127.0.0.1:54321.',
     };
   }
-
-  return {
-    status: 'configured',
-    supabaseUrl: rawUrl,
-    supabaseAnonKey: rawAnonKey,
-    diagnosticMessage: null,
-  };
 }
 
 let cachedClient: SupabaseClient | null = null;
