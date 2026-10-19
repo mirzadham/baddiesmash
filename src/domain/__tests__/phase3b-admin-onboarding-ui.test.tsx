@@ -1054,4 +1054,152 @@ describe('Phase 3 Checkpoint 3B — Invitation Redemption, Bootstrap & Admin/Own
       '/join?foo=bar#top',
     );
   });
+
+  it('allows clearing a pre-filled ?invite= URL token to enter a manual token, and syncs latest required_match_state_seq when refreshing a guest merge preview after a transient failure', async () => {
+    // Part A: Clearing pre-filled URL token does not re-populate the old URL token
+    const expiredUrlToken =
+      '1111111111111111111111111111111111111111111111111111111111111111';
+    const manualFreshToken =
+      '2222222222222222222222222222222222222222222222222222222222222222';
+    window.history.replaceState(null, '', `/?invite=${expiredUrlToken}`);
+
+    const redeemSpy = vi.fn().mockResolvedValue({
+      membership_id: DEMO_MEMBERSHIP_IDS.pendingHannah,
+      group_id: DEMO_GROUP_ID,
+      status: 'pending_approval',
+    });
+
+    const onboardingRepo = createLiveMockRepository(
+      {
+        status: 'no_membership',
+        userId: '00000000-0000-4000-8000-000000000004',
+        userEmail: 'hannah@example.com',
+        emailVerified: true,
+      },
+      {
+        redeemGroupInvitation: redeemSpy,
+      },
+    );
+
+    const { unmount } = render(
+      <App repository={onboardingRepo} envConfig={CONFIGURED_ENV} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gate-no-membership')).toBeTruthy();
+    });
+
+    const tokenInput = screen.getByLabelText(
+      /Single-Use Invitation Token/i,
+    ) as HTMLInputElement;
+    expect(tokenInput.value).toBe(expiredUrlToken);
+
+    // Clear the input completely — it must stay empty and not re-populate expiredUrlToken
+    fireEvent.change(tokenInput, { target: { value: '' } });
+    expect(tokenInput.value).toBe('');
+
+    // Enter a fresh manual token and submit
+    fireEvent.change(tokenInput, { target: { value: manualFreshToken } });
+    fireEvent.click(screen.getByTestId('redeem-invitation-submit-btn'));
+
+    await waitFor(() => {
+      expect(redeemSpy).toHaveBeenCalledWith({
+        rawToken: manualFreshToken,
+        requestedPlayerId: null,
+        requestedNewPlayerName: null,
+      });
+    });
+
+    unmount();
+
+    // Part B: Transient merge failure while required_match_state_seq advances syncs mergePreviewMatchSeq to the new sequence
+    const baseSnap = buildDeterministicDemoSnapshot();
+    let currentSeq = 5;
+
+    const getSnapshot = (): GroupReadSnapshot => ({
+      ...baseSnap,
+      isDemoMode: false,
+      group: {
+        ...baseSnap.group,
+        required_match_state_seq: currentSeq,
+      },
+    });
+
+    const previewSpy = vi.fn().mockResolvedValue({
+      group_id: DEMO_GROUP_ID,
+      source_guest_player_id: DEMO_PLAYER_IDS.ethanGuest,
+      source_guest_display_name: 'Ethan (Drop-in)',
+      target_permanent_player_id: DEMO_PLAYER_IDS.gavinBench,
+      target_permanent_display_name: 'Gavin Yap',
+      can_merge: true,
+      conflicting_match_ids: [],
+      affected_match_count: 3,
+      affected_session_attendance_count: 2,
+      overlapping_attendance_session_count: 1,
+    });
+
+    const mergeSpy = vi.fn().mockImplementationOnce(async () => {
+      // Simulate concurrent unrelated match advancing required_match_state_seq while merge fails transiently
+      currentSeq = 6;
+      throw new Error('transient lock timeout during guest merge');
+    });
+
+    const loadGateSpy = vi.fn(async () => ({
+      status: 'approved' as const,
+      userId: baseSnap.viewerMembership.user_id,
+      userEmail: 'aaron.owner@example.com',
+      membership: baseSnap.viewerMembership,
+      snapshot: getSnapshot(),
+    }));
+
+    const adminRepo = createLiveMockRepository(await loadGateSpy(), {
+      loadViewerGateState: loadGateSpy,
+      previewGuestIntoPlayerMerge: previewSpy,
+      mergeGuestIntoPlayer: mergeSpy,
+    });
+
+    render(<App repository={adminRepo} envConfig={CONFIGURED_ENV} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('view-home')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-section-guest-merge')).toBeTruthy();
+    });
+
+    const mergeSection = screen.getByTestId('admin-section-guest-merge');
+    fireEvent.change(
+      within(mergeSection).getByLabelText(/Source Temporary Guest/i),
+      { target: { value: DEMO_PLAYER_IDS.ethanGuest } },
+    );
+    fireEvent.change(
+      within(mergeSection).getByLabelText(/Target Permanent Player/i),
+      { target: { value: DEMO_PLAYER_IDS.gavinBench } },
+    );
+
+    fireEvent.click(screen.getByTestId('preview-guest-merge-btn'));
+    await waitFor(() => {
+      expect(screen.getByTestId('execute-guest-merge-btn')).toBeTruthy();
+    });
+
+    fireEvent.change(
+      within(mergeSection).getByLabelText(/Audit Reason for Guest Merge/i),
+      { target: { value: 'Merge Ethan into Gavin' } },
+    );
+    fireEvent.click(screen.getByTestId('confirm-guest-merge-checkbox'));
+    fireEvent.click(screen.getByTestId('execute-guest-merge-btn'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-action-error').textContent).toMatch(
+        /transient lock timeout/i,
+      );
+    });
+
+    // The automatically refreshed preview must be synced to currentSeq = 6 and NOT flagged as stale
+    expect(screen.queryByTestId('guest-merge-stale-preview-alert')).toBeNull();
+    expect(screen.getByTestId('execute-guest-merge-btn')).toBeTruthy();
+  });
 });
+

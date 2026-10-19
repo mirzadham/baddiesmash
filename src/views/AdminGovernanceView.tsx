@@ -1,5 +1,12 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { StatusBadge } from '../components/StatusBadge.tsx';
+import { sanitizeInvitationRpcError } from '../lib/inviteToken.ts';
 import type {
   AdminGovernanceSnapshot,
   GroupReadSnapshot,
@@ -62,6 +69,13 @@ export function AdminGovernanceView({
   const viewerRole = snapshot.viewerMembership.role;
   const isOwner = viewerRole === 'owner';
   const groupId = snapshot.group.id;
+
+  // Keep a live reference to the latest required_match_state_seq so async failure-recovery
+  // handlers never read a stale closure value after awaiting onRefreshGroupState().
+  const latestRequiredMatchSeqRef = useRef<number>(
+    snapshot.group.required_match_state_seq,
+  );
+  latestRequiredMatchSeqRef.current = snapshot.group.required_match_state_seq;
 
   const [adminSnapshot, setAdminSnapshot] =
     useState<AdminGovernanceSnapshot | null>(null);
@@ -141,7 +155,7 @@ export function AdminGovernanceView({
     } catch (err) {
       setDirectoryError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to load administrative governance directory.',
       );
     } finally {
@@ -272,13 +286,15 @@ export function AdminGovernanceView({
       });
       setInviteEmail('');
       setInviteProposedPlayerId('');
+      await loadAdminData();
       setActionSuccessMessage(
         `Invitation issued for ${trimmedEmail}. Copy the one-time token or link below immediately — it will never be shown again.`,
       );
-      await loadAdminData();
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : 'Failed to issue invitation.',
+        err instanceof Error
+          ? sanitizeInvitationRpcError(err.message)
+          : 'Failed to issue invitation.',
       );
     } finally {
       setIsMutating(false);
@@ -310,11 +326,13 @@ export function AdminGovernanceView({
       if (oneTimeIssuedSecret?.invitationId === invitationId) {
         setOneTimeIssuedSecret(null);
       }
-      setActionSuccessMessage('Invitation revoked and audited on the server.');
       await loadAdminData();
+      setActionSuccessMessage('Invitation revoked and audited on the server.');
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : 'Failed to revoke invitation.',
+        err instanceof Error
+          ? sanitizeInvitationRpcError(err.message)
+          : 'Failed to revoke invitation.',
       );
     } finally {
       setIsMutating(false);
@@ -381,7 +399,7 @@ export function AdminGovernanceView({
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to approve membership request.',
       );
     } finally {
@@ -418,7 +436,7 @@ export function AdminGovernanceView({
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to reject membership request.',
       );
     } finally {
@@ -459,7 +477,7 @@ export function AdminGovernanceView({
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to update member role or status.',
       );
     } finally {
@@ -499,7 +517,7 @@ export function AdminGovernanceView({
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to link member player profile.',
       );
     } finally {
@@ -537,7 +555,9 @@ export function AdminGovernanceView({
       );
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : 'Failed to create player profile.',
+        err instanceof Error
+          ? sanitizeInvitationRpcError(err.message)
+          : 'Failed to create player profile.',
       );
     } finally {
       setIsMutating(false);
@@ -570,14 +590,14 @@ export function AdminGovernanceView({
         isActive: targetIsActive,
         reason,
       });
+      await onRefreshGroupState();
       setActionSuccessMessage(
         `Updated player status to ${targetIsActive ? 'Active' : 'Inactive'}.`,
       );
-      await onRefreshGroupState();
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to change player active status.',
       );
     } finally {
@@ -616,14 +636,14 @@ export function AdminGovernanceView({
         targetPermanentPlayerId: mergeTargetPermanentId,
       });
       setMergePreview(preview);
-      setMergePreviewMatchSeq(snapshot.group.required_match_state_seq);
+      setMergePreviewMatchSeq(latestRequiredMatchSeqRef.current);
       setMergeConfirmedCheckbox(false);
     } catch (err) {
       setMergePreview(null);
       setMergePreviewMatchSeq(null);
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to generate guest merge preview.',
       );
     } finally {
@@ -683,14 +703,14 @@ export function AdminGovernanceView({
       setMergeTargetPermanentId('');
       setMergeReason('');
       setMergeConfirmedCheckbox(false);
+      await Promise.all([onRefreshGroupState(), loadAdminData()]);
       setActionSuccessMessage(
         `Guest profile merged atomically (${outcome.reattributed_match_count} match(es) re-attributed, ${outcome.deduplicated_attendance_count} overlapping attendance(s) deduplicated, rating version ${outcome.published_rating_version_id} published).`,
       );
-      await Promise.all([onRefreshGroupState(), loadAdminData()]);
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Guest merge execution failed on the server.',
       );
       // Condition 3: If execution fails, do not report success; refresh preview and current group/publication state
@@ -705,7 +725,7 @@ export function AdminGovernanceView({
             },
           );
           setMergePreview(refreshedPreview);
-          setMergePreviewMatchSeq(snapshot.group.required_match_state_seq);
+          setMergePreviewMatchSeq(latestRequiredMatchSeqRef.current);
         }
       } catch {
         setMergePreview(null);
@@ -756,14 +776,14 @@ export function AdminGovernanceView({
       setNewOwnerMembershipId('');
       setOwnershipTransferReason('');
       setOwnershipTransferConfirmed(false);
+      await Promise.all([onRefreshGroupState(), loadAdminData()]);
       setActionSuccessMessage(
         'Group ownership transferred atomically and audited.',
       );
-      await Promise.all([onRefreshGroupState(), loadAdminData()]);
     } catch (err) {
       setActionError(
         err instanceof Error
-          ? err.message
+          ? sanitizeInvitationRpcError(err.message)
           : 'Failed to transfer group ownership.',
       );
     } finally {

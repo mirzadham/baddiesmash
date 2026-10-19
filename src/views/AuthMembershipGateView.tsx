@@ -80,10 +80,10 @@ export function AuthMembershipGateView({
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (capturedInviteToken && !rawTokenInput) {
-      setRawTokenInput(capturedInviteToken);
+    if (capturedInviteToken) {
+      setRawTokenInput((prev) => (prev ? prev : capturedInviteToken));
     }
-  }, [capturedInviteToken, rawTokenInput]);
+  }, [capturedInviteToken]);
 
   const handleGoogleClick = async () => {
     if (isDemoMode || isSubmitting) {
