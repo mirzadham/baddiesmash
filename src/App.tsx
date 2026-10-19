@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Calendar, Home, Settings, Trophy, User } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
 import {
   captureAndStripInviteTokenFromUrl,
@@ -303,7 +304,8 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               onClick={() => setShowAdminContextualModal((prev) => !prev)}
               data-testid="toggle-admin-tools-btn"
             >
-              ⚙ Admin Tools
+              <Settings size={15} />
+              <span>Admin Tools</span>
             </button>
           )}
 
@@ -440,7 +442,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             setActiveTab('home');
           }}
         >
-          <span aria-hidden="true">⌂</span>
+          <Home size={18} strokeWidth={activeTab === 'home' ? 2.5 : 2} aria-hidden="true" />
           <span>Home</span>
         </button>
 
@@ -453,7 +455,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             setActiveTab('leaderboard');
           }}
         >
-          <span aria-hidden="true">★</span>
+          <Trophy size={18} strokeWidth={activeTab === 'leaderboard' ? 2.5 : 2} aria-hidden="true" />
           <span>Leaderboard</span>
         </button>
 
@@ -466,7 +468,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             setActiveTab('sessions');
           }}
         >
-          <span aria-hidden="true">◷</span>
+          <Calendar size={18} strokeWidth={activeTab === 'sessions' ? 2.5 : 2} aria-hidden="true" />
           <span>Sessions</span>
         </button>
 
@@ -479,7 +481,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             setActiveTab('profile');
           }}
         >
-          <span aria-hidden="true">☺</span>
+          <User size={18} strokeWidth={activeTab === 'profile' ? 2.5 : 2} aria-hidden="true" />
           <span>Profile</span>
         </button>
       </nav>

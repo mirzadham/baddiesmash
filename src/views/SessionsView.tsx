@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowUpDown, RotateCcw, Shuffle } from 'lucide-react';
 import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
 import { validateMatchScore } from '../domain/scoring.ts';
@@ -2538,7 +2539,8 @@ export function SessionsView({
                   data-testid="swap-teams-btn"
                   onClick={handleSwapTeams}
                 >
-                  ⇄ Swap Teams (A ↔ B)
+                  <ArrowUpDown size={14} />
+                  <span>Swap Teams (A ↔ B)</span>
                 </button>
                 <button
                   type="button"
@@ -2546,7 +2548,8 @@ export function SessionsView({
                   data-testid="swap-partners-btn"
                   onClick={handleSwapPartners}
                 >
-                  ⇄ Swap Partners (A2 ↔ B1)
+                  <Shuffle size={14} />
+                  <span>Swap Partners (A2 ↔ B1)</span>
                 </button>
                 <button
                   type="button"
@@ -2554,7 +2557,8 @@ export function SessionsView({
                   data-testid="clear-match-slots-btn"
                   onClick={handleClearMatchSlots}
                 >
-                  ✕ Clear Slots
+                  <RotateCcw size={14} />
+                  <span>Clear Slots</span>
                 </button>
               </div>
 
@@ -2952,6 +2956,8 @@ export function SessionsView({
                       border: '1px solid var(--border-color)',
                       borderRadius: '0.65rem',
                       padding: '0.85rem',
+                      minWidth: 0,
+                      maxWidth: '100%',
                       background:
                         card.match.status === 'voided'
                           ? 'var(--bg-surface-subtle)'
