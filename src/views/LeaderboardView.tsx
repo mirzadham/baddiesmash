@@ -98,7 +98,7 @@ export function LeaderboardView({
             type="button"
             className={`px-2.5 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
               filterMode === 'all_time'
-                ? 'bg-[#7045c6] text-white font-bold shadow-sm'
+                ? 'bg-emerald-600 text-white font-bold shadow-sm'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             aria-pressed={filterMode === 'all_time'}
@@ -110,7 +110,7 @@ export function LeaderboardView({
             type="button"
             className={`px-2.5 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
               filterMode === 'current_session'
-                ? 'bg-[#7045c6] text-white font-bold shadow-sm'
+                ? 'bg-emerald-600 text-white font-bold shadow-sm'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             aria-pressed={filterMode === 'current_session'}
@@ -122,7 +122,7 @@ export function LeaderboardView({
             type="button"
             className={`px-2.5 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
               filterMode === 'season'
-                ? 'bg-[#7045c6] text-white font-bold shadow-sm'
+                ? 'bg-emerald-600 text-white font-bold shadow-sm'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             aria-pressed={filterMode === 'season'}

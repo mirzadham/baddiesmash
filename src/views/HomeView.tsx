@@ -1,7 +1,10 @@
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
+  Calendar,
   TrendingUp,
+  Trophy,
   Users,
 } from 'lucide-react';
 import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
@@ -49,6 +52,9 @@ export function HomeView({
   const leaderboard = deriveLeaderboardFromSnapshot(snapshot, false).slice(0, 5);
   const recentMatches = deriveEnrichedMatchesFromSnapshot(snapshot).slice(0, 4);
   const activeOrLatestSession = snapshot.sessions[0] ?? null;
+  const totalCompletedMatches = snapshot.matches.filter(m => m.status === 'completed').length;
+  const totalActivePlayers = snapshot.players.filter(p => p.is_active).length;
+  const topRank1 = leaderboard[0] ?? null;
 
   return (
     <div data-testid="view-home">
@@ -58,6 +64,62 @@ export function HomeView({
         isDemoMode={snapshot.isDemoMode}
         onRetryRecalculation={onRetryRecalculation}
       />
+
+      {/* Group Athletic Quick Stats Grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: '0.75rem',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Matches</span>
+            <Activity size={16} style={{ color: 'var(--accent-volt)' }} />
+          </div>
+          <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.2rem' }}>
+            {totalCompletedMatches}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Completed on court</div>
+        </div>
+
+        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Players</span>
+            <Users size={16} style={{ color: 'var(--accent-primary)' }} />
+          </div>
+          <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.2rem' }}>
+            {totalActivePlayers}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Active roster</div>
+        </div>
+
+        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Sessions</span>
+            <Calendar size={16} style={{ color: '#38bdf8' }} />
+          </div>
+          <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.2rem' }}>
+            {snapshot.sessions.length}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total organized</div>
+        </div>
+
+        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Leader</span>
+            <Trophy size={16} style={{ color: '#f59e0b' }} />
+          </div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {topRank1 ? `#1 ${topRank1.displayName}` : '–'}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+            {topRank1 ? `${topRank1.ratingDisplay} Elo` : 'No rankings yet'}
+          </div>
+        </div>
+      </div>
 
       {/* Active / Latest Session Hero Card */}
       <section className="seamless-ranking-panel" aria-labelledby="home-session-heading">

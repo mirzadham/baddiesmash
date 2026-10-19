@@ -40,7 +40,7 @@ export function LeaderboardPodium({
       <div
         className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] sm:w-[440px] h-[220px] pointer-events-none opacity-30 dark:opacity-25 blur-3xl -z-10"
         style={{
-          background: 'radial-gradient(circle, rgba(112, 69, 198, 0.35) 0%, rgba(245, 158, 11, 0.12) 45%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(245, 158, 11, 0.12) 45%, transparent 70%)',
         }}
         aria-hidden="true"
       />
@@ -87,13 +87,13 @@ export function LeaderboardPodium({
                   type="button"
                   onClick={() => onSelectPlayer(top2.playerId)}
                   style={{ background: 'transparent', border: 'none', padding: 0 }}
-                  className="font-bold text-[11px] sm:text-sm text-[var(--text-primary)] hover:text-[#7045c6] transition-colors truncate block text-center cursor-pointer min-w-0"
+                  className="font-bold text-[11px] sm:text-sm text-[var(--text-primary)] hover:text-emerald-500 transition-colors truncate block text-center cursor-pointer min-w-0"
                   title={top2.displayName}
                 >
                   {top2.displayName}
                 </button>
                 {viewerLinkedPlayerId === top2.playerId && (
-                  <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-[#7045c6] text-white">
+                  <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-emerald-600 text-white">
                     You
                   </span>
                 )}
@@ -112,8 +112,8 @@ export function LeaderboardPodium({
               <div
                 className="mt-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-wide text-white"
                 style={{
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7045c6 100%)',
-                  boxShadow: '0 2px 8px rgba(112, 69, 198, 0.35)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
                 }}
               >
                 <span className="rating-mono">{top2.ratingDisplay}</span>
@@ -161,13 +161,13 @@ export function LeaderboardPodium({
                   type="button"
                   onClick={() => onSelectPlayer(top1.playerId)}
                   style={{ background: 'transparent', border: 'none', padding: 0 }}
-                  className="font-extrabold text-xs sm:text-base text-[var(--text-primary)] hover:text-[#7045c6] transition-colors truncate block text-center cursor-pointer min-w-0"
+                  className="font-extrabold text-xs sm:text-base text-[var(--text-primary)] hover:text-emerald-500 transition-colors truncate block text-center cursor-pointer min-w-0"
                   title={top1.displayName}
                 >
                   {top1.displayName}
                 </button>
                 {viewerLinkedPlayerId === top1.playerId && (
-                  <span className="flex-shrink-0 px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-[#7045c6] text-white">
+                  <span className="flex-shrink-0 px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-emerald-600 text-white">
                     You
                   </span>
                 )}
@@ -186,8 +186,8 @@ export function LeaderboardPodium({
               <div
                 className="mt-1 px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-black tracking-wide text-white"
                 style={{
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7045c6 100%)',
-                  boxShadow: '0 3px 12px rgba(112, 69, 198, 0.45)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 3px 12px rgba(16, 185, 129, 0.45)',
                 }}
               >
                 <span className="rating-mono">{top1.ratingDisplay}</span>
@@ -242,13 +242,13 @@ export function LeaderboardPodium({
                   type="button"
                   onClick={() => onSelectPlayer(top3.playerId)}
                   style={{ background: 'transparent', border: 'none', padding: 0 }}
-                  className="font-bold text-[11px] sm:text-sm text-[var(--text-primary)] hover:text-[#7045c6] transition-colors truncate block text-center cursor-pointer min-w-0"
+                  className="font-bold text-[11px] sm:text-sm text-[var(--text-primary)] hover:text-emerald-500 transition-colors truncate block text-center cursor-pointer min-w-0"
                   title={top3.displayName}
                 >
                   {top3.displayName}
                 </button>
                 {viewerLinkedPlayerId === top3.playerId && (
-                  <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-[#7045c6] text-white">
+                  <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-emerald-600 text-white">
                     You
                   </span>
                 )}
@@ -267,8 +267,8 @@ export function LeaderboardPodium({
               <div
                 className="mt-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-wide text-white"
                 style={{
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7045c6 100%)',
-                  boxShadow: '0 2px 8px rgba(112, 69, 198, 0.35)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
                 }}
               >
                 <span className="rating-mono">{top3.ratingDisplay}</span>

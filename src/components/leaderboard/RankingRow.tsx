@@ -30,7 +30,7 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
       onClick={() => onSelectPlayer(row.playerId)}
       className={`group relative flex items-center justify-between px-2.5 py-2.5 sm:px-5 sm:py-3.5 transition-all cursor-pointer border-b border-[var(--border-color)]/50 last:border-b-0 hover:bg-[var(--bg-surface-subtle)]/70 ${
         isCurrentUser
-          ? 'bg-[#7045c6]/10 dark:bg-[#7045c6]/18 border-l-4 border-l-[#7045c6]'
+          ? 'bg-emerald-500/10 dark:bg-emerald-500/18 border-l-4 border-l-emerald-500'
           : ''
       }`}
       role="button"
@@ -64,8 +64,8 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
             <span
-              className={`font-bold text-xs sm:text-base truncate max-w-[95px] xs:max-w-[130px] sm:max-w-[200px] text-[var(--text-primary)] group-hover:text-[#7045c6] transition-colors ${
-                isCurrentUser ? 'text-[#7045c6] dark:text-[#a78bfa]' : ''
+              className={`font-bold text-xs sm:text-base truncate max-w-[95px] xs:max-w-[130px] sm:max-w-[200px] text-[var(--text-primary)] group-hover:text-emerald-500 transition-colors ${
+                isCurrentUser ? 'text-emerald-500 dark:text-emerald-400' : ''
               }`}
               title={row.displayName}
             >
@@ -74,7 +74,7 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
 
             {/* "You" Pill for authenticated viewer */}
             {isCurrentUser && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold bg-[#7045c6] text-white tracking-wide">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-600 text-white tracking-wide">
                 You
               </span>
             )}
@@ -94,7 +94,7 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
           {/* Elo Rating Pill underneath name (matching reference layout) */}
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-black rating-mono tracking-tight text-[#7045c6] dark:text-[#c4b5fd] bg-[#7045c6]/12 dark:bg-[#7045c6]/25 border border-[#7045c6]/25"
+              className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-black rating-mono tracking-tight text-emerald-500 dark:text-emerald-400 bg-emerald-500/12 dark:bg-emerald-500/25 border border-emerald-500/25"
             >
               {row.ratingDisplay}
             </span>

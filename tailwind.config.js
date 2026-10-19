@@ -10,17 +10,27 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#7045c6', // Signature purple from reference
-          700: '#5b21b6',
-          800: '#4c1d95',
-          900: '#3b0764',
-          950: '#1d0b3a',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669', // Signature athletic emerald
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
+          volt: '#a3e635',
+          purple: '#7045c6', // Backwards compatibility
+        },
+        court: {
+          surface: '#0f291e',
+          'surface-subtle': '#14382a',
+          border: '#1f4e3b',
+          line: '#e2f5ec',
+          volt: '#a3e635',
+          emerald: '#10b981',
         },
         podium: {
           gold: '#f59e0b',
@@ -34,17 +44,19 @@ export default {
           'bronze-dark': '#9a3412',
         },
         darkbg: {
-          canvas: '#0f0e17',
-          surface: '#181724',
-          'surface-subtle': '#222034',
-          'surface-elevated': '#2b2942',
-          border: '#2e2c44',
+          canvas: '#0b0f19',
+          surface: '#111827',
+          'surface-subtle': '#182234',
+          'surface-elevated': '#1f2d42',
+          border: '#243247',
         },
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
+        'glow-emerald': '0 0 25px rgba(16, 185, 129, 0.35)',
+        'glow-volt': '0 0 25px rgba(163, 230, 53, 0.35)',
         'glow-purple': '0 0 25px rgba(112, 69, 198, 0.35)',
         'glow-gold': '0 0 25px rgba(245, 158, 11, 0.35)',
         'glow-silver': '0 0 20px rgba(148, 163, 184, 0.25)',

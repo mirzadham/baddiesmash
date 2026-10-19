@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Swords } from 'lucide-react';
 import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
 import type { GroupReadSnapshot } from '../services/demoData.ts';
@@ -37,6 +38,7 @@ export function ProfileView({
 }: ProfileViewProps) {
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all');
   const [sessionFilter, setSessionFilter] = useState<string>('all');
+  const [selectedOpponentId, setSelectedOpponentId] = useState<string>('');
 
   const leaderboardAll = deriveLeaderboardFromSnapshot(snapshot, true);
   const viewerLinkedPlayerId = snapshot.viewerMembership.linked_player_id;
@@ -75,6 +77,80 @@ export function ProfileView({
     }
     return true;
   });
+
+  const otherPlayers = useMemo(() => {
+    return leaderboardAll.filter((p) => p.playerId !== effectivePlayerId);
+  }, [leaderboardAll, effectivePlayerId]);
+
+  const activeOpponentId =
+    selectedOpponentId && selectedOpponentId !== effectivePlayerId
+      ? selectedOpponentId
+      : (otherPlayers[0]?.playerId ?? '');
+
+  const activeOpponent = useMemo(() => {
+    return leaderboardAll.find((p) => p.playerId === activeOpponentId) ?? null;
+  }, [leaderboardAll, activeOpponentId]);
+
+  const h2hStats = useMemo(() => {
+    if (!effectivePlayerId || !activeOpponentId || effectivePlayerId === activeOpponentId) {
+      return null;
+    }
+    let vsMatches = 0;
+    let vsWins = 0;
+    let vsLosses = 0;
+    let partnerMatches = 0;
+    let partnerWins = 0;
+    let partnerLosses = 0;
+
+    for (const card of allMatchesForPlayer) {
+      if (card.match.status !== 'completed') continue;
+      const playerSide = card.teamA.some((s) => s.playerId === effectivePlayerId)
+        ? 'A'
+        : 'B';
+      const opponentSide = card.teamA.some((s) => s.playerId === activeOpponentId)
+        ? 'A'
+        : card.teamB.some((s) => s.playerId === activeOpponentId)
+        ? 'B'
+        : null;
+
+      if (!opponentSide) continue;
+
+      const playerWon = card.winnerSide === playerSide;
+
+      if (playerSide === opponentSide) {
+        partnerMatches++;
+        if (playerWon) partnerWins++;
+        else partnerLosses++;
+      } else {
+        vsMatches++;
+        if (playerWon) vsWins++;
+        else vsLosses++;
+      }
+    }
+
+    return {
+      vsMatches,
+      vsWins,
+      vsLosses,
+      vsWinRate: vsMatches > 0 ? `${((vsWins / vsMatches) * 100).toFixed(0)}%` : '0%',
+      partnerMatches,
+      partnerWins,
+      partnerLosses,
+      partnerWinRate: partnerMatches > 0 ? `${((partnerWins / partnerMatches) * 100).toFixed(0)}%` : '0%',
+    };
+  }, [effectivePlayerId, activeOpponentId, allMatchesForPlayer]);
+
+  const recentForm = useMemo(() => {
+    return allMatchesForPlayer
+      .filter((c) => c.match.status === 'completed')
+      .slice(0, 5)
+      .map((c) => {
+        const playerSide = c.teamA.some((s) => s.playerId === effectivePlayerId)
+          ? 'A'
+          : 'B';
+        return c.winnerSide === playerSide ? 'W' : 'L';
+      });
+  }, [allMatchesForPlayer, effectivePlayerId]);
 
   return (
     <div data-testid="view-profile">
@@ -290,7 +366,177 @@ export function ProfileView({
                   Attended / sessions held since profile creation
                 </div>
               </div>
+
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '0.5rem',
+                  background: 'var(--bg-surface-subtle)',
+                }}
+              >
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Recent Form (Last 5)
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    marginTop: '0.35rem',
+                  }}
+                >
+                  {recentForm.length === 0 ? (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No matches</span>
+                  ) : (
+                    recentForm.map((res, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: '0.75rem',
+                          background: res === 'W' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                          color: res === 'W' ? 'var(--accent-volt)' : '#f87171',
+                          border: res === 'W' ? '1px solid var(--accent-primary)' : '1px solid #ef4444',
+                        }}
+                      >
+                        {res}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                  Latest completed matches
+                </div>
+              </div>
             </div>
+          </section>
+
+          {/* Head-to-Head (H2H) Records Section */}
+          <section
+            className="card"
+            data-testid="profile-h2h-section"
+            aria-labelledby="profile-h2h-heading"
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <Swords size={22} style={{ color: 'var(--accent-volt)' }} />
+                <div>
+                  <h3 id="profile-h2h-heading" style={{ margin: 0, fontSize: '1.15rem' }}>
+                    Head-to-Head Rivalry &amp; Partnership
+                  </h3>
+                  <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Direct track record with fellow group members
+                  </p>
+                </div>
+              </div>
+
+              {otherPlayers.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label htmlFor="h2h-opponent-select" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                    Compare with:
+                  </label>
+                  <select
+                    id="h2h-opponent-select"
+                    value={activeOpponentId}
+                    onChange={(e) => setSelectedOpponentId(e.target.value)}
+                    style={{
+                      minHeight: '42px',
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-surface)',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {otherPlayers.map((p) => (
+                      <option key={p.playerId} value={p.playerId}>
+                        {p.displayName} {p.isGuest ? '(Guest)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {h2hStats && activeOpponent ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '0.85rem',
+                }}
+              >
+                {/* As Opponents */}
+                <div
+                  style={{
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
+                    background: 'var(--bg-surface-subtle)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-volt)' }}>
+                      As Opponents
+                    </span>
+                    <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                      {h2hStats.vsMatches} {h2hStats.vsMatches === 1 ? 'match' : 'matches'}
+                    </span>
+                  </div>
+                  <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+                    {h2hStats.vsWins}W – {h2hStats.vsLosses}L
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                    Win rate against {activeOpponent.displayName}: <strong>{h2hStats.vsWinRate}</strong>
+                  </div>
+                </div>
+
+                {/* As Partners */}
+                <div
+                  style={{
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
+                    background: 'var(--bg-surface-subtle)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-primary)' }}>
+                      As Doubles Partners
+                    </span>
+                    <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                      {h2hStats.partnerMatches} {h2hStats.partnerMatches === 1 ? 'match' : 'matches'}
+                    </span>
+                  </div>
+                  <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+                    {h2hStats.partnerWins}W – {h2hStats.partnerLosses}L
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                    Win rate when paired together: <strong>{h2hStats.partnerWinRate}</strong>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.88rem' }}>
+                Select another player in the group to view direct head-to-head match records.
+              </p>
+            )}
           </section>
 
           {/* Player Match History with Filters (`DEC-052`) */}

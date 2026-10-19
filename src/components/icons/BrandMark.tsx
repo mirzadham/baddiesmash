@@ -20,15 +20,15 @@ export function ShuttlecockBrandMark({ size = 28, className = '' }: BrandMarkPro
     >
       <defs>
         <linearGradient id="shuttleFeatherGrad" x1="8" y1="4" x2="26" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#9d6bf7" />
-          <stop offset="100%" stopColor="#7045c6" />
+          <stop offset="0%" stopColor="#34d399" />
+          <stop offset="100%" stopColor="#059669" />
         </linearGradient>
         <linearGradient id="shuttleCorkGrad" x1="14" y1="18" x2="24" y2="28" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor="#e2d9f7" />
+          <stop offset="100%" stopColor="#d1fae5" />
         </linearGradient>
         <filter id="shuttleGlow" x="0" y="0" width="32" height="32" filterUnits="userSpaceOnUse">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#7045c6" floodOpacity="0.3" />
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.35" />
         </filter>
       </defs>
 
@@ -49,7 +49,7 @@ export function ShuttlecockBrandMark({ size = 28, className = '' }: BrandMarkPro
         {/* Shuttle binding thread */}
         <path
           d="M14.5 14.5L17.5 17.5"
-          stroke="#5b21b6"
+          stroke="#047857"
           strokeWidth="1.5"
           strokeLinecap="round"
         />
@@ -59,7 +59,7 @@ export function ShuttlecockBrandMark({ size = 28, className = '' }: BrandMarkPro
           cy="21"
           r="4.5"
           fill="url(#shuttleCorkGrad)"
-          stroke="#7045c6"
+          stroke="#059669"
           strokeWidth="1.2"
         />
       </g>

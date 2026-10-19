@@ -731,6 +731,26 @@ export function SessionsView({
     setClientSubmissionId(generateClientSubmissionId());
   };
 
+  const handleAdjustScore = (team: 'A' | 'B', delta: number) => {
+    if (team === 'A') {
+      const cur = teamAScoreInput.trim() === '' ? 0 : Number(teamAScoreInput);
+      const next = Math.max(0, Math.min(30, (isNaN(cur) ? 0 : cur) + delta));
+      setTeamAScoreInput(String(next));
+    } else {
+      const cur = teamBScoreInput.trim() === '' ? 0 : Number(teamBScoreInput);
+      const next = Math.max(0, Math.min(30, (isNaN(cur) ? 0 : cur) + delta));
+      setTeamBScoreInput(String(next));
+    }
+  };
+
+  const handleScorePreset = (team: 'A' | 'B', preset: number) => {
+    if (team === 'A') {
+      setTeamAScoreInput(String(preset));
+    } else {
+      setTeamBScoreInput(String(preset));
+    }
+  };
+
   const submitMatchAttempt = async () => {
     if (!detail || isSavingMatch) {
       return;
@@ -2270,47 +2290,78 @@ export function SessionsView({
               aria-live="polite"
               data-testid="immediate-undo-banner"
               style={{
-                padding: '0.85rem 1rem',
-                marginBottom: '1rem',
-                borderRadius: '0.55rem',
-                borderLeft: '4px solid var(--accent-primary)',
-                background: 'var(--bg-surface-subtle)',
+                position: 'relative',
+                padding: '1rem 1.25rem',
+                marginBottom: '1.25rem',
+                borderRadius: '0.85rem',
+                border: '1.5px solid var(--accent-primary)',
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, var(--bg-surface) 100%)',
+                boxShadow: '0 4px 20px rgba(16, 185, 129, 0.15)',
+                overflow: 'hidden',
                 display: 'flex',
                 flexWrap: 'wrap',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: '0.5rem',
+                gap: '0.85rem',
               }}
             >
-              <div>
-                <strong>
-                  ↺ Match #{activeUndoPrompt.sequenceNumber} Saved — 10-Second
-                  Immediate Undo Window
-                </strong>
+              {/* Dynamic Animated Countdown Progress Bar */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  height: '4px',
+                  width: `${Math.max(0, Math.min(100, (undoRemainingSeconds / 10) * 100))}%`,
+                  background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-volt))',
+                  transition: 'width 1s linear',
+                  boxShadow: '0 0 8px var(--accent-volt-glow)',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '220px', flex: 1 }}>
                 <div
-                  style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    background: 'rgba(16, 185, 129, 0.18)',
+                    border: '2px solid var(--accent-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    color: 'var(--accent-volt)',
+                    flexShrink: 0,
+                  }}
                 >
-                  Original recorder may undo accidental entry within 10 seconds (
-                  {undoRemainingSeconds}s remaining). Server enforces exact
-                  expiry.
+                  {undoRemainingSeconds}s
+                </div>
+                <div>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                    ↺ Match #{activeUndoPrompt.sequenceNumber} Saved — 10-Second Undo Window
+                  </strong>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                    Original recorder may undo accidental entry ({undoRemainingSeconds}s remaining).
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="touch-target touch-target-primary"
                   disabled={snapshot.isDemoMode || isUndoingMatch}
                   data-testid="immediate-undo-btn"
                   onClick={handleImmediateUndo}
+                  style={{ minHeight: '44px', fontWeight: 700 }}
                 >
-                  {isUndoingMatch
-                    ? 'Undoing...'
-                    : 'Undo Match (Within 10s Window)'}
+                  {isUndoingMatch ? 'Undoing...' : '↺ Undo Match'}
                 </button>
                 <button
                   type="button"
                   className="touch-target"
                   onClick={() => setActiveUndoPrompt(null)}
+                  style={{ minHeight: '44px' }}
                 >
                   Keep Match
                 </button>
@@ -2570,13 +2621,14 @@ export function SessionsView({
                 </div>
               )}
 
-              {/* One-Tap Swap & Clear Controls */}
+              {/* One-Tap Court Swap & Clear Controls */}
               <div
                 style={{
                   display: 'flex',
                   flexWrap: 'wrap',
+                  alignItems: 'center',
                   gap: '0.5rem',
-                  marginBottom: '0.85rem',
+                  marginBottom: '1rem',
                 }}
               >
                 <button
@@ -2584,8 +2636,9 @@ export function SessionsView({
                   className="touch-target"
                   data-testid="swap-teams-btn"
                   onClick={handleSwapTeams}
+                  title="Swap Team A and Team B sides and scores"
                 >
-                  <ArrowUpDown size={14} />
+                  <ArrowUpDown size={15} />
                   <span>Swap Teams (A ↔ B)</span>
                 </button>
                 <button
@@ -2593,8 +2646,9 @@ export function SessionsView({
                   className="touch-target"
                   data-testid="swap-partners-btn"
                   onClick={handleSwapPartners}
+                  title="Swap Partner A2 with Partner B1"
                 >
-                  <Shuffle size={14} />
+                  <Shuffle size={15} />
                   <span>Swap Partners (A2 ↔ B1)</span>
                 </button>
                 <button
@@ -2602,226 +2656,507 @@ export function SessionsView({
                   className="touch-target"
                   data-testid="clear-match-slots-btn"
                   onClick={handleClearMatchSlots}
+                  title="Reset all 4 player slots and scores"
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={15} />
                   <span>Clear Slots</span>
                 </button>
               </div>
 
-              {/* 4 Player Slot Selectors */}
+              {/* Digital LED Scoreboard Console */}
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '0.85rem',
-                  marginBottom: '0.85rem',
+                  background: 'linear-gradient(180deg, var(--bg-surface-elevated) 0%, var(--bg-surface-subtle) 100%)',
+                  borderRadius: '1rem',
+                  border: '1.5px solid var(--border-color)',
+                  padding: '1rem',
+                  marginBottom: '1rem',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
                 }}
               >
-                {/* Team A */}
                 <div
                   style={{
-                    padding: '0.75rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface-subtle)',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto 1fr',
+                    alignItems: 'center',
+                    gap: '0.75rem',
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>
-                    Team A
+                  {/* Team A Score Control */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: 'var(--accent-volt)',
+                        marginBottom: '0.35rem',
+                      }}
+                    >
+                      Team A
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustScore('A', -1)}
+                        className="touch-target"
+                        style={{ minWidth: '40px', minHeight: '44px', padding: '0.2rem 0.5rem', fontWeight: 800 }}
+                        aria-label="Decrease Team A score"
+                      >
+                        -1
+                      </button>
+                      <input
+                        id="match-score-a-input"
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={30}
+                        placeholder="21"
+                        value={teamAScoreInput}
+                        onChange={(e) => setTeamAScoreInput(e.target.value)}
+                        data-testid="match-score-a-input"
+                        aria-label="Team A Score"
+                        className="rating-mono"
+                        style={{
+                          width: '74px',
+                          minHeight: '48px',
+                          textAlign: 'center',
+                          fontSize: '1.75rem',
+                          fontWeight: 900,
+                          borderRadius: '0.65rem',
+                          border: '2px solid var(--border-strong)',
+                          background: 'var(--bg-canvas)',
+                          color: teamAScoreInput === '21' || Number(teamAScoreInput) > 21 ? 'var(--accent-volt)' : 'var(--text-primary)',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustScore('A', +1)}
+                        className="touch-target"
+                        style={{ minWidth: '40px', minHeight: '44px', padding: '0.2rem 0.5rem', fontWeight: 800 }}
+                        aria-label="Increase Team A score"
+                      >
+                        +1
+                      </button>
+                    </div>
+                    <div style={{ marginTop: '0.4rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleScorePreset('A', 21)}
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          color: 'var(--accent-volt)',
+                          borderRadius: '999px',
+                          padding: '0.15rem 0.65rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Set 21
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label
-                      htmlFor="match-slot-a1"
+
+                  {/* VS / Net Divider */}
+                  <div style={{ textAlign: 'center', padding: '0 0.25rem' }}>
+                    <span
                       style={{
-                        display: 'block',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
+                        fontSize: '1.25rem',
+                        fontWeight: 900,
+                        color: 'var(--text-muted)',
                       }}
                     >
-                      Team A — Player 1:
-                    </label>
-                    <select
-                      id="match-slot-a1"
-                      value={teamAPlayer1}
-                      onChange={(e) => setTeamAPlayer1(e.target.value)}
-                      data-testid="match-slot-a1"
-                      style={{
-                        width: '100%',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.5rem',
-                      }}
-                    >
-                      <option value="">-- Select Attendee --</option>
-                      {presentAttendeePlayers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.display_name} {p.is_guest ? '(Guest)' : ''}
-                        </option>
-                      ))}
-                    </select>
+                      VS
+                    </span>
                   </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label
-                      htmlFor="match-slot-a2"
+
+                  {/* Team B Score Control */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div
                       style={{
-                        display: 'block',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: 'var(--accent-volt)',
+                        marginBottom: '0.35rem',
                       }}
                     >
-                      Team A — Player 2:
-                    </label>
-                    <select
-                      id="match-slot-a2"
-                      value={teamAPlayer2}
-                      onChange={(e) => setTeamAPlayer2(e.target.value)}
-                      data-testid="match-slot-a2"
-                      style={{
-                        width: '100%',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.5rem',
-                      }}
-                    >
-                      <option value="">-- Select Attendee --</option>
-                      {presentAttendeePlayers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.display_name} {p.is_guest ? '(Guest)' : ''}
-                        </option>
-                      ))}
-                    </select>
+                      Team B
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustScore('B', -1)}
+                        className="touch-target"
+                        style={{ minWidth: '40px', minHeight: '44px', padding: '0.2rem 0.5rem', fontWeight: 800 }}
+                        aria-label="Decrease Team B score"
+                      >
+                        -1
+                      </button>
+                      <input
+                        id="match-score-b-input"
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={30}
+                        placeholder="19"
+                        value={teamBScoreInput}
+                        onChange={(e) => setTeamBScoreInput(e.target.value)}
+                        data-testid="match-score-b-input"
+                        aria-label="Team B Score"
+                        className="rating-mono"
+                        style={{
+                          width: '74px',
+                          minHeight: '48px',
+                          textAlign: 'center',
+                          fontSize: '1.75rem',
+                          fontWeight: 900,
+                          borderRadius: '0.65rem',
+                          border: '2px solid var(--border-strong)',
+                          background: 'var(--bg-canvas)',
+                          color: teamBScoreInput === '21' || Number(teamBScoreInput) > 21 ? 'var(--accent-volt)' : 'var(--text-primary)',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustScore('B', +1)}
+                        className="touch-target"
+                        style={{ minWidth: '40px', minHeight: '44px', padding: '0.2rem 0.5rem', fontWeight: 800 }}
+                        aria-label="Increase Team B score"
+                      >
+                        +1
+                      </button>
+                    </div>
+                    <div style={{ marginTop: '0.4rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleScorePreset('B', 21)}
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          color: 'var(--accent-volt)',
+                          borderRadius: '999px',
+                          padding: '0.15rem 0.65rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Set 21
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="match-score-a-input"
+                </div>
+              </div>
+
+              {/* Interactive Visual Badminton Court View */}
+              <div
+                className="court-container"
+                style={{
+                  background: 'linear-gradient(180deg, #0f2e24 0%, #0a1f18 100%)',
+                  border: '2.5px solid rgba(255, 255, 255, 0.85)',
+                  borderRadius: '1rem',
+                  padding: '1.1rem',
+                  marginBottom: '1rem',
+                  boxShadow: 'inset 0 0 35px rgba(0, 0, 0, 0.5)',
+                }}
+              >
+                {/* Team A Side of Court */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    <span
                       style={{
-                        display: 'block',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        background: 'rgba(0, 0, 0, 0.35)',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '0.35rem',
                       }}
                     >
-                      Team A Score:
-                    </label>
-                    <input
-                      id="match-score-a-input"
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={30}
-                      placeholder="21"
-                      value={teamAScoreInput}
-                      onChange={(e) => setTeamAScoreInput(e.target.value)}
-                      data-testid="match-score-a-input"
+                      Team A Half
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      2 Players
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    {/* Slot A1 */}
+                    <div
                       style={{
-                        width: '100%',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.6rem',
-                        fontSize: '1.05rem',
-                        fontWeight: 700,
+                        background: teamAPlayer1 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                        border: teamAPlayer1 ? '1.5px solid #10b981' : '1.5px dashed rgba(255, 255, 255, 0.35)',
+                        borderRadius: '0.65rem',
+                        padding: '0.65rem',
                       }}
-                    />
+                    >
+                      <label
+                        htmlFor="match-slot-a1"
+                        style={{
+                          display: 'block',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: '#fff',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        Team A — Player 1:
+                      </label>
+                      <select
+                        id="match-slot-a1"
+                        value={teamAPlayer1}
+                        onChange={(e) => setTeamAPlayer1(e.target.value)}
+                        data-testid="match-slot-a1"
+                        style={{
+                          width: '100%',
+                          minHeight: '44px',
+                          padding: '0.4rem 0.5rem',
+                          borderRadius: '0.5rem',
+                          background: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.88rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <option value="">-- Select Attendee --</option>
+                        {presentAttendeePlayers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.display_name} {p.is_guest ? '(Guest)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Slot A2 */}
+                    <div
+                      style={{
+                        background: teamAPlayer2 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                        border: teamAPlayer2 ? '1.5px solid #10b981' : '1.5px dashed rgba(255, 255, 255, 0.35)',
+                        borderRadius: '0.65rem',
+                        padding: '0.65rem',
+                      }}
+                    >
+                      <label
+                        htmlFor="match-slot-a2"
+                        style={{
+                          display: 'block',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: '#fff',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        Team A — Player 2:
+                      </label>
+                      <select
+                        id="match-slot-a2"
+                        value={teamAPlayer2}
+                        onChange={(e) => setTeamAPlayer2(e.target.value)}
+                        data-testid="match-slot-a2"
+                        style={{
+                          width: '100%',
+                          minHeight: '44px',
+                          padding: '0.4rem 0.5rem',
+                          borderRadius: '0.5rem',
+                          background: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.88rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <option value="">-- Select Attendee --</option>
+                        {presentAttendeePlayers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.display_name} {p.is_guest ? '(Guest)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                {/* Team B */}
+                {/* Court Net Line Divider */}
                 <div
                   style={{
-                    padding: '0.75rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface-subtle)',
+                    position: 'relative',
+                    height: '2px',
+                    background: '#ffffff',
+                    margin: '1.25rem 0',
+                    boxShadow: '0 0 8px rgba(255, 255, 255, 0.7)',
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>
-                    Team B
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: '#ffffff',
+                      color: '#0f2e24',
+                      fontSize: '0.66rem',
+                      fontWeight: 900,
+                      padding: '0.15rem 0.75rem',
+                      borderRadius: '999px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
+                    }}
+                  >
+                    NET
                   </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label
-                      htmlFor="match-slot-b1"
+                </div>
+
+                {/* Team B Side of Court */}
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    <span
                       style={{
-                        display: 'block',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        background: 'rgba(0, 0, 0, 0.35)',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '0.35rem',
                       }}
                     >
-                      Team B — Player 1:
-                    </label>
-                    <select
-                      id="match-slot-b1"
-                      value={teamBPlayer1}
-                      onChange={(e) => setTeamBPlayer1(e.target.value)}
-                      data-testid="match-slot-b1"
-                      style={{
-                        width: '100%',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.5rem',
-                      }}
-                    >
-                      <option value="">-- Select Attendee --</option>
-                      {presentAttendeePlayers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.display_name} {p.is_guest ? '(Guest)' : ''}
-                        </option>
-                      ))}
-                    </select>
+                      Team B Half
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      2 Players
+                    </span>
                   </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label
-                      htmlFor="match-slot-b2"
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    {/* Slot B1 */}
+                    <div
                       style={{
-                        display: 'block',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
+                        background: teamBPlayer1 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                        border: teamBPlayer1 ? '1.5px solid #10b981' : '1.5px dashed rgba(255, 255, 255, 0.35)',
+                        borderRadius: '0.65rem',
+                        padding: '0.65rem',
                       }}
                     >
-                      Team B — Player 2:
-                    </label>
-                    <select
-                      id="match-slot-b2"
-                      value={teamBPlayer2}
-                      onChange={(e) => setTeamBPlayer2(e.target.value)}
-                      data-testid="match-slot-b2"
+                      <label
+                        htmlFor="match-slot-b1"
+                        style={{
+                          display: 'block',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: '#fff',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        Team B — Player 1:
+                      </label>
+                      <select
+                        id="match-slot-b1"
+                        value={teamBPlayer1}
+                        onChange={(e) => setTeamBPlayer1(e.target.value)}
+                        data-testid="match-slot-b1"
+                        style={{
+                          width: '100%',
+                          minHeight: '44px',
+                          padding: '0.4rem 0.5rem',
+                          borderRadius: '0.5rem',
+                          background: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.88rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <option value="">-- Select Attendee --</option>
+                        {presentAttendeePlayers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.display_name} {p.is_guest ? '(Guest)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Slot B2 */}
+                    <div
                       style={{
-                        width: '100%',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.5rem',
+                        background: teamBPlayer2 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                        border: teamBPlayer2 ? '1.5px solid #10b981' : '1.5px dashed rgba(255, 255, 255, 0.35)',
+                        borderRadius: '0.65rem',
+                        padding: '0.65rem',
                       }}
                     >
-                      <option value="">-- Select Attendee --</option>
-                      {presentAttendeePlayers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.display_name} {p.is_guest ? '(Guest)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="match-score-b-input"
-                      style={{
-                        display: 'block',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Team B Score:
-                    </label>
-                    <input
-                      id="match-score-b-input"
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={30}
-                      placeholder="19"
-                      value={teamBScoreInput}
-                      onChange={(e) => setTeamBScoreInput(e.target.value)}
-                      data-testid="match-score-b-input"
-                      style={{
-                        width: '100%',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.6rem',
-                        fontSize: '1.05rem',
-                        fontWeight: 700,
-                      }}
-                    />
+                      <label
+                        htmlFor="match-slot-b2"
+                        style={{
+                          display: 'block',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: '#fff',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        Team B — Player 2:
+                      </label>
+                      <select
+                        id="match-slot-b2"
+                        value={teamBPlayer2}
+                        onChange={(e) => setTeamBPlayer2(e.target.value)}
+                        data-testid="match-slot-b2"
+                        style={{
+                          width: '100%',
+                          minHeight: '44px',
+                          padding: '0.4rem 0.5rem',
+                          borderRadius: '0.5rem',
+                          background: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.88rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <option value="">-- Select Attendee --</option>
+                        {presentAttendeePlayers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.display_name} {p.is_guest ? '(Guest)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
