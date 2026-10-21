@@ -109,7 +109,7 @@ describe('Phase 6 — Release Readiness, Data Privacy UX & Incomplete Draft Resi
     });
 
     const privacyCard = screen.getByTestId('privacy-lifecycle-card');
-    expect(privacyCard.textContent).toContain('Data Privacy & Account Lifecycle (PRIV-02)');
+    expect(privacyCard.textContent).toContain('Data Privacy & Account Lifecycle');
     expect(privacyCard.textContent).toContain('Rating Ledger & Match History Immutability');
     expect(privacyCard.textContent).toContain('Account Deletion & Player Profile Unlinking');
     expect(privacyCard.textContent).toContain('Confidentiality of Contact Details & Invitations');

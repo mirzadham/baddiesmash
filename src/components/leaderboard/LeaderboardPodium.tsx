@@ -1,6 +1,6 @@
 import type { AllTimeLeaderboardRow } from '../../domain/standings.ts';
 import { PlayerAvatar } from './PlayerAvatar.tsx';
-import { PodiumCrown } from '../icons/BrandMark.tsx';
+import { PodiumCrownIcon, PodiumRibbonTails } from '../icons/MedalBadges.tsx';
 import { StatusBadge } from '../StatusBadge.tsx';
 
 export interface LeaderboardPodiumProps {
@@ -12,15 +12,137 @@ export interface LeaderboardPodiumProps {
   onSelectPlayer: (playerId: string) => void;
 }
 
+function formatPodiumStats(wins: number, losses: number): string {
+  const total = wins + losses;
+  const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : '0.0';
+  return `${wins}W - ${losses}L • ${winRate}% Win Rate`;
+}
+
 /**
- * Custom Sculptural 3D Podium Component matching the reference design.
- * Features:
- * - Fluid sweeping aerodynamic ribbon base in signature royal purple (#7045C6)
- * - 3 distinct stepped heights: 1st center (tallest gold), 2nd left (silver), 3rd right (bronze)
- * - Metallic specular highlights, gold crown for champion, circular metallic rank badges
- * - Purple rating pills and secondary win statistics
- * - Highlight for the current authenticated user if on the podium
- * - Supports graceful rendering when fewer than 3 players are available
+ * 3D Platform Cap for 2nd Place (Silver)
+ * - Front edge is completely horizontal, spanning full column width
+ * - Outer left side angles inward to the middle towards the back
+ * - Sits directly on top of the dark slate front face (no front lip)
+ */
+function Silver3DPlatformCap() {
+  return (
+    <div className="w-full relative overflow-visible">
+      <svg
+        viewBox="0 0 120 24"
+        width="100%"
+        height="24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full block"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="silver-cap-surface" x1="18" y1="0" x2="120" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#E2E8F0" />
+            <stop offset="45%" stopColor="#CBD5E1" />
+            <stop offset="100%" stopColor="#94A3B8" />
+          </linearGradient>
+        </defs>
+        {/* Angled silver top cap: left side angles inward to middle from (0,24) to (18,0) */}
+        <path d="M 0,24 L 18,0 L 120,0 L 120,24 Z" fill="url(#silver-cap-surface)" />
+        {/* Top edge highlight line */}
+        <line x1="18" y1="0.5" x2="120" y2="0.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * 3D Platform Cap for 1st Place (Glowing Emerald)
+ * - Front edge is completely horizontal, spanning full column width
+ * - Both left and right sides angle symmetrically to the middle towards the back
+ * - Glowing vibrant emerald gradient
+ * - Sits directly on top of the dark slate front face (no front lip)
+ */
+function Emerald3DPlatformCap() {
+  return (
+    <div className="w-full relative overflow-visible">
+      <svg
+        viewBox="0 0 140 28"
+        width="100%"
+        height="28"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full block"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="emerald-cap-surface" x1="18" y1="0" x2="122" y2="28" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#86EFAC" />
+            <stop offset="30%" stopColor="#4ADE80" />
+            <stop offset="70%" stopColor="#22C55E" />
+            <stop offset="100%" stopColor="#16A34A" />
+          </linearGradient>
+          <filter id="emerald-glow" x="-10" y="-10" width="160" height="48" filterUnits="userSpaceOnUse">
+            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#22C55E" floodOpacity="0.65" />
+          </filter>
+        </defs>
+        {/* Angled emerald top cap: both sides angle inward to middle */}
+        <path
+          d="M 0,28 L 18,0 L 122,0 L 140,28 Z"
+          fill="url(#emerald-cap-surface)"
+          filter="url(#emerald-glow)"
+        />
+        {/* Top edge highlight line */}
+        <line x1="18" y1="0.5" x2="122" y2="0.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * 3D Platform Cap for 3rd Place (Bronze / Copper)
+ * - Front edge is completely horizontal, spanning full column width
+ * - Outer right side angles inward to the middle towards the back
+ * - Sits directly on top of the dark slate front face (no front lip)
+ */
+function Bronze3DPlatformCap() {
+  return (
+    <div className="w-full relative overflow-visible">
+      <svg
+        viewBox="0 0 120 24"
+        width="100%"
+        height="24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full block"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="bronze-cap-surface" x1="0" y1="0" x2="102" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FDE68A" />
+            <stop offset="35%" stopColor="#F59E0B" />
+            <stop offset="75%" stopColor="#D97706" />
+            <stop offset="100%" stopColor="#B45309" />
+          </linearGradient>
+        </defs>
+        {/* Angled bronze top cap: right side angles inward to middle from (120,24) to (102,0) */}
+        <path d="M 0,24 L 0,0 L 102,0 L 120,24 Z" fill="url(#bronze-cap-surface)" />
+        {/* Top edge highlight line */}
+        <line x1="0" y1="0.5" x2="102" y2="0.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Unified 3D Stepped Podium Platform matching new ui design/leaderboard.jfif:
+ * - Wide monolithic stepped structure spanning full container width (zero gap)
+ * - Deep 3D platform caps with sides angling towards the middle:
+ *     - Left: Metallic Silver cap with left side angling inwards to center
+ *     - Center: Glowing Emerald cap with both sides angling inwards to center
+ *     - Right: Metallic Bronze cap with right side angling inwards to center
+ * - UNIFIED dark slate front faces: The front faces have straight horizontal top edges
+ *   (not slanted) and share the exact same dark slate background (#182232 -> #0f1622).
+ *   Only the top platform caps are colored.
  */
 export function LeaderboardPodium({
   top1,
@@ -29,441 +151,371 @@ export function LeaderboardPodium({
   viewerLinkedPlayerId,
   onSelectPlayer,
 }: LeaderboardPodiumProps) {
-  // If no players at all, don't render podium
+  // If no players at all, don't render podium (empty state handled by parent)
   if (!top1 && !top2 && !top3) {
     return null;
   }
 
+  // Unified dark slate body background for all three front faces
+  const sharedFrontFaceBg = 'linear-gradient(180deg, #182232 0%, #0e1520 100%)';
+
   return (
-    <div className="relative w-full max-w-xl mx-auto px-2 pt-3 pb-2 select-none overflow-hidden" data-testid="leaderboard-podium">
-      {/* Background Subtle Stadium Spotlight Glow behind podium */}
+    <div
+      className="relative w-full mx-auto pt-4 pb-2 select-none"
+      data-testid="leaderboard-podium"
+    >
+      {/* Background Stadium Glow */}
       <div
-        className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] sm:w-[440px] h-[220px] pointer-events-none opacity-30 dark:opacity-25 blur-3xl -z-10"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-44 pointer-events-none opacity-20 blur-3xl -z-10"
         style={{
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(245, 158, 11, 0.12) 45%, transparent 70%)',
+          background: 'radial-gradient(circle, #22c55e 0%, #3b82f6 50%, transparent 70%)',
         }}
         aria-hidden="true"
       />
 
-      {/* Contestants Row (Stepped heights aligned over SVG pedestals) */}
-      <div className="grid grid-cols-3 items-end gap-0.5 sm:gap-3 relative z-10 mb-[-12px] sm:mb-[-18px] w-full max-w-full">
-        {/* 2nd Place Contestant (Left - Silver Tier) */}
-        <div className="flex flex-col items-center text-center translate-y-3 sm:translate-y-4 min-w-0 px-0.5">
+      {/* Contiguous Monolithic Stepped Podium Platform (Zero Gap, Full Width) */}
+      <div
+        className="w-full grid grid-cols-3 items-end gap-0 shadow-2xl relative"
+        style={{
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        {/* ================= 2ND PLACE STEP (LEFT) ================= */}
+        <div className="w-full flex flex-col justify-end">
           {top2 ? (
             <div
               data-testid={`leaderboard-row-${top2.playerId}`}
-              className="flex flex-col items-center w-full max-w-[100px] xs:max-w-[115px] sm:max-w-[130px] group min-w-0"
+              className="w-full flex flex-col justify-end cursor-pointer group"
+              onClick={() => onSelectPlayer(top2.playerId)}
             >
-              {/* Semantic hidden rank for automated tests */}
+              {/* Semantic hidden rank for tests */}
               <span className="sr-only">#{top2.rank}</span>
 
-              {/* Avatar with Silver Ring and Medal Badge */}
-              <div className="relative mb-1 cursor-pointer" onClick={() => onSelectPlayer(top2.playerId)}>
-                <PlayerAvatar
-                  displayName={top2.displayName}
-                  playerId={top2.playerId}
-                  size={46}
-                  rank={2}
-                  isCurrentUser={viewerLinkedPlayerId === top2.playerId}
-                  className="transition-transform group-hover:scale-105"
-                />
-                {/* Silver Medallion "2" overlapping bottom edge of avatar */}
+              {/* 2nd Place Avatar & Silver Ribbons (Rests directly on top of Silver cap) */}
+              <div className="flex flex-col items-center justify-end px-1 -mb-2.5 relative z-20 pointer-events-auto">
                 <div
-                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-black text-[10px] sm:text-[11px] shadow-sm text-slate-800"
-                  style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%)',
-                    border: '1.5px solid #ffffff',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
+                  className="relative flex items-center justify-center cursor-pointer group"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectPlayer(top2.playerId);
                   }}
-                  aria-label="Rank 2"
                 >
-                  2
+                  <PodiumRibbonTails variant="silver" size={54} />
+                  <div
+                    className="relative z-10 rounded-full p-0.5"
+                    style={{
+                      background: 'linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 50%, #64748b 100%)',
+                      boxShadow: '0 0 14px rgba(203, 213, 225, 0.45)',
+                    }}
+                  >
+                    <PlayerAvatar
+                      displayName={top2.displayName}
+                      playerId={top2.playerId}
+                      size={52}
+                      rank={2}
+                      isCurrentUser={viewerLinkedPlayerId === top2.playerId}
+                      className="transition-transform group-hover:scale-105"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Player Name and You pill */}
-              <div className="flex items-center justify-center gap-1 mt-0.5 max-w-full px-0.5 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => onSelectPlayer(top2.playerId)}
-                  style={{ background: 'transparent', border: 'none', padding: 0 }}
-                  className="font-bold text-[11px] sm:text-sm text-[var(--text-primary)] hover:text-emerald-500 transition-colors truncate block text-center cursor-pointer min-w-0"
-                  title={top2.displayName}
-                >
-                  {top2.displayName}
-                </button>
-                {viewerLinkedPlayerId === top2.playerId && (
-                  <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-emerald-600 text-white">
-                    You
-                  </span>
-                )}
-              </div>
+              {/* 3D Platform Cap: Side angles to middle, front edge is horizontal */}
+              <Silver3DPlatformCap />
 
-              {/* Guest / Provisional / Tied Badges */}
-              <div className="flex items-center gap-0.5 mt-0.5 flex-wrap justify-center max-w-full">
-                {top2.isTiedRank && (
-                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-500">(T)</span>
-                )}
-                {top2.isGuest && <StatusBadge variant="guest" customLabel="Guest" />}
-                {top2.isProvisional && <StatusBadge variant="provisional" customLabel="Provisional" />}
-              </div>
-
-              {/* Elo Rating Pill */}
+              {/* Front Face Content (Straight Horizontal Top Edge, Unified Dark Slate Body) */}
               <div
-                className="mt-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-wide text-white"
+                className="w-full px-2 pt-2.5 pb-3.5 flex flex-col items-center justify-between text-center rounded-bl-xl"
                 style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                  minHeight: '136px',
+                  background: sharedFrontFaceBg,
+                  borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
                 }}
               >
-                <span className="rating-mono">{top2.ratingDisplay}</span>
-              </div>
+                {/* Silver Rank */}
+                <div
+                  className="font-bold text-2xl tracking-tight"
+                  style={{ color: '#cbd5e1' }}
+                >
+                  2nd
+                </div>
 
-              {/* Secondary Stat: Wins */}
-              <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] mt-0.5 font-medium">
-                {top2.wins} {top2.wins === 1 ? 'Win' : 'Wins'}
-              </span>
+                {/* Player Name & Badges */}
+                <div className="w-full my-1 min-w-0 px-0.5">
+                  <div className="flex items-center justify-center gap-1 max-w-full">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectPlayer(top2.playerId);
+                      }}
+                      className="font-semibold text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0"
+                      title={top2.displayName}
+                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                    >
+                      {top2.displayName}
+                    </button>
+                    {viewerLinkedPlayerId === top2.playerId && (
+                      <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] font-bold bg-emerald-600 text-white">
+                        You
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Micro Badges */}
+                  <div className="flex items-center gap-0.5 mt-0.5 justify-center flex-wrap">
+                    {top2.isTiedRank && (
+                      <span className="text-[9px] font-bold text-amber-500">(T)</span>
+                    )}
+                    {top2.isGuest && <StatusBadge variant="guest" customLabel="Guest" />}
+                    {top2.isProvisional && (
+                      <StatusBadge variant="provisional" customLabel="Provisional" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Points & Stats */}
+                <div className="w-full px-1">
+                  <div className="font-semibold text-xs sm:text-sm text-slate-200">
+                    <span className="rating-mono">{top2.ratingDisplay}</span> pts
+                  </div>
+                  <div className="text-[9px] sm:text-[10px] text-slate-400 mt-1 font-normal leading-tight">
+                    {formatPodiumStats(top2.wins, top2.losses)}
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="h-28" />
+            <div className="w-full h-32 bg-slate-800/20 border-t border-slate-700/30 rounded-tl-xl" />
           )}
         </div>
 
-        {/* 1st Place Champion (Center - Gold Towering Tier) */}
-        <div className="flex flex-col items-center text-center min-w-0 px-0.5">
+        {/* ================= 1ST PLACE STEP (CENTER) ================= */}
+        <div className="w-full flex flex-col justify-end z-10">
           {top1 ? (
             <div
               data-testid={`leaderboard-row-${top1.playerId}`}
-              className="flex flex-col items-center w-full max-w-[115px] xs:max-w-[130px] sm:max-w-[145px] group z-20 min-w-0"
+              className="w-full flex flex-col justify-end cursor-pointer group"
+              onClick={() => onSelectPlayer(top1.playerId)}
             >
+              {/* Semantic hidden rank for tests */}
               <span className="sr-only">#{top1.rank}</span>
 
-              {/* Floating Gold Crown */}
-              <div className="mb-0.5 filter drop-shadow-[0_4px_8px_rgba(245,158,11,0.5)] animate-bounce-subtle">
-                <PodiumCrown size={26} />
-              </div>
-
-              {/* Avatar with Gold Ring and Medal Badge */}
-              <div className="relative mb-1 cursor-pointer" onClick={() => onSelectPlayer(top1.playerId)}>
-                <PlayerAvatar
-                  displayName={top1.displayName}
-                  playerId={top1.playerId}
-                  size={58}
-                  rank={1}
-                  isCurrentUser={viewerLinkedPlayerId === top1.playerId}
-                  className="transition-transform group-hover:scale-105"
-                />
-              </div>
-
-              {/* Champion Player Name and You pill */}
-              <div className="flex items-center justify-center gap-1 mt-0.5 max-w-full px-0.5 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => onSelectPlayer(top1.playerId)}
-                  style={{ background: 'transparent', border: 'none', padding: 0 }}
-                  className="font-extrabold text-xs sm:text-base text-[var(--text-primary)] hover:text-emerald-500 transition-colors truncate block text-center cursor-pointer min-w-0"
-                  title={top1.displayName}
-                >
-                  {top1.displayName}
-                </button>
-                {viewerLinkedPlayerId === top1.playerId && (
-                  <span className="flex-shrink-0 px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-emerald-600 text-white">
-                    You
-                  </span>
-                )}
-              </div>
-
-              {/* Badges */}
-              <div className="flex items-center gap-0.5 mt-0.5 flex-wrap justify-center max-w-full">
-                {top1.isTiedRank && (
-                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-500">(T)</span>
-                )}
-                {top1.isGuest && <StatusBadge variant="guest" customLabel="Guest" />}
-                {top1.isProvisional && <StatusBadge variant="provisional" customLabel="Provisional" />}
-              </div>
-
-              {/* Elo Rating Pill (Slightly larger for champion) */}
-              <div
-                className="mt-1 px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-black tracking-wide text-white"
-                style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  boxShadow: '0 3px 12px rgba(16, 185, 129, 0.45)',
-                }}
-              >
-                <span className="rating-mono">{top1.ratingDisplay}</span>
-              </div>
-
-              {/* Secondary Stat: Wins & Win Rate */}
-              <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] font-semibold mt-0.5">
-                {top1.wins} {top1.wins === 1 ? 'Win' : 'Wins'} ({top1.winRatePercentDisplay.split(' ')[0]})
-              </span>
-            </div>
-          ) : (
-            <div className="h-36" />
-          )}
-        </div>
-
-        {/* 3rd Place Contestant (Right - Bronze Tier) */}
-        <div className="flex flex-col items-center text-center translate-y-5 sm:translate-y-6 min-w-0 px-0.5">
-          {top3 ? (
-            <div
-              data-testid={`leaderboard-row-${top3.playerId}`}
-              className="flex flex-col items-center w-full max-w-[100px] xs:max-w-[115px] sm:max-w-[130px] group min-w-0"
-            >
-              <span className="sr-only">#{top3.rank}</span>
-
-              {/* Avatar with Bronze Ring and Medal Badge */}
-              <div className="relative mb-1 cursor-pointer" onClick={() => onSelectPlayer(top3.playerId)}>
-                <PlayerAvatar
-                  displayName={top3.displayName}
-                  playerId={top3.playerId}
-                  size={46}
-                  rank={3}
-                  isCurrentUser={viewerLinkedPlayerId === top3.playerId}
-                  className="transition-transform group-hover:scale-105"
-                />
-                {/* Bronze Medallion "3" overlapping bottom edge of avatar */}
+              {/* 1st Place Avatar & Crown (Rests directly on top of Emerald cap) */}
+              <div className="flex flex-col items-center justify-end px-1 -mb-2 relative z-20 pointer-events-auto">
                 <div
-                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-black text-[10px] sm:text-[11px] shadow-sm text-amber-950"
-                  style={{
-                    background: 'linear-gradient(135deg, #fed7aa 0%, #d97706 50%, #9a3412 100%)',
-                    border: '1.5px solid #ffedd5',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
+                  className="relative flex flex-col items-center cursor-pointer group"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectPlayer(top1.playerId);
                   }}
-                  aria-label="Rank 3"
                 >
-                  3
+                  <div className="translate-y-2 z-20 transition-transform group-hover:scale-110">
+                    <PodiumCrownIcon size={46} />
+                  </div>
+                  <div
+                    className="relative z-10 rounded-full p-0.5"
+                    style={{
+                      background: 'linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%)',
+                      boxShadow: '0 0 20px rgba(234, 179, 8, 0.55)',
+                    }}
+                  >
+                    <PlayerAvatar
+                      displayName={top1.displayName}
+                      playerId={top1.playerId}
+                      size={64}
+                      rank={1}
+                      isCurrentUser={viewerLinkedPlayerId === top1.playerId}
+                      className="transition-transform group-hover:scale-105"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* 3rd Place Player Name and You pill */}
-              <div className="flex items-center justify-center gap-1 mt-0.5 max-w-full px-0.5 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => onSelectPlayer(top3.playerId)}
-                  style={{ background: 'transparent', border: 'none', padding: 0 }}
-                  className="font-bold text-[11px] sm:text-sm text-[var(--text-primary)] hover:text-emerald-500 transition-colors truncate block text-center cursor-pointer min-w-0"
-                  title={top3.displayName}
-                >
-                  {top3.displayName}
-                </button>
-                {viewerLinkedPlayerId === top3.playerId && (
-                  <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold bg-emerald-600 text-white">
-                    You
-                  </span>
-                )}
-              </div>
+              {/* 3D Platform Cap: Both sides angle to middle, front edge is horizontal */}
+              <Emerald3DPlatformCap />
 
-              {/* Badges */}
-              <div className="flex items-center gap-0.5 mt-0.5 flex-wrap justify-center max-w-full">
-                {top3.isTiedRank && (
-                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-500">(T)</span>
-                )}
-                {top3.isGuest && <StatusBadge variant="guest" customLabel="Guest" />}
-                {top3.isProvisional && <StatusBadge variant="provisional" customLabel="Provisional" />}
-              </div>
-
-              {/* Elo Rating Pill */}
+              {/* Front Face Content (Straight Horizontal Top Edge, Unified Dark Slate Body) */}
               <div
-                className="mt-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-wide text-white"
+                className="w-full px-2 pt-2.5 pb-4 flex flex-col items-center justify-between text-center"
                 style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                  minHeight: '180px',
+                  background: sharedFrontFaceBg,
+                  borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
                 }}
               >
-                <span className="rating-mono">{top3.ratingDisplay}</span>
-              </div>
+                {/* Gold Rank */}
+                <div
+                  className="font-bold text-3xl tracking-tight"
+                  style={{
+                    color: '#facc15',
+                    textShadow: '0 2px 10px rgba(250, 204, 21, 0.4)',
+                  }}
+                >
+                  1st
+                </div>
 
-              {/* Secondary Stat: Wins */}
-              <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] mt-0.5 font-medium">
-                {top3.wins} {top3.wins === 1 ? 'Win' : 'Wins'}
-              </span>
+                {/* Player Name & Badges */}
+                <div className="w-full my-1 min-w-0 px-0.5">
+                  <div className="flex items-center justify-center gap-1 max-w-full">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectPlayer(top1.playerId);
+                      }}
+                      className="font-bold text-sm sm:text-base text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0"
+                      title={top1.displayName}
+                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                    >
+                      {top1.displayName}
+                    </button>
+                    {viewerLinkedPlayerId === top1.playerId && (
+                      <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] font-bold bg-emerald-600 text-white">
+                        You
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Micro Badges */}
+                  <div className="flex items-center gap-0.5 mt-0.5 justify-center flex-wrap">
+                    {top1.isTiedRank && (
+                      <span className="text-[9px] font-bold text-amber-500">(T)</span>
+                    )}
+                    {top1.isGuest && <StatusBadge variant="guest" customLabel="Guest" />}
+                    {top1.isProvisional && (
+                      <StatusBadge variant="provisional" customLabel="Provisional" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Points & Stats */}
+                <div className="w-full px-1">
+                  <div className="font-semibold text-sm sm:text-base text-white">
+                    <span className="rating-mono">{top1.ratingDisplay}</span> pts
+                  </div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-300 mt-1 font-normal leading-tight">
+                    {formatPodiumStats(top1.wins, top1.losses)}
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="h-24" />
+            <div className="w-full h-44 bg-slate-800/20 border-t-2 border-emerald-500/40" />
           )}
         </div>
-      </div>
 
-      {/* Sculptural 3D Vector Podium Base matching reference image */}
-      <div className="relative w-full max-w-[480px] mx-auto z-0 filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)] overflow-hidden">
-        <svg
-          viewBox="0 0 480 160"
-          width="100%"
-          style={{ maxWidth: '100%' }}
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-auto block select-none"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden="true"
-        >
-          <defs>
-            {/* Ground Shadow */}
-            <radialGradient id="podiumFloorShadow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#000000" stopOpacity="0.45" />
-              <stop offset="70%" stopColor="#000000" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-            </radialGradient>
+        {/* ================= 3RD PLACE STEP (RIGHT) ================= */}
+        <div className="w-full flex flex-col justify-end">
+          {top3 ? (
+            <div
+              data-testid={`leaderboard-row-${top3.playerId}`}
+              className="w-full flex flex-col justify-end cursor-pointer group"
+              onClick={() => onSelectPlayer(top3.playerId)}
+            >
+              {/* Semantic hidden rank for tests */}
+              <span className="sr-only">#{top3.rank}</span>
 
-            {/* Center Gold Pedestal Top */}
-            <radialGradient id="goldTopBevel" cx="50%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#fffbeb" />
-              <stop offset="35%" stopColor="#fef08a" />
-              <stop offset="70%" stopColor="#f59e0b" />
-              <stop offset="100%" stopColor="#b45309" />
-            </radialGradient>
-
-            {/* Center Gold Pedestal Front Body */}
-            <linearGradient id="goldFrontBody" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#78350f" />
-              <stop offset="20%" stopColor="#d97706" />
-              <stop offset="50%" stopColor="#fbbf24" />
-              <stop offset="80%" stopColor="#d97706" />
-              <stop offset="100%" stopColor="#78350f" />
-            </linearGradient>
-
-            {/* Left Silver Pedestal Top */}
-            <radialGradient id="silverTopBevel" cx="50%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="45%" stopColor="#e2e8f0" />
-              <stop offset="80%" stopColor="#94a3b8" />
-              <stop offset="100%" stopColor="#475569" />
-            </radialGradient>
-
-            {/* Left Silver Front Body */}
-            <linearGradient id="silverFrontBody" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#334155" />
-              <stop offset="25%" stopColor="#64748b" />
-              <stop offset="50%" stopColor="#cbd5e1" />
-              <stop offset="75%" stopColor="#64748b" />
-              <stop offset="100%" stopColor="#1e293b" />
-            </linearGradient>
-
-            {/* Right Bronze Pedestal Top */}
-            <radialGradient id="bronzeTopBevel" cx="50%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#ffedd5" />
-              <stop offset="45%" stopColor="#fed7aa" />
-              <stop offset="80%" stopColor="#ea580c" />
-              <stop offset="100%" stopColor="#7c2d12" />
-            </radialGradient>
-
-            {/* Right Bronze Front Body */}
-            <linearGradient id="bronzeFrontBody" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#431407" />
-              <stop offset="25%" stopColor="#9a3412" />
-              <stop offset="50%" stopColor="#f97316" />
-              <stop offset="75%" stopColor="#9a3412" />
-              <stop offset="100%" stopColor="#431407" />
-            </linearGradient>
-
-          </defs>
-
-          {/* Ground Contact Shadow */}
-          <ellipse cx="240" cy="142" rx="215" ry="10" fill="url(#podiumFloorShadow)" />
-
-          {/* ================= 2ND PLACE LEFT PLATFORM (SILVER) ================= */}
-          {top2 && (
-            <g id="silverPodiumTier">
-              {/* Silver riser body */}
-              <path
-                d="M65 68 L65 125 C65 135 95 142 130 142 C165 142 195 135 195 125 L195 68 Z"
-                fill="url(#silverFrontBody)"
-              />
-              {/* Silver top landing pad */}
-              <ellipse cx="130" cy="68" rx="65" ry="16" fill="url(#silverTopBevel)" stroke="#ffffff" strokeWidth="1" />
-              {/* Embossed "2" on Silver Riser */}
-              <text
-                x="130"
-                y="110"
-                textAnchor="middle"
-                fill="#ffffff"
-                fillOpacity="0.85"
-                fontSize="28"
-                fontWeight="900"
-                fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}
-              >
-                2
-              </text>
-            </g>
-          )}
-
-          {/* ================= 3RD PLACE RIGHT PLATFORM (BRONZE) ================= */}
-          {top3 && (
-            <g id="bronzePodiumTier">
-              {/* Bronze riser body */}
-              <path
-                d="M290 78 L290 128 C290 137 315 144 350 144 C385 144 410 137 410 128 L410 78 Z"
-                fill="url(#bronzeFrontBody)"
-              />
-              {/* Bronze top landing pad */}
-              <ellipse cx="350" cy="78" rx="60" ry="15" fill="url(#bronzeTopBevel)" stroke="#fed7aa" strokeWidth="1" />
-              {/* Embossed "3" on Bronze Riser */}
-              <text
-                x="350"
-                y="116"
-                textAnchor="middle"
-                fill="#ffffff"
-                fillOpacity="0.85"
-                fontSize="26"
-                fontWeight="900"
-                fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}
-              >
-                3
-              </text>
-            </g>
-          )}
-
-          {/* ================= 1ST PLACE CENTER PLATFORM (GOLD) ================= */}
-          {top1 && (
-            <g id="goldPodiumTier">
-              {/* Gold cylindrical front riser */}
-              <path
-                d="M168 40 L168 136 C168 147 200 154 240 154 C280 154 312 147 312 136 L312 40 Z"
-                fill="url(#goldFrontBody)"
-              />
-
-              {/* Gold circular beveled top surface */}
-              <ellipse cx="240" cy="40" rx="72" ry="18" fill="url(#goldTopBevel)" stroke="#fef08a" strokeWidth="1.5" />
-
-              {/* Embossed Crown & Shuttlecock Crest on Gold Riser */}
-              <g transform="translate(240, 88) scale(0.95)" className="select-none">
-                {/* Crown above "1" */}
-                <path
-                  d="M-10 -16 L-14 -24 L-5 -21 L0 -27 L5 -21 L14 -24 L10 -16 Z"
-                  fill="#fff"
-                  fillOpacity="0.9"
-                />
-                {/* Roman Numeral "1" */}
-                <text
-                  x="0"
-                  y="12"
-                  textAnchor="middle"
-                  fill="#ffffff"
-                  fillOpacity="0.95"
-                  fontSize="30"
-                  fontWeight="900"
-                  fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
-                  style={{ filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.45))' }}
+              {/* 3rd Place Avatar & Bronze Ribbons (Rests directly on top of Bronze cap) */}
+              <div className="flex flex-col items-center justify-end px-1 -mb-2.5 relative z-20 pointer-events-auto">
+                <div
+                  className="relative flex items-center justify-center cursor-pointer group"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectPlayer(top3.playerId);
+                  }}
                 >
-                  1
-                </text>
-                {/* Shuttlecock engraving emblem beneath numeral */}
-                <path
-                  d="M-7 20 L7 20 L4 27 C4 29 1 30 0 30 C-1 30 -4 29 -4 27 Z"
-                  fill="#ffffff"
-                  fillOpacity="0.8"
-                />
-                <path
-                  d="M-5 20 L-2 26 M0 20 L0 27 M5 20 L2 26"
-                  stroke="#78350f"
-                  strokeWidth="0.8"
-                />
-              </g>
-            </g>
+                  <PodiumRibbonTails variant="bronze" size={50} />
+                  <div
+                    className="relative z-10 rounded-full p-0.5"
+                    style={{
+                      background: 'linear-gradient(135deg, #fed7aa 0%, #d97706 50%, #78350f 100%)',
+                      boxShadow: '0 0 14px rgba(217, 119, 6, 0.45)',
+                    }}
+                  >
+                    <PlayerAvatar
+                      displayName={top3.displayName}
+                      playerId={top3.playerId}
+                      size={48}
+                      rank={3}
+                      isCurrentUser={viewerLinkedPlayerId === top3.playerId}
+                      className="transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3D Platform Cap: Side angles to middle, front edge is horizontal */}
+              <Bronze3DPlatformCap />
+
+              {/* Front Face Content (Straight Horizontal Top Edge, Unified Dark Slate Body) */}
+              <div
+                className="w-full px-2 pt-2 pb-3.5 flex flex-col items-center justify-between text-center rounded-br-xl"
+                style={{
+                  minHeight: '116px',
+                  background: sharedFrontFaceBg,
+                  borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                {/* Bronze Rank */}
+                <div
+                  className="font-bold text-xl sm:text-2xl tracking-tight"
+                  style={{ color: '#d97706' }}
+                >
+                  3rd
+                </div>
+
+                {/* Player Name & Badges */}
+                <div className="w-full my-0.5 min-w-0 px-0.5">
+                  <div className="flex items-center justify-center gap-1 max-w-full">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectPlayer(top3.playerId);
+                      }}
+                      className="font-semibold text-xs text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0"
+                      title={top3.displayName}
+                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                    >
+                      {top3.displayName}
+                    </button>
+                    {viewerLinkedPlayerId === top3.playerId && (
+                      <span className="flex-shrink-0 px-1 py-0.2 rounded-full text-[8px] font-bold bg-emerald-600 text-white">
+                        You
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Micro Badges */}
+                  <div className="flex items-center gap-0.5 mt-0.5 justify-center flex-wrap">
+                    {top3.isTiedRank && (
+                      <span className="text-[9px] font-bold text-amber-500">(T)</span>
+                    )}
+                    {top3.isGuest && <StatusBadge variant="guest" customLabel="Guest" />}
+                    {top3.isProvisional && (
+                      <StatusBadge variant="provisional" customLabel="Provisional" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Points & Stats */}
+                <div className="w-full px-1">
+                  <div className="font-semibold text-xs sm:text-sm text-amber-100">
+                    <span className="rating-mono">{top3.ratingDisplay}</span> pts
+                  </div>
+                  <div className="text-[9px] sm:text-[10px] text-slate-400 mt-1 font-normal leading-tight">
+                    {formatPodiumStats(top3.wins, top3.losses)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-24 bg-slate-800/10 border-t border-amber-900/30 rounded-tr-xl" />
           )}
-        </svg>
+        </div>
       </div>
     </div>
   );

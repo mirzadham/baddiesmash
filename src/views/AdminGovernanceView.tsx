@@ -6,12 +6,16 @@ import {
   useState,
 } from 'react';
 import { StatusBadge } from '../components/StatusBadge.tsx';
+import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
 import { sanitizeInvitationRpcError } from '../lib/inviteToken.ts';
 import type {
   AdminGovernanceSnapshot,
   GroupReadSnapshot,
 } from '../services/demoData.ts';
-import type { TrackerRepository } from '../services/trackerRepository.ts';
+import type {
+  EffectivePublicationBannerState,
+  TrackerRepository,
+} from '../services/trackerRepository.ts';
 import type {
   AdminMembershipDirectoryEntry,
   GuestMergeExecutionResponse,
@@ -24,6 +28,8 @@ import type {
 export interface AdminGovernanceViewProps {
   snapshot: GroupReadSnapshot;
   repository: TrackerRepository;
+  publication?: EffectivePublicationBannerState;
+  onRetryRecalculation?: () => Promise<void>;
   onRefreshGroupState: () => Promise<void>;
   onClose: () => void;
 }
@@ -62,6 +68,8 @@ interface MemberEditDraft {
 export function AdminGovernanceView({
   snapshot,
   repository,
+  publication,
+  onRetryRecalculation,
   onRefreshGroupState,
   onClose,
 }: AdminGovernanceViewProps) {
@@ -947,12 +955,12 @@ export function AdminGovernanceView({
         data-testid="admin-section-invitations"
       >
         <h3 style={{ marginTop: 0 }}>
-          1. Single-Use Invitation Management (AUTH-02, DEC-038)
+          1. Single-Use Invitation Management
         </h3>
         <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
           Invitations are bound to a normalized email address, expire in up to 7
-          days, and store only a SHA-256 <code>token_hash</code> in PostgreSQL.
-          The raw token is returned only once upon issuance so you can copy and
+          days, and are securely hashed in the database.
+          The token is returned only once upon issuance so you can copy and
           share the link manually.
         </p>
 
@@ -1132,8 +1140,7 @@ export function AdminGovernanceView({
               {oneTimeIssuedSecret.invitedEmail}
             </div>
             <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.82rem' }}>
-              Copy and share this link or raw token now. Only its SHA-256 hash
-              is stored in PostgreSQL — once dismissed, this raw token can never
+              Copy and share this link or token now. It is stored securely — once dismissed, this token can never
               be viewed again.
             </p>
             <div style={{ fontSize: '0.82rem', marginBottom: '0.35rem' }}>
@@ -1143,7 +1150,7 @@ export function AdminGovernanceView({
               </code>
             </div>
             <div style={{ fontSize: '0.82rem', marginBottom: '0.6rem' }}>
-              <strong>Raw Token:</strong>{' '}
+              <strong>Invitation Token:</strong>{' '}
               <code data-testid="one-time-raw-token">
                 {oneTimeIssuedSecret.rawToken}
               </code>
@@ -1162,7 +1169,7 @@ export function AdminGovernanceView({
         {/* Invitation Metadata List (never shows raw_token or token_hash) */}
         <div style={{ marginTop: '1rem' }}>
           <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.92rem' }}>
-            Issued Invitations (Metadata Only — Raw Tokens Never Stored)
+            Issued Invitations
           </h4>
           {(adminSnapshot?.invitations ?? []).length === 0 ? (
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -1249,13 +1256,12 @@ export function AdminGovernanceView({
         data-testid="admin-section-memberships"
       >
         <h3 style={{ marginTop: 0 }}>
-          2. Membership Approvals &amp; Role Management (AUTH-01, AUTH-03, ID-01,
-          ID-02)
+          2. Membership Approvals &amp; Role Management
         </h3>
         <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
           Pending accounts have zero access to group data until approved. When
           approving, you must explicitly select whether to link an existing
-          player UUID, create a new player profile, or approve as a Viewer
+          player profile, create a new player profile, or approve as a Viewer
           without a linked player profile. Display names are never auto-linked.
         </p>
 
@@ -1452,8 +1458,7 @@ export function AdminGovernanceView({
                           data-testid={`radio-viewer-unlinked-${entry.membership_id}`}
                         />
                         <span>
-                          Option C: Approve as Viewer without a linked player
-                          profile (ID-01)
+                          Option C: Approve as Viewer without a linked player profile
                         </span>
                       </label>
                     </div>
@@ -1708,12 +1713,12 @@ export function AdminGovernanceView({
         data-testid="admin-section-players"
       >
         <h3 style={{ marginTop: 0 }}>
-          3. Player Profile Creation &amp; Roster Status (ID-01, ID-02)
+          3. Player Profile Creation &amp; Roster Status
         </h3>
         <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
           Permanent player profiles and temporary guests can exist before or
-          without user accounts. Duplicate display names are assigned distinct
-          UUIDs and are never automatically linked or merged.
+          without user accounts. Duplicate display names are kept as separate
+          profiles and are never automatically linked or merged.
         </p>
 
         <form onSubmit={(e) => void handleCreatePlayerProfile(e)} noValidate>
@@ -1800,8 +1805,8 @@ export function AdminGovernanceView({
             >
               ℹ An existing player in this group already has the display name
               &ldquo;{newPlayerDisplayName.trim()}&rdquo;. Creating this profile
-              will assign a separate UUID and will never auto-merge or auto-link
-              by display name (ID-02).
+              will assign a separate profile and will never automatically merge or link
+              by display name.
             </p>
           )}
         </form>
@@ -1889,14 +1894,12 @@ export function AdminGovernanceView({
         data-testid="admin-section-guest-merge"
       >
         <h3 style={{ marginTop: 0 }}>
-          4. Guest-to-Permanent Player Merge (ID-03, DEC-037, DEC-050, DEC-051)
+          4. Guest-to-Permanent Player Merge
         </h3>
         <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-          Merging a temporary guest into a permanent player requires an explicit
-          source guest UUID, target permanent player UUID, a fresh server-side
-          impact preview, and an audited reason. The final transaction
-          re-validates permissions, eligibility, and same-match conflicts under
-          database locks and replays Elo ratings chronologically.
+          Merging a temporary guest into a permanent player transfers all match
+          history and recalculates ratings chronologically. Same-match conflicts
+          are checked automatically before execution.
         </p>
 
         <div
@@ -2195,13 +2198,11 @@ export function AdminGovernanceView({
         style={{ background: 'var(--bg-surface-alt)' }}
         data-testid="admin-section-ownership"
       >
-        <h3 style={{ marginTop: 0 }}>5. Atomic Ownership Transfer (AUTH-03)</h3>
+        <h3 style={{ marginTop: 0 }}>5. Ownership Transfer</h3>
         <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
           Only the current Group Owner may transfer ownership to another
-          approved group member by explicit membership UUID. The database
-          atomically demotes the current Owner to <code>admin</code> and
-          promotes the recipient to <code>owner</code> in a single audited
-          transaction.
+          approved group member. The current Owner will become an Admin and
+          the recipient will become the new Owner.
         </p>
 
         {!isOwner && (
@@ -2325,6 +2326,26 @@ export function AdminGovernanceView({
           </button>
         </form>
       </div>
+
+      {/* 6. RATING SYSTEM HEALTH & RECALCULATION */}
+      {publication && (
+        <div
+          className="card"
+          style={{ background: 'var(--bg-surface-alt)', marginTop: '1rem' }}
+          data-testid="admin-section-ratings"
+        >
+          <h3 style={{ marginTop: 0 }}>6. Rating System Health &amp; Recalculation</h3>
+          <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+            System ratings status. If ratings recalculation is interrupted or fails due to database timeouts, you can trigger a manual recalculation here.
+          </p>
+          <PublicationStatusBanner
+            publication={publication}
+            viewerRole={viewerRole}
+            isDemoMode={isDemoMode}
+            onRetryRecalculation={onRetryRecalculation}
+          />
+        </div>
+      )}
     </section>
   );
 }

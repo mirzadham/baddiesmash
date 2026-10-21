@@ -3,10 +3,10 @@
 ## Session creation
 - One active session per group.
 - Start flow selects attendees and creates session in one streamlined operation.
-- Date/time defaults to current Malaysia local date/time and is editable before creation.
+- Date/time defaults automatically to current local time (`now()`) upon session creation; manual start-time input is omitted from the client UI to eliminate courtside recording friction.
 - Use `Asia/Kuala_Lumpur`; store timestamps consistently in UTC where appropriate (`session_started_at`).
 - Creating a backdated session dated before an existing session containing rated matches requires Admin/Owner authorization and must warn that historical ratings may be recalculated.
-- The active session controller may edit an active session's start time with a required reason and audit log. Editing a completed session's start time requires Admin/Owner authorization and an audit trail; if the edit changes chronological ordering relative to rated matches, trigger deterministic rating recalculation.
+- Session start time is recorded automatically at session creation. To provide a clean, friction-free mobile recording experience, manual "Edit Start Time" buttons and panels are omitted from the standard client interface. The server-side RPC (`public.update_session_start_time`) remains available in PostgreSQL for backend administration and data integrity, ensuring deterministic chronological Elo replay if an administrative reordering is ever required.
 - Assign the active season at creation. Assignment remains fixed even if the session start time is later edited. If no active season exists (including throughout Stage 1), session contributes to all-time only (`season_id = NULL`).
 - If a session has no matches, recorder may cancel with reason and audit record.
 - Opening the app with an active session surfaces it with Resume and status review.

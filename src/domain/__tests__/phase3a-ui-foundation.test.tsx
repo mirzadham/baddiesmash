@@ -212,11 +212,20 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     });
     expect(screen.getByTestId('status-badge-demo_mode')).toBeTruthy();
 
+    // Open Admin Tools to access rating recalculation
+    await waitFor(() => {
+      expect(screen.getByTestId('toggle-admin-tools-btn')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
+
     // Retry button on stale banner must be disabled in Demo Mode
     const retryBtn = screen.getByRole('button', {
       name: /Retry Recalculation \(Disabled in Demo Mode\)/i,
     });
     expect((retryBtn as HTMLButtonElement).disabled).toBe(true);
+
+    // Close Admin Tools modal
+    fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
 
     // Preview Sign-In screen in Demo Mode: sign-in buttons must be disabled
     fireEvent.click(
@@ -262,6 +271,12 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     const { unmount } = render(
       <App repository={unverifiedRepo} envConfig={CONFIGURED_ENV} />,
     );
+
+    // Open Admin Tools to access rating status
+    await waitFor(() => {
+      expect(screen.getByTestId('toggle-admin-tools-btn')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
 
     await waitFor(() => {
       expect(screen.getByTestId('status-badge-unverified')).toBeTruthy();
@@ -338,6 +353,12 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     );
 
     render(<App repository={liveRepo} envConfig={CONFIGURED_ENV} />);
+
+    // Open Admin Tools to access rating recalculation
+    await waitFor(() => {
+      expect(screen.getByTestId('toggle-admin-tools-btn')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
 
     await waitFor(() => {
       expect(screen.getByTestId('status-badge-stale_or_failed')).toBeTruthy();
@@ -469,7 +490,7 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     });
   });
 
-  it('supports Session Detail rating breakdown, Profile match filtering, and Viewer-without-player-profile notice (ID-01, DIS-01, DEC-036, DEC-052)', async () => {
+  it('supports Session Detail match history, Profile match filtering, and Viewer-without-player-profile notice (ID-01, DIS-01, DEC-036, DEC-052)', async () => {
     const base = buildDeterministicDemoSnapshot();
     // Simulate an approved Viewer account with linked_player_id = null (ID-01)
     const viewerOnlySnapshot: GroupReadSnapshot = {
@@ -510,12 +531,11 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     });
 
     const m3Card = screen.getByTestId(`match-card-${DEMO_MATCH_IDS.m3}`);
-    fireEvent.click(
-      within(m3Card).getByRole('button', {
+    expect(
+      within(m3Card).queryByRole('button', {
         name: /Show Rating Breakdown/i,
       }),
-    );
-    expect(within(m3Card).getByText(/Before \(Rounded\)/i)).toBeTruthy();
+    ).toBeNull();
 
     // Verify disputed match badge on m4Disputed and voided badge on m5Voided
     const m4Card = screen.getByTestId(

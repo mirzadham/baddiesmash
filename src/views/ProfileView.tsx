@@ -1,40 +1,51 @@
 import { useMemo, useState } from 'react';
-import { Swords } from 'lucide-react';
-import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
-import { StatusBadge } from '../components/StatusBadge.tsx';
+import { Shield, Settings, LogOut, SunMoon } from 'lucide-react';
+import { ProfileHeroCard } from '../components/profile/ProfileHeroCard.tsx';
+import { PerformanceMetricsGrid } from '../components/profile/PerformanceMetricsGrid.tsx';
+import {
+  H2HRivalrySection,
+  type H2HStatsData,
+} from '../components/profile/H2HRivalrySection.tsx';
+import {
+  ProfileMatchHistorySection,
+  type MatchStatusFilter,
+} from '../components/profile/ProfileMatchHistorySection.tsx';
 import type { GroupReadSnapshot } from '../services/demoData.ts';
 import {
   deriveEnrichedMatchesFromSnapshot,
   deriveLeaderboardFromSnapshot,
   formatMalaysiaDate,
 } from '../services/readViewModels.ts';
-import type { EffectivePublicationBannerState } from '../services/trackerRepository.ts';
 
 export interface ProfileViewProps {
   snapshot: GroupReadSnapshot;
-  publication: EffectivePublicationBannerState;
   selectedPlayerId: string | null;
   onSelectPlayer: (playerId: string) => void;
-  onRetryRecalculation: () => Promise<void>;
+  theme?: 'system' | 'light' | 'dark';
+  onSelectTheme?: (theme: 'system' | 'light' | 'dark') => void;
+  onOpenAdminTools?: () => void;
+  onSignOut?: () => void;
 }
 
-type MatchStatusFilter = 'all' | 'completed' | 'disputed' | 'voided';
-
 /**
- * Player Profile & Match History View (`ID-01`, `RATE-04`, `RATE-06`, `DEC-036`, `DEC-044`, `DEC-052`):
+ * Player Profile & Match History View (`ID-01`, `RATE-04`, `RATE-06`, `DEC-036`, `DEC-044`, `DEC-052`, `PRIV-02`):
+ * - Redesigned to match the athletic dark sports aesthetic in `profile.jfif`.
  * - Exposes the signed-in user's linked player profile first (or explains Viewer-only status
  *   when `linked_player_id === null` per `ID-01`).
- * - Exposes the publication health banner (`Current`, `Recalculating`, `Stale/Failed`) so profile
- *   views never claim stale ratings reflect the latest match history (`DEC-016`).
- * - Displays rounded before/after ratings and 1-decimal rating changes with independent-rounding
- *   disclosure.
+ * - Exposes the publication health banner (`Current`, `Recalculating`, `Stale/Failed`).
+ * - Displays 2x2 Performance Grid (Recent Form, Win Rate, Win Streak, Elo points, Attendance Rate).
+ * - Displays H2H Rivalry & Partnerships with visual split comparison bars.
+ * - Displays mobile-first Match History cards with filters.
+ * - Displays Data Privacy & Account Lifecycle disclosures (`PRIV-02`).
  */
 export function ProfileView({
   snapshot,
-  publication,
   selectedPlayerId,
   onSelectPlayer,
-  onRetryRecalculation,
+  theme,
+  onSelectTheme,
+  onOpenAdminTools,
+  onSignOut,
 }: ProfileViewProps) {
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all');
   const [sessionFilter, setSessionFilter] = useState<string>('all');
@@ -91,8 +102,12 @@ export function ProfileView({
     return leaderboardAll.find((p) => p.playerId === activeOpponentId) ?? null;
   }, [leaderboardAll, activeOpponentId]);
 
-  const h2hStats = useMemo(() => {
-    if (!effectivePlayerId || !activeOpponentId || effectivePlayerId === activeOpponentId) {
+  const h2hStats = useMemo<H2HStatsData | null>(() => {
+    if (
+      !effectivePlayerId ||
+      !activeOpponentId ||
+      effectivePlayerId === activeOpponentId
+    ) {
       return null;
     }
     let vsMatches = 0;
@@ -110,8 +125,8 @@ export function ProfileView({
       const opponentSide = card.teamA.some((s) => s.playerId === activeOpponentId)
         ? 'A'
         : card.teamB.some((s) => s.playerId === activeOpponentId)
-        ? 'B'
-        : null;
+          ? 'B'
+          : null;
 
       if (!opponentSide) continue;
 
@@ -132,15 +147,19 @@ export function ProfileView({
       vsMatches,
       vsWins,
       vsLosses,
-      vsWinRate: vsMatches > 0 ? `${((vsWins / vsMatches) * 100).toFixed(0)}%` : '0%',
+      vsWinRate:
+        vsMatches > 0 ? `${((vsWins / vsMatches) * 100).toFixed(0)}%` : '0%',
       partnerMatches,
       partnerWins,
       partnerLosses,
-      partnerWinRate: partnerMatches > 0 ? `${((partnerWins / partnerMatches) * 100).toFixed(0)}%` : '0%',
+      partnerWinRate:
+        partnerMatches > 0
+          ? `${((partnerWins / partnerMatches) * 100).toFixed(0)}%`
+          : '0%',
     };
   }, [effectivePlayerId, activeOpponentId, allMatchesForPlayer]);
 
-  const recentForm = useMemo(() => {
+  const recentForm = useMemo<Array<'W' | 'L'>>(() => {
     return allMatchesForPlayer
       .filter((c) => c.match.status === 'completed')
       .slice(0, 5)
@@ -152,624 +171,120 @@ export function ProfileView({
       });
   }, [allMatchesForPlayer, effectivePlayerId]);
 
-  return (
-    <div data-testid="view-profile">
-      <PublicationStatusBanner
-        publication={publication}
-        viewerRole={snapshot.viewerMembership.role}
-        isDemoMode={snapshot.isDemoMode}
-        onRetryRecalculation={onRetryRecalculation}
-      />
+  const winStreak = useMemo(() => {
+    const completed = allMatchesForPlayer.filter(
+      (c) => c.match.status === 'completed',
+    );
+    let streak = 0;
+    for (const card of completed) {
+      const playerSide = card.teamA.some(
+        (s) => s.playerId === effectivePlayerId,
+      )
+        ? 'A'
+        : 'B';
+      if (card.winnerSide === playerSide) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [allMatchesForPlayer, effectivePlayerId]);
 
-      {/* Viewer Account Identity Separation Notice (ID-01) */}
+  return (
+    <div data-testid="view-profile" className="flex flex-col gap-4 pb-20">
+      {/* 2. Viewer Account Identity Separation Notice (ID-01) */}
       {viewerLinkedPlayerId === null && (
         <section
-          className="card"
+          className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex flex-col gap-1.5"
           role="note"
           data-testid="viewer-unlinked-profile-notice"
-          style={{
-            background: 'var(--status-warn-bg)',
-            color: 'var(--status-warn-fg)',
-            borderColor: 'var(--status-warn-border)',
-          }}
         >
           <strong>Viewer Account (No Linked Player Profile):</strong> Your login
           account is approved with role{' '}
-          <code>{snapshot.viewerMembership.role}</code>, and is not currently
-          linked to a player profile (<code>linked_player_id = NULL</code>). Per{' '}
-          <code>ID-01</code>, viewer accounts do not appear on leaderboards or
-          participate in official matches until an Admin links a player profile,
-          but you have full read access to browse all group profiles below.
+          <code className="text-amber-200">{snapshot.viewerMembership.role}</code>
+          , and is not currently linked to a player profile. Viewer accounts do not
+          appear on leaderboards or participate in official matches until an Admin
+          links a player profile, but you have full read access to browse all
+          group profiles below.
         </section>
       )}
 
-      {/* Player Profile Switcher */}
-      <section className="card" aria-labelledby="profile-selector-heading">
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '0.75rem',
-          }}
-        >
-          <div>
-            <h2 id="profile-selector-heading" style={{ margin: 0 }}>
-              Player Profile &amp; Match History
-            </h2>
-            <p
-              style={{
-                margin: '0.2rem 0 0 0',
-                fontSize: '0.84rem',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              Browse any permanent or temporary guest player profile in the
-              group.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label htmlFor="profile-player-select" style={{ fontWeight: 600 }}>
-              Player:
-            </label>
-            <select
-              id="profile-player-select"
-              value={effectivePlayerId ?? ''}
-              onChange={(e) => onSelectPlayer(e.target.value)}
-              style={{
-                minHeight: '48px',
-                padding: '0.4rem 0.75rem',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
-            >
-              {leaderboardAll.map((r) => (
-                <option key={r.playerId} value={r.playerId}>
-                  {r.displayName}
-                  {r.playerId === viewerLinkedPlayerId ? ' (You)' : ''}
-                  {r.isGuest ? ' [Guest]' : ''}
-                  {!r.isActive ? ' [Inactive]' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </section>
-
-      {/* Selected Player Summary */}
+      {/* 3. Selected Player Summary, Performance Grid, H2H & Match History */}
       {selectedRow && selectedPlayerRecord ? (
         <>
-          <section
-            className="card"
-            aria-labelledby="selected-player-heading"
-            data-testid="selected-player-summary"
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.75rem',
-                marginBottom: '1rem',
-              }}
-            >
-              <div>
-                <h3
-                  id="selected-player-heading"
-                  style={{ margin: 0, fontSize: '1.35rem' }}
-                >
-                  {selectedRow.displayName}
-                  {selectedRow.playerId === viewerLinkedPlayerId && (
-                    <span
-                      style={{
-                        marginLeft: '0.5rem',
-                        fontSize: '0.85rem',
-                        color: 'var(--accent-primary)',
-                      }}
-                    >
-                      (Your Linked Profile)
-                    </span>
-                  )}
-                </h3>
-                <p
-                  style={{
-                    margin: '0.2rem 0 0 0',
-                    fontSize: '0.82rem',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  Profile joined:{' '}
-                  {formatMalaysiaDate(selectedPlayerRecord.created_at)} • Stable
-                  ID: <code>{selectedRow.playerId.slice(0, 8)}</code>
-                </p>
-              </div>
+          {/* Hero Card matching profile.jfif */}
+          <ProfileHeroCard
+            selectedRow={selectedRow}
+            selectedPlayerRecord={selectedPlayerRecord}
+            viewerLinkedPlayerId={viewerLinkedPlayerId}
+            allPlayers={leaderboardAll}
+            effectivePlayerId={selectedRow.playerId}
+            onSelectPlayer={onSelectPlayer}
+            formatMalaysiaDate={formatMalaysiaDate}
+          />
 
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                {selectedRow.isGuest && <StatusBadge variant="guest" />}
-                {selectedRow.isProvisional && (
-                  <StatusBadge variant="provisional" />
-                )}
-              </div>
-            </div>
+          {/* 2x2 Performance Metrics Grid matching profile.jfif */}
+          <PerformanceMetricsGrid
+            selectedRow={selectedRow}
+            recentForm={recentForm}
+            winStreak={winStreak}
+          />
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: '0.75rem',
-              }}
-            >
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-surface-subtle)',
-                }}
-              >
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  All-Time Elo (Rounded)
-                </div>
-                <div
-                  className="rating-mono"
-                  style={{ fontSize: '1.5rem', marginTop: '0.15rem' }}
-                >
-                  {selectedRow.ratingDisplay}
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                  Exact: {selectedRow.ratingNumeric4} • Rank #{selectedRow.rank}
-                  {selectedRow.isTiedRank ? ' (T)' : ''}
-                </div>
-              </div>
+          {/* H2H Rivalry & Partnerships matching profile.jfif */}
+          <H2HRivalrySection
+            otherPlayers={otherPlayers}
+            activeOpponentId={activeOpponentId}
+            activeOpponent={activeOpponent}
+            h2hStats={h2hStats}
+            onSelectOpponent={setSelectedOpponentId}
+          />
 
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-surface-subtle)',
-                }}
-              >
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Completed Matches
-                </div>
-                <div
-                  className="rating-mono"
-                  style={{ fontSize: '1.35rem', marginTop: '0.15rem' }}
-                >
-                  {selectedRow.wins}W – {selectedRow.losses}L
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                  Win rate: {selectedRow.winRatePercentDisplay}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-surface-subtle)',
-                }}
-              >
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Attendance Rate (ATT-01)
-                </div>
-                <div
-                  className="rating-mono"
-                  style={{ fontSize: '1.25rem', marginTop: '0.15rem' }}
-                >
-                  {selectedRow.attendanceRatePercentDisplay ?? '0.0% (0/0)'}
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                  Attended / sessions held since profile creation
-                </div>
-              </div>
-
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-surface-subtle)',
-                }}
-              >
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Recent Form (Last 5)
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    marginTop: '0.35rem',
-                  }}
-                >
-                  {recentForm.length === 0 ? (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No matches</span>
-                  ) : (
-                    recentForm.map((res, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 800,
-                          fontSize: '0.75rem',
-                          background: res === 'W' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                          color: res === 'W' ? 'var(--accent-volt)' : '#f87171',
-                          border: res === 'W' ? '1px solid var(--accent-primary)' : '1px solid #ef4444',
-                        }}
-                      >
-                        {res}
-                      </span>
-                    ))
-                  )}
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                  Latest completed matches
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Head-to-Head (H2H) Records Section */}
-          <section
-            className="card"
-            data-testid="profile-h2h-section"
-            aria-labelledby="profile-h2h-heading"
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.75rem',
-                marginBottom: '1rem',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <Swords size={22} style={{ color: 'var(--accent-volt)' }} />
-                <div>
-                  <h3 id="profile-h2h-heading" style={{ margin: 0, fontSize: '1.15rem' }}>
-                    Head-to-Head Rivalry &amp; Partnership
-                  </h3>
-                  <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Direct track record with fellow group members
-                  </p>
-                </div>
-              </div>
-
-              {otherPlayers.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label htmlFor="h2h-opponent-select" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    Compare with:
-                  </label>
-                  <select
-                    id="h2h-opponent-select"
-                    value={activeOpponentId}
-                    onChange={(e) => setSelectedOpponentId(e.target.value)}
-                    style={{
-                      minHeight: '42px',
-                      padding: '0.35rem 0.65rem',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-surface)',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {otherPlayers.map((p) => (
-                      <option key={p.playerId} value={p.playerId}>
-                        {p.displayName} {p.isGuest ? '(Guest)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {h2hStats && activeOpponent ? (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '0.85rem',
-                }}
-              >
-                {/* As Opponents */}
-                <div
-                  style={{
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    background: 'var(--bg-surface-subtle)',
-                    border: '1px solid var(--border-color)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-volt)' }}>
-                      As Opponents
-                    </span>
-                    <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                      {h2hStats.vsMatches} {h2hStats.vsMatches === 1 ? 'match' : 'matches'}
-                    </span>
-                  </div>
-                  <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800 }}>
-                    {h2hStats.vsWins}W – {h2hStats.vsLosses}L
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                    Win rate against {activeOpponent.displayName}: <strong>{h2hStats.vsWinRate}</strong>
-                  </div>
-                </div>
-
-                {/* As Partners */}
-                <div
-                  style={{
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    background: 'var(--bg-surface-subtle)',
-                    border: '1px solid var(--border-color)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-primary)' }}>
-                      As Doubles Partners
-                    </span>
-                    <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                      {h2hStats.partnerMatches} {h2hStats.partnerMatches === 1 ? 'match' : 'matches'}
-                    </span>
-                  </div>
-                  <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800 }}>
-                    {h2hStats.partnerWins}W – {h2hStats.partnerLosses}L
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                    Win rate when paired together: <strong>{h2hStats.partnerWinRate}</strong>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.88rem' }}>
-                Select another player in the group to view direct head-to-head match records.
-              </p>
-            )}
-          </section>
-
-          {/* Player Match History with Filters (`DEC-052`) */}
-          <section className="card" aria-labelledby="profile-history-heading">
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.75rem',
-                marginBottom: '0.75rem',
-              }}
-            >
-              <div>
-                <h3 id="profile-history-heading" style={{ margin: 0 }}>
-                  Match History ({filteredMatches.length})
-                </h3>
-                <p
-                  style={{
-                    margin: '0.2rem 0 0 0',
-                    fontSize: '0.82rem',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  Ordered newest first. Displayed before/after ratings (whole
-                  numbers) and change (1 decimal) are rounded independently from
-                  internal <code>NUMERIC(10,4)</code> values.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.5rem',
-                  alignItems: 'center',
-                }}
-              >
-                <label htmlFor="profile-session-filter" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                  Session:
-                </label>
-                <select
-                  id="profile-session-filter"
-                  value={sessionFilter}
-                  onChange={(e) => setSessionFilter(e.target.value)}
-                  style={{
-                    minHeight: '44px',
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                  }}
-                >
-                  <option value="all">All Sessions</option>
-                  {snapshot.sessions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {formatMalaysiaDate(s.session_started_at)}
-                    </option>
-                  ))}
-                </select>
-
-                <label htmlFor="profile-status-filter" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                  Status:
-                </label>
-                <select
-                  id="profile-status-filter"
-                  value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value as MatchStatusFilter)
-                  }
-                  style={{
-                    minHeight: '44px',
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                  }}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="completed">Completed Only</option>
-                  <option value="disputed">Disputed Only</option>
-                  <option value="voided">Voided Only</option>
-                </select>
-              </div>
-            </div>
-
-            {filteredMatches.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)' }}>
-                No matches match the selected filters for this player.
-              </p>
-            ) : (
-              <div className="data-table-wrapper">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Date &amp; Seq</th>
-                      <th scope="col">Matchup</th>
-                      <th scope="col">Score</th>
-                      <th scope="col">Rating (Before → After)</th>
-                      <th scope="col">Change (Δ)</th>
-                      <th scope="col">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMatches.map((card) => {
-                      const playerSlot = [...card.teamA, ...card.teamB].find(
-                        (s) => s.playerId === effectivePlayerId,
-                      )!;
-                      const won =
-                        card.winnerSide !== null &&
-                        card.winnerSide === playerSlot.teamSide;
-
-                      return (
-                        <tr key={card.match.id}>
-                          <td>
-                            <div>{card.sessionDateDisplay}</div>
-                            <div
-                              style={{
-                                fontSize: '0.78rem',
-                                color: 'var(--text-muted)',
-                              }}
-                            >
-                              Match #{card.match.sequence_number ?? 'Draft'}
-                            </div>
-                          </td>
-                          <td>
-                            <div>
-                              <strong>Team A:</strong>{' '}
-                              {card.teamA[0].displayName} &amp;{' '}
-                              {card.teamA[1].displayName}
-                            </div>
-                            <div>
-                              <strong>Team B:</strong>{' '}
-                              {card.teamB[0].displayName} &amp;{' '}
-                              {card.teamB[1].displayName}
-                            </div>
-                          </td>
-                          <td className="rating-mono">
-                            {card.match.team_a_score ?? '–'}–
-                            {card.match.team_b_score ?? '–'}{' '}
-                            {card.match.status === 'completed'
-                              ? won
-                                ? '(W)'
-                                : '(L)'
-                              : ''}
-                          </td>
-                          <td className="rating-mono">
-                            {playerSlot.beforeDisplay !== null &&
-                            playerSlot.afterDisplay !== null
-                              ? `${playerSlot.beforeDisplay} → ${playerSlot.afterDisplay}`
-                              : '–'}
-                          </td>
-                          <td className="rating-mono">
-                            {playerSlot.changeDisplay ?? '–'}
-                          </td>
-                          <td>
-                            <div
-                              style={{
-                                display: 'flex',
-                                gap: '0.35rem',
-                                flexWrap: 'wrap',
-                              }}
-                            >
-                              {card.match.is_disputed && (
-                                <StatusBadge variant="disputed" />
-                              )}
-                              {card.match.status === 'voided' ? (
-                                <StatusBadge variant="voided" />
-                              ) : (
-                                <span style={{ fontSize: '0.82rem' }}>
-                                  Official
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+          {/* Player Match History with Filters (DEC-052) */}
+          <ProfileMatchHistorySection
+            filteredMatches={filteredMatches}
+            effectivePlayerId={selectedRow.playerId}
+            sessionFilter={sessionFilter}
+            statusFilter={statusFilter}
+            sessions={snapshot.sessions}
+            onSessionFilterChange={setSessionFilter}
+            onStatusFilterChange={setStatusFilter}
+            formatMalaysiaDate={formatMalaysiaDate}
+          />
         </>
       ) : (
-        <section className="card">
-          <p style={{ color: 'var(--text-muted)' }}>
-            No player profile selected.
-          </p>
+        <section className="p-4 rounded-xl bg-[#121a24] text-slate-400 text-xs text-center border border-slate-800">
+          No player profile selected.
         </section>
       )}
 
-      {/* Data Privacy & Account Lifecycle (PRIV-02) */}
+      {/* 4. Data Privacy & Account Lifecycle (PRIV-02) */}
       <section
-        className="card"
+        className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-3.5"
         data-testid="privacy-lifecycle-card"
         aria-labelledby="privacy-lifecycle-heading"
-        style={{ marginTop: '1.25rem' }}
       >
-        <h3
-          id="privacy-lifecycle-heading"
-          style={{ margin: '0 0 0.5rem 0', fontSize: '1.05rem' }}
-        >
-          Data Privacy &amp; Account Lifecycle (PRIV-02)
-        </h3>
-        <p
-          style={{
-            margin: '0 0 0.75rem 0',
-            fontSize: '0.84rem',
-            color: 'var(--text-secondary)',
-          }}
-        >
+        <div className="flex items-center gap-2">
+          <Shield size={20} className="text-emerald-400" />
+          <h3
+            id="privacy-lifecycle-heading"
+            className="text-base sm:text-lg font-bold text-white tracking-tight"
+          >
+            Data Privacy &amp; Account Lifecycle
+          </h3>
+        </div>
+
+        <p className="text-xs text-slate-400 leading-relaxed">
           This tracker is built for a trusted badminton group with strict privacy
           separation, deterministic ratings, and audited data integrity.
         </p>
 
-        <div style={{ display: 'grid', gap: '0.65rem', fontSize: '0.83rem' }}>
-          <div
-            style={{
-              padding: '0.6rem 0.75rem',
-              borderRadius: '0.45rem',
-              background: 'var(--bg-surface-subtle)',
-              border: '1px solid var(--border-color)',
-            }}
-          >
-            <strong>1. Rating Ledger &amp; Match History Immutability</strong>
-            <p
-              style={{
-                margin: '0.25rem 0 0 0',
-                color: 'var(--text-secondary)',
-              }}
-            >
+        <div className="grid gap-2.5 text-xs">
+          <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1">
+            <strong className="text-white font-semibold text-xs sm:text-sm">
+              1. Rating Ledger &amp; Match History Immutability
+            </strong>
+            <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed">
               Completed doubles matches, scores, and sequential order numbers are
               immutable historical facts. Because all Elo ratings and leaderboard
               standings are mathematically derived from past matches, match history
@@ -777,51 +292,124 @@ export function ProfileView({
             </p>
           </div>
 
-          <div
-            style={{
-              padding: '0.6rem 0.75rem',
-              borderRadius: '0.45rem',
-              background: 'var(--bg-surface-subtle)',
-              border: '1px solid var(--border-color)',
-            }}
-          >
-            <strong>2. Account Deletion &amp; Player Profile Unlinking</strong>
-            <p
-              style={{
-                margin: '0.25rem 0 0 0',
-                color: 'var(--text-secondary)',
-              }}
-            >
+          <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1">
+            <strong className="text-white font-semibold text-xs sm:text-sm">
+              2. Account Deletion &amp; Player Profile Unlinking
+            </strong>
+            <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed">
               If a member departs or requests account deletion, their login
               authentication record is removed and their membership status
-              transitions to <code>departed</code>. The player profile remains with{' '}
-              <code>linked_player_id = NULL</code>, preserving historical match
-              scorecards and group rating integrity while severing all personal
-              authentication credentials.
+              transitions to <code className="text-slate-300">departed</code>. The
+              player profile remains with{' '}
+              <code className="text-slate-300">linked_player_id = NULL</code>,
+              preserving historical match scorecards and group rating integrity
+              while severing all personal authentication credentials.
             </p>
           </div>
 
-          <div
-            style={{
-              padding: '0.6rem 0.75rem',
-              borderRadius: '0.45rem',
-              background: 'var(--bg-surface-subtle)',
-              border: '1px solid var(--border-color)',
-            }}
-          >
-            <strong>3. Confidentiality of Contact Details &amp; Invitations</strong>
-            <p
-              style={{
-                margin: '0.25rem 0 0 0',
-                color: 'var(--text-secondary)',
-              }}
-            >
+          <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1">
+            <strong className="text-white font-semibold text-xs sm:text-sm">
+              3. Confidentiality of Contact Details &amp; Invitations
+            </strong>
+            <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed">
               Member email addresses and raw invitation tokens are never displayed
-              to other players or sent in client-side data bundles (PRIV-01).
-              Invitation links are single-use and hashed (SHA-256) before database
+              to other players or sent in client-side data.
+              Invitation links are single-use and securely encrypted before database
               storage.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* 5. Preferences & Account Settings Section */}
+      <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Settings size={20} className="text-slate-400" />
+          <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            Preferences &amp; Account
+          </h3>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {/* Theme Selection */}
+          {onSelectTheme && (
+            <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <SunMoon size={18} className="text-slate-400" />
+                <div>
+                  <strong className="text-xs sm:text-sm font-semibold text-white block">
+                    Display Theme
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    Switch between Dark, Light, or follow system
+                  </span>
+                </div>
+              </div>
+
+              <select
+                aria-label="Profile theme select"
+                value={theme ?? 'dark'}
+                onChange={(e) =>
+                  onSelectTheme(e.target.value as 'system' | 'light' | 'dark')
+                }
+                className="bg-[#101722] text-slate-200 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700/80 focus:outline-none focus:border-emerald-500"
+              >
+                <option value="system">System</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+          )}
+
+          {/* Admin Tools Button (Restricted to Admin/Owner only) */}
+          {(snapshot.viewerMembership.role === 'admin' ||
+            snapshot.viewerMembership.role === 'owner') &&
+            onOpenAdminTools && (
+              <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <strong className="text-xs sm:text-sm font-semibold text-white block">
+                    Admin &amp; Owner Tools
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    Manage invitations, promotions, and merges
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onOpenAdminTools}
+                  data-testid="toggle-admin-tools-profile-btn"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
+                >
+                  Open Admin Tools
+                </button>
+              </div>
+            )}
+
+          {/* Sign Out Button */}
+          {onSignOut && !snapshot.isDemoMode && (
+            <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <LogOut size={18} className="text-rose-400" />
+                <div>
+                  <strong className="text-xs sm:text-sm font-semibold text-white block">
+                    Account Session
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    Sign out from this device
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -430,6 +430,41 @@ export function AuthMembershipGateView({
             {isSubmitting ? 'Signing In...' : 'Sign In with Email'}
           </button>
         </form>
+
+        {!isDemoMode && (
+          <div
+            style={{
+              marginTop: '1.25rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-color)',
+              textAlign: 'center',
+            }}
+          >
+            <a
+              href="?demo=true"
+              className="touch-target"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                width: '100%',
+                background: 'var(--bg-surface-alt)',
+                color: 'var(--brand-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '0.5rem',
+                padding: '0.65rem 1rem',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                textDecoration: 'none',
+              }}
+              data-testid="explore-demo-mode-btn"
+            >
+              <span>▷</span>
+              <span>Explore Demo Mode (Interactive Preview)</span>
+            </a>
+          </div>
+        )}
       </section>
     );
   }
@@ -726,7 +761,7 @@ export function AuthMembershipGateView({
               }}
             >
               <h3 style={{ marginTop: 0, fontSize: '1rem' }}>
-                One-Time Initial Group Bootstrap (DEC-012)
+                One-Time Initial Group Setup
               </h3>
               <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
                 This action is enforced server-side via{' '}

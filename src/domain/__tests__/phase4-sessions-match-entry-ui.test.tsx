@@ -107,36 +107,17 @@ async function openSessionsTab(repo: TrackerRepository) {
 }
 
 describe('Phase 4 — Live Session Control, Attendance Check-In, Match Entry, 10s Undo & Corrections UI', () => {
-  it('supports starting a session, warns and enforces Policy 3A on backdated sessions before rated matches, and edits session start time with Policy 3B reason & audit (SES-01, Policy 3A, Policy 3B)', async () => {
-    const startGroupSessionSpy = vi
-      .fn()
-      .mockRejectedValueOnce(
-        new Error(
-          'Backdated session creation denied: only Admin or Owner may create a session dated before an existing session containing rated matches (Policy 3A)',
-        ),
-      )
-      .mockResolvedValueOnce({
-        session_id: '00000000-0000-4000-8000-000000000399',
-        group_id: DEMO_GROUP_ID,
-        controller_user_id: DEMO_VIEWER_USER_ID,
-        controller_lease_version: 1,
-        is_backdated_before_rated: true,
-      });
-
-    const updateSessionStartTimeSpy = vi.fn().mockResolvedValue({
-      session_id: DEMO_SESSION_IDS.session2,
-      session_started_at: '2026-10-15T11:30:00Z',
-      recalculation: {
-        recalculation_succeeded: true,
-        recalculation_status: 'idle',
-        published_rating_version_id: '00000000-0000-4000-8000-000000000903',
-        required_match_state_seq: 7,
-      },
+  it('supports starting a session with streamlined attendees selection and renders active session card without start time edit buttons (SES-01, Policy 3B UI streamlining)', async () => {
+    const startGroupSessionSpy = vi.fn().mockResolvedValueOnce({
+      session_id: '00000000-0000-4000-8000-000000000399',
+      group_id: DEMO_GROUP_ID,
+      controller_user_id: DEMO_VIEWER_USER_ID,
+      controller_lease_version: 1,
+      is_backdated_before_rated: false,
     });
 
     const { repo } = createPhase4MockRepository(undefined, {
       startGroupSession: startGroupSessionSpy,
-      updateSessionStartTime: updateSessionStartTimeSpy,
     });
 
     await openSessionsTab(repo);
@@ -146,13 +127,8 @@ describe('Phase 4 — Live Session Control, Attendance Check-In, Match Entry, 10
     expect(screen.getByTestId('start-session-panel')).toBeTruthy();
     expect(screen.getByTestId('existing-active-session-warning')).toBeTruthy();
 
-    // Enter a timestamp earlier than Session 1 (2026-10-08T12:00:00Z which has rated matches)
-    fireEvent.change(screen.getByTestId('start-session-datetime-input'), {
-      target: { value: '2026-10-01T12:00:00Z' },
-    });
-
-    // Policy 3A warning box must appear automatically
-    expect(screen.getByTestId('backdated-session-warning')).toBeTruthy();
+    // Verify manual start-session-datetime-input is removed for frictionless courtside start
+    expect(screen.queryByTestId('start-session-datetime-input')).toBeNull();
 
     // Select Aaron & Brenda as initial attendees
     fireEvent.click(
@@ -162,60 +138,28 @@ describe('Phase 4 — Live Session Control, Attendance Check-In, Match Entry, 10
       screen.getByTestId(`initial-attendee-checkbox-${DEMO_PLAYER_IDS.brenda}`),
     );
 
-    // 1st attempt: simulated server rejection (e.g. non-admin or unacknowledged)
-    fireEvent.click(screen.getByTestId('start-session-submit-btn'));
-    await waitFor(() => {
-      expect(
-        screen.getByTestId('start-session-error-alert').textContent,
-      ).toMatch(/Policy 3A/i);
-    });
-
-    // Check Policy 3A acknowledgment checkbox and submit again -> succeeds
-    fireEvent.click(
-      screen.getByTestId('acknowledge-backdated-session-checkbox'),
-    );
+    // Click start session -> succeeds immediately with current time (sessionStartedAt: null)
     fireEvent.click(screen.getByTestId('start-session-submit-btn'));
 
     await waitFor(() => {
-      expect(startGroupSessionSpy).toHaveBeenLastCalledWith({
+      expect(startGroupSessionSpy).toHaveBeenCalledWith({
         groupId: DEMO_GROUP_ID,
-        sessionStartedAt: '2026-10-01T12:00:00Z',
+        sessionStartedAt: null,
         initialAttendeePlayerIds: [
           DEMO_PLAYER_IDS.aaron,
           DEMO_PLAYER_IDS.brenda,
         ],
-        acknowledgeBackdatedRecalcWarning: true,
       });
     });
 
-    // Test Session Start-Time Editor (Policy 3B) on the existing active Session 2
-    // (the mocked start response's new session is not present in the static mock snapshot)
+    // Check existing active Session 2 card: clean display without edit start time button or editor panel
     fireEvent.click(
       screen.getByTestId(`session-card-${DEMO_SESSION_IDS.session2}`),
     );
     await waitFor(() => {
-      expect(screen.getByTestId('toggle-edit-start-time-btn')).toBeTruthy();
-    });
-    fireEvent.click(screen.getByTestId('toggle-edit-start-time-btn'));
-    expect(screen.getByTestId('edit-session-start-time-panel')).toBeTruthy();
-
-    fireEvent.change(screen.getByTestId('edit-start-time-input'), {
-      target: { value: '2026-10-15T11:30:00Z' },
-    });
-    fireEvent.change(screen.getByTestId('edit-start-time-reason-input'), {
-      target: { value: 'Court booking started 30 minutes earlier' },
-    });
-    fireEvent.click(screen.getByTestId('edit-start-time-ack-checkbox'));
-    fireEvent.click(screen.getByTestId('save-start-time-btn'));
-
-    await waitFor(() => {
-      expect(updateSessionStartTimeSpy).toHaveBeenCalledWith({
-        sessionId: DEMO_SESSION_IDS.session2,
-        newStartedAt: '2026-10-15T11:30:00Z',
-        reason: 'Court booking started 30 minutes earlier',
-        expectedLeaseVersion: 1,
-        acknowledgeRecalcWarning: true,
-      });
+      expect(screen.getByTestId('session-controller-panel')).toBeTruthy();
+      expect(screen.queryByTestId('toggle-edit-start-time-btn')).toBeNull();
+      expect(screen.queryByTestId('edit-session-start-time-panel')).toBeNull();
     });
   });
 

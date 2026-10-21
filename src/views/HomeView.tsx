@@ -1,31 +1,15 @@
-import {
-  Activity,
-  AlertTriangle,
-  ArrowRight,
-  Calendar,
-  TrendingUp,
-  Trophy,
-  Users,
-} from 'lucide-react';
-import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
+import { AlertTriangle, Plus, Users } from 'lucide-react';
+import { MedalBadge } from '../components/icons/MedalBadges.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
-import {
-  CrossedRackets,
-  DesignerShuttlecock,
-  LaurelWreathShield,
-} from '../components/icons/DesignerBadmintonIcons.tsx';
+import { DesignerShuttlecock } from '../components/icons/DesignerBadmintonIcons.tsx';
 import type { GroupReadSnapshot } from '../services/demoData.ts';
 import {
-  deriveEnrichedMatchesFromSnapshot,
-  deriveLeaderboardFromSnapshot,
+  deriveWeeklyLeaderboardFromSnapshot,
   formatMalaysiaDate,
 } from '../services/readViewModels.ts';
-import type { EffectivePublicationBannerState } from '../services/trackerRepository.ts';
 
 export interface HomeViewProps {
   snapshot: GroupReadSnapshot;
-  publication: EffectivePublicationBannerState;
-  onRetryRecalculation: () => Promise<void>;
   onNavigateTab: (tab: 'home' | 'leaderboard' | 'sessions' | 'profile') => void;
   onSelectPlayer: (playerId: string) => void;
   onSelectSession: (sessionId: string) => void;
@@ -43,459 +27,437 @@ function getPlayerInitials(name: string): string {
 
 export function HomeView({
   snapshot,
-  publication,
-  onRetryRecalculation,
   onNavigateTab,
   onSelectPlayer,
   onSelectSession,
 }: HomeViewProps) {
-  const leaderboard = deriveLeaderboardFromSnapshot(snapshot, false).slice(0, 5);
-  const recentMatches = deriveEnrichedMatchesFromSnapshot(snapshot).slice(0, 4);
+  const weeklyLeaderboard = deriveWeeklyLeaderboardFromSnapshot(snapshot).slice(0, 3);
   const activeOrLatestSession = snapshot.sessions[0] ?? null;
-  const totalCompletedMatches = snapshot.matches.filter(m => m.status === 'completed').length;
-  const totalActivePlayers = snapshot.players.filter(p => p.is_active).length;
-  const topRank1 = leaderboard[0] ?? null;
+
+  const isSessionActive =
+    activeOrLatestSession?.status === 'active' ||
+    activeOrLatestSession?.status === 'reopened';
+
+  const attendeeCount = activeOrLatestSession
+    ? snapshot.sessionAttendees.filter(
+        (sa) => sa.session_id === activeOrLatestSession.id,
+      ).length
+    : 0;
+
+  const completedMatchesCount = activeOrLatestSession
+    ? snapshot.matches.filter(
+        (m) =>
+          m.session_id === activeOrLatestSession.id && m.status === 'completed',
+      ).length
+    : 0;
+
+  const isStaleSession =
+    Boolean(activeOrLatestSession && isSessionActive) &&
+    Date.now() - Date.parse(activeOrLatestSession!.last_meaningful_activity_at) >=
+      43200 * 1000;
 
   return (
-    <div data-testid="view-home">
-      <PublicationStatusBanner
-        publication={publication}
-        viewerRole={snapshot.viewerMembership.role}
-        isDemoMode={snapshot.isDemoMode}
-        onRetryRecalculation={onRetryRecalculation}
-      />
-
-      {/* Group Athletic Quick Stats Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: '0.75rem',
-          marginBottom: '1.25rem',
+    <div data-testid="view-home" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Primary Action Button: + Start New Session / Resume Active Session */}
+      <button
+        type="button"
+        className="smashtrack-cta-btn"
+        onClick={() => {
+          if (activeOrLatestSession && isSessionActive) {
+            onSelectSession(activeOrLatestSession.id);
+          }
+          onNavigateTab('sessions');
         }}
       >
-        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Matches</span>
-            <Activity size={16} style={{ color: 'var(--accent-volt)' }} />
-          </div>
-          <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.2rem' }}>
-            {totalCompletedMatches}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Completed on court</div>
-        </div>
+        <Plus size={22} strokeWidth={3} />
+        <span>
+          {isSessionActive ? 'Resume Active Session' : 'Start New Session'}
+        </span>
+      </button>
 
-        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Players</span>
-            <Users size={16} style={{ color: 'var(--accent-primary)' }} />
-          </div>
-          <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.2rem' }}>
-            {totalActivePlayers}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Active roster</div>
-        </div>
-
-        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Sessions</span>
-            <Calendar size={16} style={{ color: '#38bdf8' }} />
-          </div>
-          <div className="rating-mono" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.2rem' }}>
-            {snapshot.sessions.length}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total organized</div>
-        </div>
-
-        <div className="card" style={{ padding: '0.85rem 1rem', margin: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Leader</span>
-            <Trophy size={16} style={{ color: '#f59e0b' }} />
-          </div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {topRank1 ? `#1 ${topRank1.displayName}` : '–'}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-            {topRank1 ? `${topRank1.ratingDisplay} Elo` : 'No rankings yet'}
-          </div>
-        </div>
-      </div>
-
-      {/* Active / Latest Session Hero Card */}
-      <section className="seamless-ranking-panel" aria-labelledby="home-session-heading">
-        <div className="seamless-header">
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <DesignerShuttlecock size={28} />
-              <div>
-                <h2 id="home-session-heading" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
-                  {activeOrLatestSession?.status === 'active'
-                    ? 'Current Active Session'
-                    : 'Latest Session'}
-                </h2>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  Courtside doubles session status
-                </span>
-              </div>
-            </div>
-
-            {activeOrLatestSession && (
-              <StatusBadge
-                variant={
-                  activeOrLatestSession.status === 'active'
-                    ? 'active_session'
-                    : activeOrLatestSession.status === 'reopened'
-                      ? 'reopened_session'
-                      : 'completed_session'
-                }
-              />
-            )}
-          </div>
-        </div>
-
-        <div style={{ padding: '1rem 1.25rem' }}>
-          {activeOrLatestSession ? (
-            <div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                  gap: '0.75rem',
-                  marginBottom: '1rem',
-                  padding: '0.85rem',
-                  borderRadius: '0.75rem',
-                  background: 'var(--bg-surface-subtle)',
-                }}
-              >
-                <div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Session Date
-                  </span>
-                  <p style={{ margin: '0.15rem 0 0 0', fontWeight: 700, fontSize: '0.92rem' }}>
-                    {formatMalaysiaDate(activeOrLatestSession.session_started_at)}
-                  </p>
-                </div>
-
-                <div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Attendance
-                  </span>
-                  <p style={{ margin: '0.15rem 0 0 0', fontWeight: 700, fontSize: '0.92rem' }}>
-                    <Users size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                    {
-                      snapshot.sessionAttendees.filter(
-                        (sa) => sa.session_id === activeOrLatestSession.id,
-                      ).length
-                    }{' '}
-                    players
-                  </p>
-                </div>
-
-                <div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Matches
-                  </span>
-                  <p style={{ margin: '0.15rem 0 0 0', fontWeight: 700, fontSize: '0.92rem' }}>
-                    {
-                      snapshot.matches.filter(
-                        (m) =>
-                          m.session_id === activeOrLatestSession.id &&
-                          m.status === 'completed',
-                      ).length
-                    }{' '}
-                    completed
-                  </p>
-                </div>
-              </div>
-
-              {(activeOrLatestSession.status === 'active' ||
-                activeOrLatestSession.status === 'reopened') &&
-                Date.now() -
-                  Date.parse(activeOrLatestSession.last_meaningful_activity_at) >=
-                  43200 * 1000 && (
-                  <div
-                    style={{
-                      margin: '0.75rem 0',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.65rem',
-                      background: 'var(--status-warn-bg)',
-                      border: '1px solid var(--status-warn-border)',
-                      color: 'var(--status-warn-fg)',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                    }}
-                    data-testid="home-stale-session-indicator"
-                  >
-                    <AlertTriangle size={16} />
-                    <span>
-                      ⚠ Active session has been inactive for ≥ 12 hours (never
-                      auto-closed — review or finalize in Sessions).
-                    </span>
-                  </div>
-                )}
-
-              <button
-                type="button"
-                className="touch-target touch-target-primary"
-                onClick={() => {
-                  onSelectSession(activeOrLatestSession.id);
-                  onNavigateTab('sessions');
-                }}
-              >
-                <span>View Session Standings & Attendance</span>
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          ) : (
-            <div>
-              <p style={{ color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>
-                No sessions have been recorded for this group yet.
-              </p>
-              <button
-                type="button"
-                className="touch-target touch-target-primary"
-                onClick={() => onNavigateTab('sessions')}
-              >
-                <span>Open Sessions &amp; Start First Session</span>
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Top All-Time Players Preview (Seamless Panel) */}
-      <section className="seamless-ranking-panel" aria-labelledby="home-top-players-heading">
-        <div className="seamless-header">
+      {/* Latest / Active Session Hero Card */}
+      {activeOrLatestSession ? (
+        <section
+          className="smashtrack-session-card"
+          aria-labelledby="home-session-heading"
+        >
+          {/* Card Header: Title & Date */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <div>
-              <h2
-                id="home-top-players-heading"
-                style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}
-              >
-                All-Time Leaderboard Top 5
-              </h2>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                Highest rated doubles players
-              </span>
-            </div>
-
-            <button
-              type="button"
-              className="touch-target"
-              style={{ minHeight: '36px', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
-              onClick={() => onNavigateTab('leaderboard')}
-            >
-              <span>Full Leaderboard</span>
-              <ArrowRight size={13} />
-            </button>
-          </div>
-        </div>
-
-        {leaderboard.length === 0 ? (
-          <p style={{ padding: '1.25rem', color: 'var(--text-muted)', margin: 0 }}>No active players found.</p>
-        ) : (
-          <div>
-            {leaderboard.map((row) => (
-              <div
-                key={row.playerId}
-                className="seamless-row"
-              >
-                <div className="player-card-left">
-                  <LaurelWreathShield
-                    rank={row.rank}
-                    isTied={row.isTiedRank}
-                    size={42}
-                  />
-
-                  <div className="player-card-avatar">
-                    {getPlayerInitials(row.displayName)}
-                  </div>
-
-                  <div className="player-card-info">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onSelectPlayer(row.playerId);
-                          onNavigateTab('profile');
-                        }}
-                        className="player-card-name-btn"
-                      >
-                        {row.displayName}
-                      </button>
-                      {row.isGuest && <StatusBadge variant="guest" />}
-                      {row.isProvisional && (
-                        <StatusBadge variant="provisional" />
-                      )}
-                    </div>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                      {row.winRatePercentDisplay} win rate • {row.wins}W - {row.losses}L
-                    </span>
-                  </div>
-                </div>
-
-                <div className="player-card-right">
-                  <div className="rating-score-volt">
-                    <TrendingUp size={13} />
-                    <span className="rating-mono">{row.ratingDisplay}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Recent Matches */}
-      <section className="seamless-ranking-panel" aria-labelledby="home-recent-matches-heading">
-        <div className="seamless-header">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '0.5rem',
+              marginBottom: '1rem',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CrossedRackets size={24} />
-              <div>
-                <h2
-                  id="home-recent-matches-heading"
-                  style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}
-                >
-                  Recent Matches
-                </h2>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  Latest court results
-                </span>
-              </div>
+              <h2
+                id="home-session-heading"
+                style={{
+                  margin: 0,
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {isSessionActive ? 'Current Session' : 'Latest Session'}
+              </h2>
+              {isSessionActive && <StatusBadge variant="active_session" />}
             </div>
 
-            <button
-              type="button"
-              className="touch-target"
-              style={{ minHeight: '36px', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
-              onClick={() => onNavigateTab('sessions')}
+            <span
+              style={{
+                fontSize: '0.88rem',
+                color: 'var(--text-secondary)',
+                fontWeight: 500,
+              }}
             >
-              <span>All Sessions</span>
-              <ArrowRight size={13} />
-            </button>
+              {formatMalaysiaDate(activeOrLatestSession.session_started_at)}
+            </span>
           </div>
+
+          {/* 12-Hour Stale Session Warning Indicator (Requirement SES-04) */}
+          {isStaleSession && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.65rem',
+                background: 'var(--status-warn-bg)',
+                border: '1px solid var(--status-warn-border)',
+                color: 'var(--status-warn-fg)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+              data-testid="home-stale-session-indicator"
+            >
+              <AlertTriangle size={16} />
+              <span>
+                ⚠ Active session has been inactive for ≥ 12 hours (never
+                auto-closed — review or finalize in Sessions).
+              </span>
+            </div>
+          )}
+
+          {/* Metrics Grid: Attendees & Matches Completed */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '1rem',
+              alignItems: 'center',
+              padding: '0.85rem 0.5rem',
+              marginBottom: '1.15rem',
+            }}
+          >
+            {/* Attendees Stat */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                borderRight: '1px solid var(--border-color)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  marginBottom: '0.25rem',
+                }}
+              >
+                <Users size={24} style={{ color: '#22c55e' }} />
+                <span
+                  className="rating-mono"
+                  style={{
+                    fontSize: '1.85rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {attendeeCount}
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 400,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Attendees
+              </span>
+            </div>
+
+            {/* Matches Completed Stat */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  marginBottom: '0.25rem',
+                }}
+              >
+                <DesignerShuttlecock size={24} />
+                <span
+                  className="rating-mono"
+                  style={{
+                    fontSize: '1.85rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {completedMatchesCount}
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 400,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Matches Completed
+              </span>
+            </div>
+          </div>
+
+          {/* Card CTA Button: View Session > */}
+          <button
+            type="button"
+            className="smashtrack-blue-btn"
+            onClick={() => {
+              onSelectSession(activeOrLatestSession.id);
+              onNavigateTab('sessions');
+            }}
+          >
+            <span>View Session &gt;</span>
+          </button>
+        </section>
+      ) : (
+        <section
+          className="smashtrack-session-card"
+          aria-labelledby="home-session-empty-heading"
+        >
+          <h2
+            id="home-session-empty-heading"
+            style={{
+              margin: '0 0 0.5rem 0',
+              fontSize: '1.15rem',
+              fontWeight: 700,
+            }}
+          >
+            Latest Session
+          </h2>
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: '0.9rem',
+              margin: '0 0 1rem 0',
+            }}
+          >
+            No sessions have been recorded for this group yet.
+          </p>
+          <button
+            type="button"
+            className="smashtrack-blue-btn"
+            onClick={() => onNavigateTab('sessions')}
+          >
+            <span>Open Sessions &amp; Start First Session</span>
+          </button>
+        </section>
+      )}
+
+      {/* Weekly Leaderboard Section */}
+      <section aria-labelledby="home-leaderboard-heading">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem',
+          }}
+        >
+          <h2
+            id="home-leaderboard-heading"
+            style={{
+              margin: 0,
+              fontSize: '1.2rem',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+            }}
+          >
+            Weekly Leaderboard
+          </h2>
+
+          <button
+            type="button"
+            onClick={() => onNavigateTab('leaderboard')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#38bdf8',
+              fontSize: '0.92rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: '0.25rem 0.5rem',
+            }}
+          >
+            See All
+          </button>
         </div>
 
-        {recentMatches.length === 0 ? (
-          <p style={{ padding: '1.25rem', color: 'var(--text-muted)', margin: 0 }}>No matches recorded yet.</p>
-        ) : (
-          <div>
-            {recentMatches.map((card) => {
-              const aWon = (card.match.team_a_score ?? 0) > (card.match.team_b_score ?? 0);
-              const bWon = (card.match.team_b_score ?? 0) > (card.match.team_a_score ?? 0);
-
-              return (
-                <div
-                  key={card.match.id}
-                  className="seamless-row"
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: '0.74rem',
-                        color: 'var(--text-muted)',
-                        marginBottom: '0.35rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                      }}
-                    >
-                      <span>
-                        {card.sessionDateDisplay} • Match #{card.match.sequence_number ?? 'Draft'}
-                      </span>
-                      {card.match.is_disputed && <StatusBadge variant="disputed" />}
-                      {card.match.status === 'voided' && <StatusBadge variant="voided" />}
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                      <div
-                        style={{
-                          fontSize: '0.9rem',
-                          fontWeight: aWon ? 800 : 500,
-                          color: aWon ? '#fff' : 'var(--text-secondary)',
-                        }}
-                      >
-                        {card.teamA[0].displayName} &amp; {card.teamA[1].displayName}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.9rem',
-                          fontWeight: bWon ? 800 : 500,
-                          color: bWon ? '#fff' : 'var(--text-secondary)',
-                        }}
-                      >
-                        {card.teamB[0].displayName} &amp; {card.teamB[1].displayName}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Scoreboard Pill */}
+        <div className="smashtrack-leaderboard-card">
+          {weeklyLeaderboard.length === 0 ? (
+            <p
+              style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                color: 'var(--text-muted)',
+                margin: 0,
+              }}
+            >
+              No matches recorded for this week yet.
+            </p>
+          ) : (
+            <div>
+              {weeklyLeaderboard.map((row) => (
+                <div key={row.playerId} className="smashtrack-weekly-row">
+                  {/* Left: Medal Badge, Avatar, Name & Win Rate */}
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.3rem',
-                      padding: '0.35rem 0.75rem',
-                      background: 'var(--bg-surface-subtle)',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border-color)',
-                      flexShrink: 0,
+                      gap: '0.75rem',
+                      minWidth: 0,
+                      flex: 1,
                     }}
                   >
-                    <span
+                    <MedalBadge rank={row.rank} size={38} />
+
+                    {/* Circular Avatar */}
+                    {row.avatarUrl ? (
+                      <img
+                        src={row.avatarUrl}
+                        alt={row.displayName}
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '9999px',
+                          objectFit: 'cover',
+                          border: '2px solid var(--border-color)',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '9999px',
+                          background: 'linear-gradient(135deg, #1e293b, #334155)',
+                          border: '2px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 600,
+                          fontSize: '0.88rem',
+                          color: '#f8fafc',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {getPlayerInitials(row.displayName)}
+                      </div>
+                    )}
+
+                    {/* Player Info */}
+                    <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          flexWrap: 'nowrap',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectPlayer(row.playerId);
+                            onNavigateTab('profile');
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            color: 'var(--text-primary)',
+                            fontWeight: 600,
+                            fontSize: '0.98rem',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {row.displayName}
+                        </button>
+                        {row.isGuest && <StatusBadge variant="guest" />}
+                        {row.isProvisional && (
+                          <StatusBadge variant="provisional" customLabel="Provisional" />
+                        )}
+                      </div>
+
+                      {/* Subtitle: 14W - 3L • 82.4% Win Rate */}
+                      <div
+                        style={{
+                          fontSize: '0.78rem',
+                          color: 'var(--text-secondary)',
+                          marginTop: '0.15rem',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontWeight: 400,
+                        }}
+                      >
+                        {row.wins}W - {row.losses}L • {row.winRatePercentDisplay}{' '}
+                        Win Rate
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Elo / Points Display */}
+                  <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: '0.75rem' }}>
+                    <div
                       className="rating-mono"
                       style={{
-                        fontSize: '1.15rem',
-                        fontWeight: 800,
-                        color: aWon ? 'var(--accent-volt)' : 'var(--text-primary)',
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
                       }}
                     >
-                      {card.match.team_a_score ?? '–'}
-                    </span>
-                    <span style={{ color: 'var(--text-muted)' }}>:</span>
-                    <span
-                      className="rating-mono"
-                      style={{
-                        fontSize: '1.15rem',
-                        fontWeight: 800,
-                        color: bWon ? 'var(--accent-volt)' : 'var(--text-primary)',
-                      }}
-                    >
-                      {card.match.team_b_score ?? '–'}
-                    </span>
+                      {row.ratingDisplay} pts
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

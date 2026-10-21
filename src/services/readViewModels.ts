@@ -145,6 +145,280 @@ export function deriveLeaderboardFromSnapshot(
   });
 }
 
+export interface WeeklyLeaderboardRow {
+  playerId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isGuest: boolean;
+  isProvisional: boolean;
+  rank: number;
+  isTiedRank: boolean;
+  wins: number;
+  losses: number;
+  matchesPlayed: number;
+  winRatePercent: number;
+  winRatePercentDisplay: string;
+  ratingDisplay: string;
+  weekLabel: string;
+}
+
+/**
+ * Calculates start and end of week (Monday 00:00:00 to Sunday 23:59:59 MYT)
+ * in UTC timestamps for a given date.
+ */
+function getMalaysiaWeekBounds(targetDate: Date): { startMs: number; endMs: number; weekLabel: string } {
+  // Offset by +8 hours to align with Malaysia calendar days
+  const mytDate = new Date(targetDate.getTime() + 8 * 60 * 60 * 1000);
+  const dayOfWeek = mytDate.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+  const mondayYear = mytDate.getUTCFullYear();
+  const mondayMonth = mytDate.getUTCMonth();
+  const mondayDate = mytDate.getUTCDate() + diffToMonday;
+
+  // Monday 00:00:00 MYT converted back to UTC ms
+  const mondayUtcMidnight = Date.UTC(mondayYear, mondayMonth, mondayDate, 0, 0, 0, 0);
+  const startMs = mondayUtcMidnight - 8 * 60 * 60 * 1000;
+  const endMs = startMs + 7 * 24 * 60 * 60 * 1000 - 1;
+
+  const startFmt = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Asia/Kuala_Lumpur',
+  }).format(new Date(startMs));
+
+  const endFmt = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kuala_Lumpur',
+  }).format(new Date(endMs));
+
+  return {
+    startMs,
+    endMs,
+    weekLabel: `${startFmt} – ${endFmt}`,
+  };
+}
+
+/**
+ * Derives the Weekly Leaderboard from snapshot matches for the current calendar week
+ * in Malaysia time (or most recent week with matches if current week has none).
+ */
+export function deriveWeeklyLeaderboardFromSnapshot(
+  snapshot: GroupReadSnapshot,
+): WeeklyLeaderboardRow[] {
+  const completedMatches = snapshot.matches.filter(
+    (m) =>
+      m.status === 'completed' &&
+      m.team_a_score !== null &&
+      m.team_b_score !== null,
+  );
+
+  const playerMap = new Map<string, DbPlayerRow>();
+  for (const p of snapshot.players) {
+    if (p.merged_into_player_id === null) {
+      playerMap.set(p.id, p);
+    }
+  }
+
+  const sessionMap = new Map<string, DbSessionRow>();
+  for (const s of snapshot.sessions) {
+    sessionMap.set(s.id, s);
+  }
+
+  const snapshotMap = new Map<string, PlayerRatingSnapshot>();
+  for (const row of snapshot.ratingSnapshots) {
+    const scaled = parseNumeric4(row.rating);
+    snapshotMap.set(row.player_id, {
+      playerId: row.player_id,
+      ratingScaled: scaled,
+      ratingNumeric4: row.rating,
+      ratingDisplay: roundScaledToWholeNumber(scaled),
+      matchesPlayed: row.matches_played,
+      wins: row.wins,
+      losses: row.losses,
+      isProvisional: row.is_provisional,
+    });
+  }
+
+  if (completedMatches.length === 0) {
+    return [];
+  }
+
+  // 1. Determine target week (current week first, or latest week with matches)
+  const now = new Date();
+  let weekBounds = getMalaysiaWeekBounds(now);
+
+  let weekMatches = completedMatches.filter((m) => {
+    const s = sessionMap.get(m.session_id);
+    const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+    return timeMs >= weekBounds.startMs && timeMs <= weekBounds.endMs;
+  });
+
+  if (weekMatches.length === 0) {
+    // Find latest completed match date
+    let latestMs = 0;
+    for (const m of completedMatches) {
+      const s = sessionMap.get(m.session_id);
+      const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+      if (timeMs > latestMs) {
+        latestMs = timeMs;
+      }
+    }
+    if (latestMs > 0) {
+      weekBounds = getMalaysiaWeekBounds(new Date(latestMs));
+      weekMatches = completedMatches.filter((m) => {
+        const s = sessionMap.get(m.session_id);
+        const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+        return timeMs >= weekBounds.startMs && timeMs <= weekBounds.endMs;
+      });
+    }
+  }
+
+  // 2. Count wins and losses in the target week
+  const weeklyStats = new Map<string, { wins: number; losses: number }>();
+
+  for (const match of weekMatches) {
+    const parts = snapshot.matchParticipants.filter((mp) => mp.match_id === match.id);
+    const teamA = parts.filter((p) => p.team_side === 'A').map((p) => p.player_id);
+    const teamB = parts.filter((p) => p.team_side === 'B').map((p) => p.player_id);
+
+    const aScore = match.team_a_score ?? 0;
+    const bScore = match.team_b_score ?? 0;
+
+    if (aScore > bScore) {
+      for (const pid of teamA) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.wins += 1;
+        weeklyStats.set(pid, stat);
+      }
+      for (const pid of teamB) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.losses += 1;
+        weeklyStats.set(pid, stat);
+      }
+    } else if (bScore > aScore) {
+      for (const pid of teamB) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.wins += 1;
+        weeklyStats.set(pid, stat);
+      }
+      for (const pid of teamA) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.losses += 1;
+        weeklyStats.set(pid, stat);
+      }
+    }
+  }
+
+  // 3. Build candidate list: players with weekly activity first, or top all-time players
+  const rows: WeeklyLeaderboardRow[] = [];
+
+  for (const [playerId, stats] of weeklyStats.entries()) {
+    const player = playerMap.get(playerId);
+    if (!player || !player.is_active) {
+      continue;
+    }
+    const snap = snapshotMap.get(playerId);
+    const matchesPlayed = stats.wins + stats.losses;
+    const winRatePercent = matchesPlayed > 0 ? (stats.wins / matchesPlayed) * 100 : 0;
+    const ratingDisplay = (snap?.ratingDisplay ?? 1000).toLocaleString();
+
+    rows.push({
+      playerId,
+      displayName: player.display_name,
+      avatarUrl: player.avatar_url,
+      isGuest: player.is_guest,
+      isProvisional: snap?.isProvisional ?? true,
+      rank: 1,
+      isTiedRank: false,
+      wins: stats.wins,
+      losses: stats.losses,
+      matchesPlayed,
+      winRatePercent: Math.round(winRatePercent * 10) / 10,
+      winRatePercentDisplay: `${(Math.round(winRatePercent * 10) / 10).toFixed(1)}%`,
+      ratingDisplay,
+      weekLabel: weekBounds.weekLabel,
+    });
+  }
+
+  // If fewer than 3 players had matches this week, backfill from other active players
+  if (rows.length < 3) {
+    const includedIds = new Set(rows.map((r) => r.playerId));
+    const otherPlayers = Array.from(playerMap.values())
+      .filter((p) => p.is_active && !includedIds.has(p.id))
+      .sort((a, b) => {
+        const rA = Number(snapshotMap.get(a.id)?.ratingScaled ?? 10000000);
+        const rB = Number(snapshotMap.get(b.id)?.ratingScaled ?? 10000000);
+        return rB - rA;
+      });
+
+    for (const p of otherPlayers) {
+      if (rows.length >= 3) break;
+      const snap = snapshotMap.get(p.id);
+      rows.push({
+        playerId: p.id,
+        displayName: p.display_name,
+        avatarUrl: p.avatar_url,
+        isGuest: p.is_guest,
+        isProvisional: snap?.isProvisional ?? true,
+        rank: 1,
+        isTiedRank: false,
+        wins: 0,
+        losses: 0,
+        matchesPlayed: 0,
+        winRatePercent: 0,
+        winRatePercentDisplay: '0.0%',
+        ratingDisplay: (snap?.ratingDisplay ?? 1000).toLocaleString(),
+        weekLabel: weekBounds.weekLabel,
+      });
+    }
+  }
+
+  // 4. Sort weekly rows:
+  // (a) wins DESC
+  // (b) winRatePercent DESC
+  // (c) ratingDisplay (raw numeric value) DESC
+  // (d) displayName ASC
+  rows.sort((a, b) => {
+    if (a.wins !== b.wins) {
+      return b.wins - a.wins;
+    }
+    if (a.winRatePercent !== b.winRatePercent) {
+      return b.winRatePercent - a.winRatePercent;
+    }
+    const numA = parseInt(a.ratingDisplay.replace(/,/g, ''), 10) || 0;
+    const numB = parseInt(b.ratingDisplay.replace(/,/g, ''), 10) || 0;
+    if (numA !== numB) {
+      return numB - numA;
+    }
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  // 5. Assign competition ranks
+  for (let i = 0; i < rows.length; i++) {
+    const curr = rows[i];
+    if (!curr) continue;
+    const prev = rows[i - 1];
+    if (
+      prev &&
+      prev.wins === curr.wins &&
+      prev.winRatePercent === curr.winRatePercent &&
+      prev.ratingDisplay === curr.ratingDisplay
+    ) {
+      curr.rank = prev.rank;
+      curr.isTiedRank = true;
+      prev.isTiedRank = true;
+    } else {
+      curr.rank = i + 1;
+      curr.isTiedRank = false;
+    }
+  }
+
+  return rows;
+}
+
 /**
  * Enriches all matches in the snapshot with participant names, guest flags, and
  * rounded rating before/after/delta values (`DEC-036`).

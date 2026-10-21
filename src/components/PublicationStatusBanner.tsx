@@ -7,7 +7,7 @@ export interface PublicationStatusBannerProps {
   publication: EffectivePublicationBannerState;
   viewerRole: MembershipRole;
   isDemoMode: boolean;
-  onRetryRecalculation?: () => Promise<void>;
+  onRetryRecalculation?: (() => Promise<void>) | undefined;
 }
 
 /**
@@ -81,9 +81,7 @@ export function PublicationStatusBanner({
         >
           <StatusBadge variant={badgeVariant} />
           <span style={{ fontSize: '0.82rem', fontWeight: 600, wordBreak: 'break-word' }}>
-            Match State #{publication.publishedSeq ?? 'none'} / Required #
-            {publication.requiredSeq} • Rules: {publication.rulesVersion} (K=
-            {publication.kFactor} pilot default)
+            Match State #{publication.publishedSeq ?? 'none'} / Required #{publication.requiredSeq}
           </span>
         </div>
 

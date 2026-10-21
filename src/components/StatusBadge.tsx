@@ -54,9 +54,9 @@ const BADGE_CONFIG: Record<
     className: 'status-badge status-badge-stale',
   },
   provisional: {
-    icon: <Sparkles size={12} strokeWidth={2.5} />,
+    icon: null,
     defaultLabel: 'Provisional (<3 matches)',
-    className: 'status-badge status-badge-warning',
+    className: 'status-badge status-badge-warning status-badge-provisional',
   },
   guest: {
     icon: <Star size={12} strokeWidth={2.5} fill="currentColor" />,
@@ -104,9 +104,11 @@ export function StatusBadge({ variant, customLabel }: StatusBadgeProps) {
   const label = customLabel ?? cfg.defaultLabel;
   return (
     <span className={cfg.className} data-testid={`status-badge-${variant}`}>
-      <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center' }}>
-        {cfg.icon}
-      </span>
+      {cfg.icon ? (
+        <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          {cfg.icon}
+        </span>
+      ) : null}
       <span>{label}</span>
     </span>
   );
