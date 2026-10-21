@@ -26,7 +26,7 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
     <div
       data-testid={`leaderboard-row-${row.playerId}`}
       onClick={() => onSelectPlayer(row.playerId)}
-      className={`group relative flex items-center justify-between px-3.5 py-3 sm:px-4 sm:py-3.5 transition-colors cursor-pointer border-b border-slate-800/80 last:border-b-0 hover:bg-slate-800/40 ${
+      className={`group relative flex items-center justify-between px-3.5 py-3 sm:px-4 sm:py-3.5 transition-colors cursor-pointer border-b border-[var(--border-color)] last:border-b-0 hover:bg-[var(--bg-surface-subtle)] ${
         isCurrentUser ? 'bg-emerald-500/10 border-l-4 border-l-emerald-500' : ''
       }`}
       role="button"
@@ -42,7 +42,7 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
       {/* Left: #Rank, Avatar, Player Name & Badges */}
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 pr-2">
         {/* Rank Number with # */}
-        <div className="w-7 sm:w-8 text-left flex-shrink-0 font-medium text-xs sm:text-sm text-slate-400">
+        <div className="w-7 sm:w-8 text-left flex-shrink-0 font-medium text-xs sm:text-sm text-[var(--text-secondary)]">
           <span>#{row.rank}</span>
         </div>
 
@@ -58,8 +58,8 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span
-              className={`font-semibold text-sm sm:text-base truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] text-white group-hover:text-emerald-400 transition-colors ${
-                isCurrentUser ? 'text-emerald-400' : ''
+              className={`font-semibold text-sm sm:text-base truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] text-[var(--text-primary)] group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors ${
+                isCurrentUser ? 'text-emerald-600 dark:text-emerald-400' : ''
               }`}
               title={row.displayName}
             >
@@ -89,10 +89,10 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
 
       {/* Right: Elo Points and Win-Loss & Win Rate Record */}
       <div className="text-right flex-shrink-0 pl-2">
-        <div className="font-semibold text-sm sm:text-base text-slate-100">
+        <div className="font-semibold text-sm sm:text-base text-[var(--text-primary)]">
           <span className="rating-mono">{row.ratingDisplay}</span> pts
         </div>
-        <div className="text-[11px] sm:text-xs text-slate-400 font-normal mt-0.5 whitespace-nowrap">
+        <div className="text-[11px] sm:text-xs text-[var(--text-secondary)] font-normal mt-0.5 whitespace-nowrap">
           {statsDisplay}
         </div>
       </div>

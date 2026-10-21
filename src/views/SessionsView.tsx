@@ -1027,7 +1027,7 @@ export function SessionsView({
 
       {/* Page Header: Title, Filter Pills, and + Start New Session CTA */}
       <div className="flex flex-col gap-3">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
           Sessions
         </h1>
 
@@ -1044,13 +1044,18 @@ export function SessionsView({
         )}
 
         {/* Filter Bar: [All] [Singles] [Doubles] matching sessions.jfif */}
-        <div className="w-full bg-[#121a24] p-1 rounded-xl border border-slate-800/80 grid grid-cols-3 gap-1">
+        <div
+          role="group"
+          aria-label="Filter sessions by format"
+          className="w-full bg-[#121a24] p-1 rounded-xl border border-slate-800/80 grid grid-cols-3 gap-1"
+        >
           {(['all', 'singles', 'doubles'] as const).map((tab) => {
             const isActive = sessionFilter === tab;
             return (
               <button
                 key={tab}
                 type="button"
+                aria-pressed={isActive}
                 onClick={() => setSessionFilter(tab)}
                 className={`py-2 px-3 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
                   isActive
@@ -1286,7 +1291,7 @@ export function SessionsView({
       {/* Past Completed Sessions Accordion Section (matching sessions.jfif) */}
       <div className="flex flex-col gap-3 mt-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight">
             Session History
           </h2>
           <span className="text-xs text-slate-400">

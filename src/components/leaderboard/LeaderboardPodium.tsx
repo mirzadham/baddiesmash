@@ -185,7 +185,16 @@ export function LeaderboardPodium({
           {top2 ? (
             <div
               data-testid={`leaderboard-row-${top2.playerId}`}
-              className="w-full flex flex-col justify-end cursor-pointer group"
+              className="w-full flex flex-col justify-end cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectPlayer(top2.playerId);
+                }
+              }}
+              aria-label={`View stats for rank ${top2.rank}, ${top2.displayName}`}
               onClick={() => onSelectPlayer(top2.playerId)}
             >
               {/* Semantic hidden rank for tests */}
@@ -249,9 +258,9 @@ export function LeaderboardPodium({
                         e.stopPropagation();
                         onSelectPlayer(top2.playerId);
                       }}
-                      className="font-semibold text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0"
+                      className="font-semibold text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0 min-h-[24px] px-1 py-0.5"
                       title={top2.displayName}
-                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                      style={{ background: 'transparent', border: 'none' }}
                     >
                       {top2.displayName}
                     </button>
@@ -295,7 +304,16 @@ export function LeaderboardPodium({
           {top1 ? (
             <div
               data-testid={`leaderboard-row-${top1.playerId}`}
-              className="w-full flex flex-col justify-end cursor-pointer group"
+              className="w-full flex flex-col justify-end cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectPlayer(top1.playerId);
+                }
+              }}
+              aria-label={`View stats for rank ${top1.rank}, ${top1.displayName}`}
               onClick={() => onSelectPlayer(top1.playerId)}
             >
               {/* Semantic hidden rank for tests */}
@@ -366,9 +384,9 @@ export function LeaderboardPodium({
                         e.stopPropagation();
                         onSelectPlayer(top1.playerId);
                       }}
-                      className="font-bold text-sm sm:text-base text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0"
+                      className="font-bold text-sm sm:text-base text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0 min-h-[24px] px-1 py-0.5"
                       title={top1.displayName}
-                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                      style={{ background: 'transparent', border: 'none' }}
                     >
                       {top1.displayName}
                     </button>
@@ -412,7 +430,16 @@ export function LeaderboardPodium({
           {top3 ? (
             <div
               data-testid={`leaderboard-row-${top3.playerId}`}
-              className="w-full flex flex-col justify-end cursor-pointer group"
+              className="w-full flex flex-col justify-end cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectPlayer(top3.playerId);
+                }
+              }}
+              aria-label={`View stats for rank ${top3.rank}, ${top3.displayName}`}
               onClick={() => onSelectPlayer(top3.playerId)}
             >
               {/* Semantic hidden rank for tests */}
@@ -476,9 +503,9 @@ export function LeaderboardPodium({
                         e.stopPropagation();
                         onSelectPlayer(top3.playerId);
                       }}
-                      className="font-semibold text-xs text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0"
+                      className="font-semibold text-xs text-white hover:text-emerald-400 transition-colors truncate block text-center cursor-pointer min-w-0 min-h-[24px] px-1 py-0.5"
                       title={top3.displayName}
-                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                      style={{ background: 'transparent', border: 'none' }}
                     >
                       {top3.displayName}
                     </button>

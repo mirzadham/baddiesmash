@@ -416,10 +416,11 @@ export function LiveDoublesRecorderCard({
             <button
               type="button"
               onClick={onDismissUndo}
-              className="text-slate-400 hover:text-white text-xs px-1.5 py-1"
+              aria-label="Dismiss undo notification"
+              className="text-slate-400 hover:text-white text-xs px-2 py-1 min-h-[28px] min-w-[28px] inline-flex items-center justify-center rounded hover:bg-slate-800/60 cursor-pointer"
               title="Dismiss"
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </div>
         </div>

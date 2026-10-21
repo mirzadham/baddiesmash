@@ -369,7 +369,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             snapshot.viewerMembership.role === 'owner') && (
             <button
               type="button"
-              className="sr-only"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:shadow-xl focus:text-xs focus:font-bold"
               aria-expanded={showAdminContextualModal}
               onClick={() => setShowAdminContextualModal((prev) => !prev)}
               data-testid="toggle-admin-tools-btn"
@@ -380,7 +380,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
 
           <button
             type="button"
-            className="sr-only"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-32 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:shadow-xl focus:text-xs focus:font-bold"
             onClick={() => {
               const next: ThemePreference = theme === 'dark' ? 'light' : 'dark';
               setTheme(next);

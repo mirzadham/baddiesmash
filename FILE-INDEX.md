@@ -99,6 +99,7 @@ This pack contains the following files:
 - [`src/domain/__tests__/phase10-leaderboard-redesign.test.tsx`](src/domain/__tests__/phase10-leaderboard-redesign.test.tsx)
 - [`src/domain/__tests__/phase11-sessions-redesign.test.tsx`](src/domain/__tests__/phase11-sessions-redesign.test.tsx)
 - [`src/domain/__tests__/phase12-profile-redesign.test.tsx`](src/domain/__tests__/phase12-profile-redesign.test.tsx)
+- [`src/domain/__tests__/phase13-interface-accessibility.test.tsx`](src/domain/__tests__/phase13-interface-accessibility.test.tsx)
 - [`src/domain/__tests__/scoring.test.ts`](src/domain/__tests__/scoring.test.ts)
 - [`src/domain/__tests__/standings.test.ts`](src/domain/__tests__/standings.test.ts)
 - [`src/lib/inviteToken.ts`](src/lib/inviteToken.ts)

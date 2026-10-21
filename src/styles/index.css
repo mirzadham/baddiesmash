@@ -123,6 +123,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-padding-top: 4.5rem;
+}
+
 html,
 body {
   margin: 0;
@@ -194,7 +198,7 @@ canvas {
 }
 
 .touch-target:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .touch-target:disabled {
@@ -965,8 +969,8 @@ canvas {
   box-shadow: 0 6px 20px rgba(34, 197, 94, 0.45);
 }
 
-.smashtrack-cta-btn:active {
-  transform: scale(0.98);
+.smashtrack-cta-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .smashtrack-session-card {
@@ -1001,8 +1005,8 @@ canvas {
   transform: translateY(-1px);
 }
 
-.smashtrack-blue-btn:active {
-  transform: scale(0.98);
+.smashtrack-blue-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .smashtrack-leaderboard-card {

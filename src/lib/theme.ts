@@ -42,9 +42,39 @@ export function applyThemeToDocument(theme: ThemePreference): void {
     return;
   }
   const root = document.documentElement;
+
+  // Suppress transitions temporarily to prevent color smearing on theme switch
+  let styleEl: HTMLStyleElement | null = null;
+  if (document.head) {
+    styleEl = document.createElement('style');
+    styleEl.appendChild(
+      document.createTextNode(
+        '*, *::before, *::after { transition: none !important; }',
+      ),
+    );
+    document.head.appendChild(styleEl);
+  }
+
   if (theme === 'system') {
     root.removeAttribute('data-theme');
   } else {
     root.setAttribute('data-theme', theme);
+  }
+
+  if (styleEl && document.head) {
+    // Force a style flush then re-enable transitions on the next frame
+    if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+      void window.getComputedStyle(root).opacity;
+    }
+    const cleanup = () => {
+      if (styleEl && styleEl.parentNode) {
+        styleEl.parentNode.removeChild(styleEl);
+      }
+    };
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(cleanup);
+    } else {
+      setTimeout(cleanup, 0);
+    }
   }
 }

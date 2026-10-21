@@ -235,7 +235,7 @@ export function HomeView({
             </div>
           </div>
 
-          {/* Card CTA Button: View Session > */}
+          {/* Card CTA Button: View Session */}
           <button
             type="button"
             className="smashtrack-blue-btn"
@@ -244,7 +244,8 @@ export function HomeView({
               onNavigateTab('sessions');
             }}
           >
-            <span>View Session &gt;</span>
+            <span>View Session</span>
+            <span aria-hidden="true" style={{ marginLeft: '0.25rem' }}>→</span>
           </button>
         </section>
       ) : (
@@ -306,13 +307,12 @@ export function HomeView({
           <button
             type="button"
             onClick={() => onNavigateTab('leaderboard')}
+            className="text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
             style={{
               background: 'none',
               border: 'none',
-              color: '#38bdf8',
               fontSize: '0.92rem',
-              fontWeight: 500,
-              cursor: 'pointer',
+              fontWeight: 600,
               padding: '0.25rem 0.5rem',
             }}
           >

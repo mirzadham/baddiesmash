@@ -51,20 +51,25 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           onClick={onClose}
           aria-label="Close admin tools"
           data-testid="close-admin-panel-btn"
-          className="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors border border-slate-700/60 cursor-pointer"
+          className="w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors border border-slate-700/60 cursor-pointer"
         >
           <X size={16} />
         </button>
       </div>
 
       {/* Segmented Category Pill Switcher */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+      <div
+        role="group"
+        aria-label="Filter admin tools by category"
+        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1"
+      >
         {tabs.map((tab) => {
           const isActive = activeCategory === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
+              aria-pressed={isActive}
               onClick={() => onSelectCategory(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 isActive

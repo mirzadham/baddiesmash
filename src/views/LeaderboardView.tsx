@@ -104,10 +104,10 @@ export function LeaderboardView({
     <div data-testid="view-leaderboard" className="pb-12">
       {/* Page Heading Section matching new ui design/leaderboard.jfif */}
       <div className="mb-3">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white m-0">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] m-0">
           Leaderboard
         </h1>
-        <p className="text-xs text-slate-400 mt-0.5 m-0 font-normal">
+        <p className="text-xs text-[var(--text-secondary)] mt-0.5 m-0 font-normal">
           See who&apos;s leading the court
         </p>
       </div>
@@ -120,7 +120,7 @@ export function LeaderboardView({
             type="button"
             id="leaderboard-filter-dropdown-btn"
             onClick={() => setIsFilterOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-700 bg-[#16202e] text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface-subtle)] text-xs sm:text-sm font-semibold text-[var(--text-primary)] shadow-sm hover:bg-[var(--bg-surface-elevated)] transition-all cursor-pointer"
             aria-expanded={isFilterOpen}
             aria-label="Filter leaderboard"
           >
@@ -249,24 +249,26 @@ export function LeaderboardView({
           <button
             type="button"
             onClick={() => setFormatMode('singles')}
-            style={{ background: 'transparent', border: 'none', padding: '0 2px', cursor: 'pointer' }}
-            className={`transition-colors ${
+            aria-pressed={formatMode === 'singles'}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            className={`min-h-[28px] px-2 py-1 rounded transition-colors ${
               formatMode === 'singles'
-                ? 'text-emerald-400 font-bold'
-                : 'text-slate-400 hover:text-slate-200 font-medium'
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium'
             }`}
           >
             Singles
           </button>
-          <span className="text-slate-600 font-normal select-none">|</span>
+          <span className="text-[var(--text-muted)] font-normal select-none" aria-hidden="true">|</span>
           <button
             type="button"
             onClick={() => setFormatMode('doubles')}
-            style={{ background: 'transparent', border: 'none', padding: '0 2px', cursor: 'pointer' }}
-            className={`transition-colors ${
+            aria-pressed={formatMode === 'doubles'}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            className={`min-h-[28px] px-2 py-1 rounded transition-colors ${
               formatMode === 'doubles'
-                ? 'text-emerald-400 font-bold'
-                : 'text-slate-400 hover:text-slate-200 font-medium'
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium'
             }`}
           >
             Doubles

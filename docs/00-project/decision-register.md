@@ -202,6 +202,22 @@ When a material decision changes:
   - *Comprehensive Gate States:* Redesigned all other gate views (`no_membership` invitation redemption, `pending_approval` waiting room, `membership_check_failed`, `rejected`, `suspended`, `departed`) to match the athletic dark sports design language.
   - *Test Verification:* All 14 Vitest test suites (87 tests) continue to pass 100%; TypeScript (`tsc -b`) and Vite production build pass cleanly with zero errors.
   - *Affected Files:* `src/App.tsx`, `src/views/AuthMembershipGateView.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Phase 17 Cross-Discipline Interface & Accessibility Remediation):**
+  - *Accessibility & Contrast Resolution (`DEC-058`):* Fixed 5 `HIGH` severity escalation triggers identified by cross-discipline interface review (`better-interface`):
+    - Color Contrast in Light & Dark: Replaced hardcoded `text-white`, `text-slate-100`, and `#38bdf8` with semantic variables (`var(--text-primary)`, `var(--text-secondary)`) and theme-safe classes (`text-sky-600 dark:text-sky-400`, `text-emerald-600 dark:text-emerald-400`) in `LeaderboardView.tsx`, `RankingRow.tsx`, and `HomeView.tsx`. Contrast ratios now exceed 4.5:1 across both themes.
+    - Keyboard Focus Indicators: Applied `focus:not-sr-only focus:fixed ...` to `toggle-admin-tools-btn` and theme toggle buttons in `App.tsx` so keyboard users have continuous visible focus rings when navigating the header.
+    - Non-Color State Communication: Added `aria-pressed` / `role="group"` attributes to format switchers (Singles/Doubles in `LeaderboardView.tsx`), filter pills (`SessionsView.tsx`), and admin category tabs (`AdminHeader.tsx`).
+    - Accessible Names: Added `aria-label="Dismiss undo notification"` and `aria-hidden="true"` to the 10-second undo notification dismiss button in `LiveDoublesRecorderCard.tsx`.
+    - Keyboard Support on Podium: Added `role="button"`, `tabIndex={0}`, `onKeyDown` (Enter/Space), and descriptive `aria-label` to 1st, 2nd, and 3rd place podium tiers in `LeaderboardPodium.tsx`.
+  - *Layout, Typography & UI Polish:*
+    - Added `viewport-fit=cover` in `index.html` to ensure `env(safe-area-inset-bottom)` functions properly on mobile Safari.
+    - Increased interactive hit target sizes to at least 24×24px across format and podium buttons.
+    - Normalized button active scale to `0.96` with `:not(:disabled)` in `src/styles/index.css`.
+    - Implemented CSS transition suppression in `src/lib/theme.ts` during theme switching to prevent color smearing.
+    - Replaced raw ASCII `&gt;` with clean button copy and an SVG chevron in `HomeView.tsx`.
+  - *Test Evidence & Quality Gates:* Created `src/domain/__tests__/phase13-interface-accessibility.test.tsx` (5 automated tests). All 15 test suites and all 92 automated tests pass with 100% success rate (`npm test -- --run`). TypeScript check (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `index.html`, `src/App.tsx`, `src/styles/index.css`, `src/lib/theme.ts`, `src/views/HomeView.tsx`, `src/views/LeaderboardView.tsx`, `src/views/SessionsView.tsx`, `src/components/leaderboard/LeaderboardPodium.tsx`, `src/components/leaderboard/RankingRow.tsx`, `src/components/sessions/LiveDoublesRecorderCard.tsx`, `src/components/admin/AdminHeader.tsx`, `src/domain/__tests__/phase13-interface-accessibility.test.tsx`, `FILE-INDEX.md`, `docs/00-project/decision-register.md`.
+
 
 
 
