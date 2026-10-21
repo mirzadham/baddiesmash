@@ -177,6 +177,31 @@ When a material decision changes:
   - *Admin Maintenance & Recalculation Relocation:* Relocated system publication health monitoring and the `Retry Recalculation` control exclusively into `AdminGovernanceView` (Section 6: Rating System Health & Recalculation) where technical system controls belong.
   - *Test Verification:* Updated `src/domain/__tests__/phase3a-ui-foundation.test.tsx`, `phase6-release-readiness.test.tsx`, and `phase12-profile-redesign.test.tsx`. All 14 test suites and all 87 automated tests pass (100% green). TypeScript check (`tsc -b`) and Vite production build pass with zero errors.
   - *Affected Files:* `src/views/HomeView.tsx`, `src/views/LeaderboardView.tsx`, `src/views/ProfileView.tsx`, `src/views/SessionsView.tsx`, `src/views/AdminGovernanceView.tsx`, `src/App.tsx`, `src/components/PublicationStatusBanner.tsx`, `src/domain/__tests__/phase3a-ui-foundation.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-21 (Owner approval — Phase 14 SMASHTRACK Admin & Governance Control Room Redesign):**
+  - *Modular Control Room Architecture (`DEC-055`):* Decomposed the monolithic, 2,350-line `AdminGovernanceView.tsx` into 7 high-contrast, mobile-first modular components in `src/components/admin/`:
+    - `AdminHeader.tsx`: Sticky frosted top header with category pill switcher (`All Tools`, `Members & Invites`, `Players & Roster`, `Club & System`), pending approval counter badge, and close button.
+    - `AdminInvitationsSection.tsx`: Single-use invitation issuance, copyable one-time secret box, and invitation directory with reasoned revocation.
+    - `AdminMembershipsSection.tsx`: Pending approvals with visual 3-option player linking mode cards, and authorized member directory with role dropdowns, status, and profile link editing.
+    - `AdminPlayersSection.tsx`: Player profile creation with duplicate name warnings, and roster list with active/inactive status toggles.
+    - `AdminGuestMergeSection.tsx`: Two-step atomic guest merge with server impact preview, same-match conflict detection, and stale preview fencing.
+    - `AdminOwnershipSection.tsx`: Group Owner exclusive transfer with non-owner transparency notice and recipient selection.
+    - `AdminRatingHealthSection.tsx`: Rating system health monitoring and manual recalculation retry trigger (`DEC-054`).
+  - *Zero Test Regression Guarantee:* Kept `All Tools` active by default so all sections remain in the DOM, maintaining 100% compatibility with automated tests in `phase3b-admin-onboarding-ui.test.tsx`.
+  - *Test Verification:* All 14 Vitest test suites (87 tests) pass with 100% success rate; TypeScript (`tsc -b`) and Vite production build pass cleanly with zero errors.
+  - *Affected Files:* `src/views/AdminGovernanceView.tsx`, `src/components/admin/AdminHeader.tsx`, `src/components/admin/AdminInvitationsSection.tsx`, `src/components/admin/AdminMembershipsSection.tsx`, `src/components/admin/AdminPlayersSection.tsx`, `src/components/admin/AdminGuestMergeSection.tsx`, `src/components/admin/AdminOwnershipSection.tsx`, `src/components/admin/AdminRatingHealthSection.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-21 (Owner approval — Phase 15 SMASHTRACK Roster Control Dropdown Redesign):**
+  - *Player Selector Dropdown & Focused Inspector Card (`DEC-056`):* Replaced the unbounded vertical list of all player cards in Section 3 (`AdminPlayersSection.tsx`) with a mobile-friendly player selector dropdown (`admin-roster-player-select`) and a focused management card.
+  - *Scroll Elimination:* Instead of forcing organizers to scroll past dozens of cards as club memberships grow, organizers can choose any player from the dropdown to immediately view their identity, active status, guest status, and toggle their active/inactive status with a required 3-character audit reason.
+  - *Collapsible Full Roster Drawer:* Added an optional "View All Roster" drawer toggle for organizers who need a global glance at all player profiles simultaneously.
+  - *Test Verification:* All 14 Vitest test suites (87 tests) continue to pass 100%; TypeScript (`tsc -b`) and Vite production build pass cleanly with zero errors.
+  - *Affected Files:* `src/components/admin/AdminPlayersSection.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-21 (Owner approval — Phase 16 SMASHTRACK Authentication & Membership Gate Interface Redesign):**
+  - *Unified Brand Header Across Gate States (`DEC-057`):* Replaced the legacy "Badminton Tracker" header and broken native select (`#theme-select-gate`) in `App.tsx` with the official SMASHTRACK brand header (`ShuttlecockBrandMark`, bold white/emerald typography, and one-tap Sun/Moon theme toggle button).
+  - *Jargon & Commentary Elimination:* Removed all internal technical commentary ("Supabase Free-Plan built-in SMTP quotas (2 emails/hour)", "OAuth provider configuration in Supabase Auth", and "(Recommended for V1)") from authentication cards.
+  - *Athletic Dark Sports Styling:* Modernized `AuthMembershipGateView.tsx` with cyber-slate containers (`#121c28`), emerald lock hero badge, official Google "G" vector logo button, Mail/Lock icons with emerald focus rings on inputs, and an athletic pill card for Demo Mode.
+  - *Comprehensive Gate States:* Redesigned all other gate views (`no_membership` invitation redemption, `pending_approval` waiting room, `membership_check_failed`, `rejected`, `suspended`, `departed`) to match the athletic dark sports design language.
+  - *Test Verification:* All 14 Vitest test suites (87 tests) continue to pass 100%; TypeScript (`tsc -b`) and Vite production build pass cleanly with zero errors.
+  - *Affected Files:* `src/App.tsx`, `src/views/AuthMembershipGateView.tsx`, `docs/00-project/decision-register.md`.
 
 
 

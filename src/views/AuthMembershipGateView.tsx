@@ -1,5 +1,19 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import {
+  Lock,
+  Mail,
+  Key,
+  Clock,
+  ShieldAlert,
+  Sparkles,
+  RefreshCw,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  UserX,
+  AlertOctagon,
+} from 'lucide-react';
+import {
   clearCapturedInviteToken,
   sanitizeInvitationRpcError,
 } from '../lib/inviteToken.ts';
@@ -213,327 +227,53 @@ export function AuthMembershipGateView({
     }
   };
 
-  if (gateState.status === 'membership_check_failed') {
-    return (
-      <section
-        className="card"
-        role="alert"
-        aria-labelledby="gate-error-heading"
-        data-testid="gate-membership-check-failed"
-      >
-        <h2 id="gate-error-heading" style={{ marginTop: 0 }}>
-          ⚠ Unable to Verify Group Membership
-        </h2>
-        <p>
-          Access to group data is blocked because your membership status could
-          not be verified with the server. Protected group data is never shown
-          while verification is unconfirmed.
-        </p>
-        <p
-          style={{
-            padding: '0.75rem',
-            background: 'var(--status-stale-bg)',
-            color: 'var(--status-stale-fg)',
-            borderRadius: '0.5rem',
-            fontWeight: 600,
-          }}
-        >
-          Diagnostic detail: {gateState.errorMessage}
-        </p>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="touch-target touch-target-primary"
-            onClick={() => void onRetryCheck()}
-          >
-            ↻ Retry Verification
-          </button>
-        </div>
-      </section>
-    );
-  }
-
-  if (gateState.status === 'unauthenticated') {
-    return (
-      <section
-        className="card"
-        aria-labelledby="auth-signin-heading"
-        data-testid="gate-unauthenticated"
-      >
-        <h2 id="auth-signin-heading" style={{ marginTop: 0 }}>
-          Sign In Required — Invitation-Only Group
-        </h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          This badminton tracker is private to approved group members. Signing
-          in authenticates your account, after which your group membership and
-          invitation status are verified server-side.
-        </p>
-
-        {capturedInviteToken && (
-          <div
-            role="status"
-            data-testid="invite-url-captured-notice"
-            style={{
-              padding: '0.75rem',
-              background: 'var(--status-ok-bg)',
-              color: 'var(--status-ok-fg)',
-              borderRadius: '0.5rem',
-              fontWeight: 600,
-              marginBottom: '1rem',
-            }}
-          >
-            ✉ Invitation token detected in session memory and removed from the
-            visible address bar. Sign in with the invited email address to
-            redeem it.
-          </div>
-        )}
-
-        {isDemoMode && (
-          <p
-            role="note"
-            style={{
-              padding: '0.75rem',
-              background: 'var(--status-warn-bg)',
-              color: 'var(--status-warn-fg)',
-              borderRadius: '0.5rem',
-              fontWeight: 600,
-            }}
-          >
-            ◈ Demo Mode Notice: Live authentication, invitation redemption, and
-            group bootstrap are disabled because VITE_SUPABASE_URL and
-            VITE_SUPABASE_ANON_KEY are not configured.
-          </p>
-        )}
-
-        <div style={{ margin: '1rem 0' }}>
-          <button
-            type="button"
-            className="touch-target touch-target-primary"
-            style={{ width: '100%' }}
-            disabled={isDemoMode || isSubmitting}
-            onClick={() => void handleGoogleClick()}
-          >
-            {isSubmitting
-              ? 'Connecting to Google...'
-              : 'Continue with Google (Recommended for V1)'}
-          </button>
-          <p
-            style={{
-              fontSize: '0.82rem',
-              color: 'var(--text-muted)',
-              marginTop: '0.4rem',
-            }}
-          >
-            Google Sign-In provides a verified email claim immediately without
-            consuming Supabase Free-Plan built-in SMTP quotas (2 emails/hour).
-            Requires Google OAuth provider configuration in Supabase Auth.
-          </p>
-        </div>
-
-        <hr
-          style={{
-            border: 'none',
-            borderTop: '1px solid var(--border-color)',
-            margin: '1.25rem 0',
-          }}
-        />
-
-        <form onSubmit={(e) => void handleEmailSubmit(e)} noValidate>
-          <h3 style={{ marginTop: 0, fontSize: '1rem' }}>
-            Or Sign In with Verified Email &amp; Password
-          </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Note: Email verification and password-reset emails are limited to 2
-            emails/hour on Supabase&apos;s built-in email provider unless custom
-            SMTP is configured.
-          </p>
-
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label
-              htmlFor="auth-email-input"
-              style={{
-                display: 'block',
-                fontWeight: 600,
-                marginBottom: '0.25rem',
-              }}
-            >
-              Email Address
-            </label>
-            <input
-              id="auth-email-input"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isDemoMode || isSubmitting}
-              style={{
-                width: '100%',
-                minHeight: '48px',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label
-              htmlFor="auth-password-input"
-              style={{
-                display: 'block',
-                fontWeight: 600,
-                marginBottom: '0.25rem',
-              }}
-            >
-              Password
-            </label>
-            <input
-              id="auth-password-input"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isDemoMode || isSubmitting}
-              style={{
-                width: '100%',
-                minHeight: '48px',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
-            />
-          </div>
-
-          {authError && (
-            <p
-              role="alert"
-              style={{
-                padding: '0.65rem',
-                background: 'var(--status-stale-bg)',
-                color: 'var(--status-stale-fg)',
-                borderRadius: '0.5rem',
-                fontWeight: 600,
-              }}
-            >
-              ✕ {authError}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="touch-target"
-            disabled={isDemoMode || isSubmitting}
-          >
-            {isSubmitting ? 'Signing In...' : 'Sign In with Email'}
-          </button>
-        </form>
-
-        {!isDemoMode && (
-          <div
-            style={{
-              marginTop: '1.25rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid var(--border-color)',
-              textAlign: 'center',
-            }}
-          >
-            <a
-              href="?demo=true"
-              className="touch-target"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                width: '100%',
-                background: 'var(--bg-surface-alt)',
-                color: 'var(--brand-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '0.5rem',
-                padding: '0.65rem 1rem',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                textDecoration: 'none',
-              }}
-              data-testid="explore-demo-mode-btn"
-            >
-              <span>▷</span>
-              <span>Explore Demo Mode (Interactive Preview)</span>
-            </a>
-          </div>
-        )}
-      </section>
-    );
-  }
-
+  // Shared Invitation Redemption Form Component
   const renderInvitationRedemptionForm = (contextLabel: string) => (
     <form
       onSubmit={(e) => void handleRedeemSubmit(e)}
       noValidate
       data-testid="invitation-redemption-form"
-      style={{
-        marginTop: '1rem',
-        padding: '1rem',
-        border: '1px solid var(--border-color)',
-        borderRadius: '0.6rem',
-        background: 'var(--bg-surface-alt)',
-      }}
+      className="mt-4 p-4 sm:p-5 rounded-2xl bg-[#0b121b] border border-slate-800 text-left space-y-4"
     >
-      <h3 style={{ marginTop: 0, fontSize: '1rem' }}>{contextLabel}</h3>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-        Invitation tokens are single-use, valid for up to 7 days, and verified
-        server-side against your confirmed account email. Redeeming an
-        invitation places your membership into <code>pending_approval</code>{' '}
-        until a group Admin or Owner approves it.
-      </p>
+      <div>
+        <h3 className="text-sm sm:text-base font-bold text-white tracking-tight m-0">
+          {contextLabel}
+        </h3>
+        <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+          Invitation tokens are single-use, valid for up to 7 days, and verified server-side against your account email.
+        </p>
+      </div>
 
       {capturedInviteToken && (
-        <p
+        <div
           role="status"
           data-testid="invite-url-prefilled-notice"
-          style={{
-            padding: '0.6rem',
-            background: 'var(--status-ok-bg)',
-            color: 'var(--status-ok-fg)',
-            borderRadius: '0.4rem',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-          }}
+          className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2"
         >
-          ✓ Invite token captured from URL parameter and stripped from the
-          visible address bar.
-        </p>
+          <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+          <span>Invite token captured from URL and ready to redeem.</span>
+        </div>
       )}
 
       {isDemoMode && (
-        <p
+        <div
           role="note"
           data-testid="redeem-demo-disabled-notice"
-          style={{
-            padding: '0.6rem',
-            background: 'var(--status-warn-bg)',
-            color: 'var(--status-warn-fg)',
-            borderRadius: '0.4rem',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-          }}
+          className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold"
         >
-          ◈ Demo Mode is read-only. Invitation redemption and first-run
-          bootstrap are disabled.
-        </p>
+          ◈ Demo Mode is read-only. Invitation redemption is disabled.
+        </div>
       )}
 
-      <div style={{ marginBottom: '0.75rem' }}>
+      {/* Raw token input */}
+      <div>
         <label
           htmlFor="invite-raw-token-input"
-          style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}
+          className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
         >
           Single-Use Invitation Token
         </label>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="flex gap-2">
           <input
             id="invite-raw-token-input"
             type={showRawToken ? 'text' : 'password'}
@@ -542,209 +282,394 @@ export function AuthMembershipGateView({
             value={rawTokenInput}
             onChange={(e) => setRawTokenInput(e.target.value)}
             disabled={isDemoMode || isSubmitting}
-            placeholder="Paste 64-character hex invitation token"
-            style={{
-              flex: 1,
-              minHeight: '48px',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '0.5rem',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-surface)',
-              fontFamily: 'monospace',
-            }}
+            placeholder="Paste your invitation token"
+            className="flex-1 h-11 px-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors disabled:opacity-50"
           />
           <button
             type="button"
-            className="touch-target"
             onClick={() => setShowRawToken((prev) => !prev)}
             disabled={isDemoMode || isSubmitting}
+            className="h-11 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
           >
             {showRawToken ? 'Hide' : 'Show'}
           </button>
         </div>
       </div>
 
+      {/* Profile preference fieldset */}
       <fieldset
-        style={{
-          border: '1px solid var(--border-color)',
-          borderRadius: '0.5rem',
-          padding: '0.75rem',
-          marginBottom: '0.75rem',
-        }}
+        className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2 text-xs"
         disabled={isDemoMode || isSubmitting}
       >
-        <legend style={{ fontWeight: 600, fontSize: '0.88rem' }}>
-          Optional Player Profile Request (Confirmed by Admin on Approval)
+        <legend className="text-xs font-semibold text-slate-300 uppercase tracking-wider px-1">
+          Player Profile Request (Optional)
         </legend>
-        <div style={{ display: 'grid', gap: '0.4rem', fontSize: '0.88rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="radio"
-              name="redeem-player-pref"
-              checked={playerPref === 'none'}
-              onChange={() => setPlayerPref('none')}
-            />
-            <span>
-              Let Admin choose during approval (or use invitation&apos;s
-              proposed player / Viewer-only)
-            </span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="radio"
-              name="redeem-player-pref"
-              checked={playerPref === 'new_name'}
-              onChange={() => setPlayerPref('new_name')}
-            />
-            <span>Request a new player profile display name</span>
-          </label>
-          {playerPref === 'new_name' && (
-            <div style={{ marginLeft: '1.5rem' }}>
-              <label
-                htmlFor="redeem-new-player-name"
-                style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600 }}
-              >
-                Requested New Player Display Name
-              </label>
-              <input
-                id="redeem-new-player-name"
-                type="text"
-                value={requestedNewPlayerName}
-                onChange={(e) => setRequestedNewPlayerName(e.target.value)}
-                placeholder="e.g. Hannah Tan"
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              />
-            </div>
-          )}
+        <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
+          <input
+            type="radio"
+            name="redeem-player-pref"
+            checked={playerPref === 'none'}
+            onChange={() => setPlayerPref('none')}
+            className="mt-0.5 text-cyan-500"
+          />
+          <span>Let Admin choose during approval (or use invitation&apos;s proposed player / Viewer-only)</span>
+        </label>
+        <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
+          <input
+            type="radio"
+            name="redeem-player-pref"
+            checked={playerPref === 'new_name'}
+            onChange={() => setPlayerPref('new_name')}
+            className="mt-0.5 text-cyan-500"
+          />
+          <span>Request a new player profile display name</span>
+        </label>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {playerPref === 'new_name' && (
+          <div className="pl-6 pt-1">
+            <label
+              htmlFor="invite-new-player-name-input"
+              className="block text-[11px] font-medium text-slate-400 mb-1"
+            >
+              Requested New Player Display Name
+            </label>
             <input
-              type="radio"
-              name="redeem-player-pref"
-              checked={playerPref === 'existing_uuid'}
-              onChange={() => setPlayerPref('existing_uuid')}
+              id="invite-new-player-name-input"
+              type="text"
+              value={requestedNewPlayerName}
+              onChange={(e) => setRequestedNewPlayerName(e.target.value)}
+              disabled={isDemoMode || isSubmitting}
+              placeholder="e.g. Hannah Tan"
+              className="w-full h-10 px-3 bg-[#0b121b] border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
-            <span>Request linking to an existing player UUID</span>
-          </label>
-          {playerPref === 'existing_uuid' && (
-            <div style={{ marginLeft: '1.5rem' }}>
-              <label
-                htmlFor="redeem-existing-player-uuid"
-                style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600 }}
-              >
-                Existing Player UUID (Never matched by display name alone)
-              </label>
-              <input
-                id="redeem-existing-player-uuid"
-                type="text"
-                value={requestedExistingPlayerId}
-                onChange={(e) => setRequestedExistingPlayerId(e.target.value)}
-                placeholder="00000000-0000-4000-8000-000000000000"
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                  fontFamily: 'monospace',
-                }}
-              />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
+          <input
+            type="radio"
+            name="redeem-player-pref"
+            checked={playerPref === 'existing_uuid'}
+            onChange={() => setPlayerPref('existing_uuid')}
+            className="mt-0.5 text-cyan-500"
+          />
+          <span>Link an existing player profile UUID provided by Admin</span>
+        </label>
+
+        {playerPref === 'existing_uuid' && (
+          <div className="pl-6 pt-1">
+            <label
+              htmlFor="invite-existing-player-uuid-input"
+              className="block text-[11px] font-medium text-slate-400 mb-1"
+            >
+              Existing Player Profile UUID
+            </label>
+            <input
+              id="invite-existing-player-uuid-input"
+              type="text"
+              value={requestedExistingPlayerId}
+              onChange={(e) => setRequestedExistingPlayerId(e.target.value)}
+              disabled={isDemoMode || isSubmitting}
+              placeholder="e.g. 00000000-0000-4000-8000-000000000201"
+              className="w-full h-10 px-3 bg-[#0b121b] border border-slate-700 rounded-lg text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+        )}
       </fieldset>
 
       {redeemError && (
-        <p
+        <div
           role="alert"
           data-testid="redeem-invitation-error"
-          style={{
-            padding: '0.65rem',
-            background: 'var(--status-stale-bg)',
-            color: 'var(--status-stale-fg)',
-            borderRadius: '0.5rem',
-            fontWeight: 600,
-          }}
+          className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold leading-relaxed"
         >
           ✕ {redeemError}
-        </p>
+        </div>
       )}
 
       <button
         type="submit"
-        className="touch-target touch-target-primary"
-        disabled={isDemoMode || isSubmitting || !onRedeemInvitation}
+        disabled={isDemoMode || isSubmitting}
         data-testid="redeem-invitation-submit-btn"
+        className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-[0.98] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 cursor-pointer"
       >
-        {isSubmitting ? 'Redeeming Invitation...' : 'Redeem Invitation Token'}
+        {isSubmitting ? 'Redeeming Invitation...' : 'Redeem Invitation & Request Membership'}
       </button>
     </form>
   );
 
+  // 1. Membership check failed state
+  if (gateState.status === 'membership_check_failed') {
+    return (
+      <section
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        role="alert"
+        aria-labelledby="gate-error-heading"
+        data-testid="gate-membership-check-failed"
+      >
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4 shadow-lg shadow-rose-500/10">
+          <ShieldAlert size={26} />
+        </div>
+        <h2 id="gate-error-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Verification Unsuccessful
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-4 leading-relaxed">
+          Access to group data is blocked because your membership status could not be verified with the server.
+        </p>
+        <div className="p-3.5 mb-6 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold text-left">
+          Diagnostic detail: {gateState.errorMessage}
+        </div>
+        <button
+          type="button"
+          className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          onClick={() => void onRetryCheck()}
+        >
+          <RefreshCw size={14} />
+          Retry Verification
+        </button>
+      </section>
+    );
+  }
+
+  // 2. Unauthenticated state (Sign-in form)
+  if (gateState.status === 'unauthenticated') {
+    return (
+      <section
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        aria-labelledby="auth-signin-heading"
+        data-testid="gate-unauthenticated"
+      >
+        {/* Subtle decorative background glows */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Hero Lock Badge */}
+        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-4 shadow-lg shadow-emerald-500/10">
+          <Lock size={26} />
+        </div>
+
+        <h2
+          id="auth-signin-heading"
+          className="text-xl sm:text-2xl font-black text-white tracking-tight"
+        >
+          Member Access
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-6 leading-relaxed max-w-xs mx-auto">
+          Private club tracker for approved members. Sign in to access live sessions, rankings, and stats.
+        </p>
+
+        {capturedInviteToken && (
+          <div
+            role="status"
+            data-testid="invite-url-captured-notice"
+            className="p-3.5 mb-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 text-left leading-relaxed"
+          >
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span>
+              Invitation token detected. Sign in with your invited email address to activate your membership.
+            </span>
+          </div>
+        )}
+
+        {isDemoMode && (
+          <div
+            role="note"
+            className="p-3.5 mb-5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-start gap-2.5 text-left leading-relaxed"
+          >
+            <span className="text-base shrink-0">◈</span>
+            <span>
+              Demo Mode Notice: Live authentication and membership mutations are disabled because no Supabase backend is configured.
+            </span>
+          </div>
+        )}
+
+        {/* Primary Action: Google OAuth Button */}
+        <div className="mb-6">
+          <button
+            type="button"
+            disabled={isDemoMode || isSubmitting}
+            onClick={() => void handleGoogleClick()}
+            className="w-full h-12 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-sm tracking-wide shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            <span>{isSubmitting ? 'Connecting...' : 'Continue with Google'}</span>
+          </button>
+          <p className="text-[11px] text-slate-400 mt-2">
+            Fast 1-tap sign in with your verified Google account
+          </p>
+        </div>
+
+        {/* Clean Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800" />
+          </div>
+          <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
+            <span className="bg-[#121c28] px-3 text-slate-500">
+              Or Sign In with Email
+            </span>
+          </div>
+        </div>
+
+        {/* Email & Password Form */}
+        <form onSubmit={(e) => void handleEmailSubmit(e)} noValidate className="text-left space-y-4">
+          <div>
+            <label
+              htmlFor="auth-email-input"
+              className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
+            >
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+              />
+              <input
+                id="auth-email-input"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isDemoMode || isSubmitting}
+                placeholder="you@example.com"
+                className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="auth-password-input"
+              className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <Lock
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+              />
+              <input
+                id="auth-password-input"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isDemoMode || isSubmitting}
+                placeholder="••••••••"
+                className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+              />
+            </div>
+          </div>
+
+          {authError && (
+            <div
+              role="alert"
+              className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed"
+            >
+              <span className="text-base shrink-0">✕</span>
+              <span>{authError}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isDemoMode || isSubmitting}
+            className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white font-bold text-xs uppercase tracking-wider border border-slate-700 shadow-md disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {isSubmitting ? (
+              <>
+                <RefreshCw size={14} className="animate-spin text-emerald-400" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In with Email'
+            )}
+          </button>
+        </form>
+
+        {/* Demo Mode Link */}
+        {!isDemoMode && (
+          <div className="mt-6 pt-5 border-t border-slate-800/80 flex flex-col items-center gap-2">
+            <span className="text-xs text-slate-400">
+              Want to explore the app first?
+            </span>
+            <a
+              href="?demo=true"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 font-semibold text-xs border border-slate-700/80 transition-all cursor-pointer"
+            >
+              <Sparkles size={13} />
+              Try Interactive Demo Mode →
+            </a>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // 3. Authenticated but not a group member state
   if (gateState.status === 'no_membership') {
     return (
       <section
-        className="card"
-        aria-labelledby="gate-no-membership-heading"
+        className="max-w-lg mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        aria-labelledby="gate-nomember-heading"
         data-testid="gate-no-membership"
       >
-        <h2 id="gate-no-membership-heading" style={{ marginTop: 0 }}>
-          🔒 Invitation Required
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-lg shadow-amber-500/10">
+          <Key size={26} />
+        </div>
+        <h2 id="gate-nomember-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Invitation Required
         </h2>
-        <p>
-          Signed in as <strong>{gateState.userEmail ?? gateState.userId}</strong>{' '}
-          ({gateState.emailVerified ? 'Verified Email' : 'Unverified Email'}).
+        <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-2 leading-relaxed">
+          Signed in as <strong className="text-slate-200">{gateState.userEmail ?? gateState.userId}</strong>.
         </p>
-        <p>
-          Your account does not yet have a membership record in this group.
-          Authentication alone does not grant access to group data. Redeem a
-          single-use invitation token issued for your email address below.
+        <p className="text-xs sm:text-sm text-slate-400 mb-5 leading-relaxed">
+          Your account does not yet have a membership record in this club. Redeem a single-use invitation token below to request access.
         </p>
 
         {!gateState.emailVerified && (
-          <p
+          <div
             role="alert"
-            style={{
-              padding: '0.65rem',
-              background: 'var(--status-warn-bg)',
-              color: 'var(--status-warn-fg)',
-              borderRadius: '0.5rem',
-              fontWeight: 600,
-            }}
+            className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-left"
           >
-            ⚠ Your account email is not yet marked verified. The database
-            requires a verified email address before redeeming an invitation or
-            bootstrapping a group.
-          </p>
+            ⚠ Your account email is not yet verified. Please verify your email before redeeming an invitation.
+          </div>
         )}
 
         {renderInvitationRedemptionForm('Redeem Single-Use Group Invitation')}
 
-        <div
-          style={{
-            marginTop: '1.25rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid var(--border-color)',
-          }}
-        >
+        {/* First-Run Initial Group Bootstrap (Owner only) */}
+        <div className="mt-6 pt-4 border-t border-slate-800 text-left">
           <button
             type="button"
-            className="touch-target"
+            className="text-xs text-slate-400 hover:text-white font-semibold flex items-center gap-1.5 cursor-pointer"
             aria-expanded={showBootstrapSection}
             onClick={() => setShowBootstrapSection((prev) => !prev)}
             data-testid="toggle-bootstrap-section-btn"
           >
+            {showBootstrapSection ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             {showBootstrapSection
-              ? '▾ Hide First-Run Initial Group Bootstrap'
-              : '▸ First-Run Initial Group Bootstrap (Owner Only)'}
+              ? 'Hide Initial Group Setup (Owner Only)'
+              : 'First-Run Initial Group Setup (Owner Only)'}
           </button>
 
           {showBootstrapSection && (
@@ -752,33 +677,19 @@ export function AuthMembershipGateView({
               onSubmit={(e) => void handleBootstrapSubmit(e)}
               noValidate
               data-testid="bootstrap-group-form"
-              style={{
-                marginTop: '0.75rem',
-                padding: '1rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '0.6rem',
-                background: 'var(--bg-surface-alt)',
-              }}
+              className="mt-3 p-4 rounded-xl bg-[#0b121b] border border-slate-800 space-y-3 animate-in fade-in"
             >
-              <h3 style={{ marginTop: 0, fontSize: '1rem' }}>
+              <h3 className="text-sm font-bold text-white m-0">
                 One-Time Initial Group Setup
               </h3>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-                This action is enforced server-side via{' '}
-                <code>public.bootstrap_initial_group</code> with an exclusive
-                table lock on <code>public.groups</code>. Once the initial group
-                exists, all subsequent bootstrap attempts are rejected by
-                PostgreSQL regardless of UI state.
+              <p className="text-xs text-slate-400 m-0">
+                Initialize the first club group. Once established, all future members join via invitations.
               </p>
 
-              <div style={{ marginBottom: '0.75rem' }}>
+              <div>
                 <label
                   htmlFor="bootstrap-group-name"
-                  style={{
-                    display: 'block',
-                    fontWeight: 600,
-                    marginBottom: '0.25rem',
-                  }}
+                  className="block text-xs font-medium text-slate-300 mb-1"
                 >
                   Group Name
                 </label>
@@ -789,25 +700,14 @@ export function AuthMembershipGateView({
                   onChange={(e) => setBootstrapGroupName(e.target.value)}
                   disabled={isDemoMode || isSubmitting}
                   placeholder="e.g. KL Badminton Regulars"
-                  style={{
-                    width: '100%',
-                    minHeight: '44px',
-                    padding: '0.45rem 0.65rem',
-                    borderRadius: '0.4rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                  }}
+                  className="w-full h-10 px-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
-              <div style={{ marginBottom: '0.75rem' }}>
+              <div>
                 <label
                   htmlFor="bootstrap-group-slug"
-                  style={{
-                    display: 'block',
-                    fontWeight: 600,
-                    marginBottom: '0.25rem',
-                  }}
+                  className="block text-xs font-medium text-slate-300 mb-1"
                 >
                   Group Slug
                 </label>
@@ -818,29 +718,16 @@ export function AuthMembershipGateView({
                   onChange={(e) => setBootstrapGroupSlug(e.target.value)}
                   disabled={isDemoMode || isSubmitting}
                   placeholder="e.g. kl-badminton-regulars"
-                  style={{
-                    width: '100%',
-                    minHeight: '44px',
-                    padding: '0.45rem 0.65rem',
-                    borderRadius: '0.4rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    fontFamily: 'monospace',
-                  }}
+                  className="w-full h-10 px-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
-              <div style={{ marginBottom: '0.75rem' }}>
+              <div>
                 <label
                   htmlFor="bootstrap-owner-display-name"
-                  style={{
-                    display: 'block',
-                    fontWeight: 600,
-                    marginBottom: '0.25rem',
-                  }}
+                  className="block text-xs font-medium text-slate-300 mb-1"
                 >
-                  Owner Player Profile Display Name (Optional — Leave blank for
-                  Viewer-only Owner)
+                  Owner Player Profile Display Name
                 </label>
                 <input
                   id="bootstrap-owner-display-name"
@@ -849,66 +736,45 @@ export function AuthMembershipGateView({
                   onChange={(e) => setBootstrapOwnerDisplayName(e.target.value)}
                   disabled={isDemoMode || isSubmitting}
                   placeholder="e.g. Aaron Tan"
-                  style={{
-                    width: '100%',
-                    minHeight: '44px',
-                    padding: '0.45rem 0.65rem',
-                    borderRadius: '0.4rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                  }}
+                  className="w-full h-10 px-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               {bootstrapError && (
-                <p
+                <div
                   role="alert"
                   data-testid="bootstrap-group-error"
-                  style={{
-                    padding: '0.65rem',
-                    background: 'var(--status-stale-bg)',
-                    color: 'var(--status-stale-fg)',
-                    borderRadius: '0.5rem',
-                    fontWeight: 600,
-                  }}
+                  className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold"
                 >
                   ✕ {bootstrapError}
-                </p>
+                </div>
               )}
 
               <button
                 type="submit"
-                className="touch-target touch-target-primary"
                 disabled={isDemoMode || isSubmitting || !onBootstrapGroup}
                 data-testid="bootstrap-group-submit-btn"
+                className="w-full h-11 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                {isSubmitting
-                  ? 'Bootstrapping Initial Group...'
-                  : 'Bootstrap Initial Group'}
+                {isSubmitting ? 'Setting Up Initial Group...' : 'Bootstrap Initial Group'}
               </button>
             </form>
           )}
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-            marginTop: '1.25rem',
-          }}
-        >
+        {/* Footer actions */}
+        <div className="flex items-center justify-center gap-3 mt-6 pt-5 border-t border-slate-800">
           <button
             type="button"
-            className="touch-target"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
             disabled={isSubmitting}
             onClick={() => void onRetryCheck()}
           >
-            ↻ Re-check Membership Status
+            ↻ Re-check Status
           </button>
           <button
             type="button"
-            className="touch-target"
+            className="px-4 py-2.5 rounded-xl bg-slate-800/60 hover:bg-rose-500/20 text-rose-300 font-bold text-xs uppercase tracking-wider border border-slate-700/80 hover:border-rose-500/40 transition-colors cursor-pointer"
             disabled={isSubmitting}
             onClick={() => void onSignOut()}
           >
@@ -919,37 +785,38 @@ export function AuthMembershipGateView({
     );
   }
 
+  // 4. Pending approval state (Waiting room)
   if (gateState.status === 'pending_approval') {
     return (
       <section
-        className="card"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
         aria-labelledby="gate-pending-heading"
         data-testid="gate-pending-approval"
       >
-        <h2 id="gate-pending-heading" style={{ marginTop: 0 }}>
-          ⏳ Membership Pending Admin Approval
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-lg shadow-amber-500/10">
+          <Clock size={26} className="animate-pulse" />
+        </div>
+        <h2 id="gate-pending-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Membership Pending Approval
         </h2>
-        <p>
-          Signed in as <strong>{gateState.userEmail ?? gateState.userId}</strong>.
+        <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-2 leading-relaxed">
+          Signed in as <strong className="text-slate-200">{gateState.userEmail ?? gateState.userId}</strong>.
         </p>
-        <p>
-          Your invitation has been redeemed and your membership request is
-          currently <strong>pending_approval</strong> (intended role:{' '}
-          <code>{gateState.membership.role}</code>). Group leaderboards,
-          sessions, and player profiles remain hidden until a group Admin or
-          Owner approves your membership.
+        <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
+          Your invitation has been redeemed and your membership request is currently awaiting organizer approval (intended role: <code className="text-amber-300 font-bold">{gateState.membership.role}</code>). Group leaderboards and sessions will unlock once approved.
         </p>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+
+        <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            className="touch-target touch-target-primary"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer"
             onClick={() => void onRetryCheck()}
           >
             ↻ Check Approval Status
           </button>
           <button
             type="button"
-            className="touch-target"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
             onClick={() => void onSignOut()}
           >
             Sign Out
@@ -959,27 +826,28 @@ export function AuthMembershipGateView({
     );
   }
 
+  // 5. Rejected membership state
   if (gateState.status === 'rejected') {
     return (
       <section
-        className="card"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
         aria-labelledby="gate-rejected-heading"
         data-testid="gate-rejected"
       >
-        <h2 id="gate-rejected-heading" style={{ marginTop: 0 }}>
-          ✕ Membership Request Declined
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4 shadow-lg shadow-rose-500/10">
+          <UserX size={26} />
+        </div>
+        <h2 id="gate-rejected-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Membership Request Declined
         </h2>
-        <p>
-          Your membership request for this group has status{' '}
-          <strong>rejected</strong>. Group data is not accessible. If a group
-          Admin or Owner has issued you a new single-use invitation, you may
-          redeem it below.
+        <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-4 leading-relaxed">
+          Your membership request for this group was declined by club organizers. If you received a new invitation token, you can redeem it below.
         </p>
         {renderInvitationRedemptionForm('Redeem a New Group Invitation')}
-        <div style={{ marginTop: '1rem' }}>
+        <div className="mt-6 pt-4 border-t border-slate-800">
           <button
             type="button"
-            className="touch-target"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
             disabled={isSubmitting}
             onClick={() => void onSignOut()}
           >
@@ -990,25 +858,26 @@ export function AuthMembershipGateView({
     );
   }
 
+  // 6. Suspended membership state
   if (gateState.status === 'suspended') {
     return (
       <section
-        className="card"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
         aria-labelledby="gate-suspended-heading"
         data-testid="gate-suspended"
       >
-        <h2 id="gate-suspended-heading" style={{ marginTop: 0 }}>
-          ⛔ Membership Suspended
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-lg shadow-amber-500/10">
+          <AlertOctagon size={26} />
+        </div>
+        <h2 id="gate-suspended-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Membership Suspended
         </h2>
-        <p>
-          Your group membership status is currently <strong>suspended</strong>.
-          Access to group leaderboards, sessions, and match records is disabled
-          while your account is suspended. Please contact the group Owner or an
-          Admin.
+        <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-6 leading-relaxed">
+          Your membership is currently suspended. Access to match history and sessions is restricted. Please contact the group Owner or an Admin.
         </p>
         <button
           type="button"
-          className="touch-target"
+          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
           onClick={() => void onSignOut()}
         >
           Sign Out
@@ -1017,27 +886,27 @@ export function AuthMembershipGateView({
     );
   }
 
-  // gateState.status === 'departed'
+  // 7. Departed membership state
   return (
     <section
-      className="card"
+      className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
       aria-labelledby="gate-departed-heading"
       data-testid="gate-departed"
     >
-      <h2 id="gate-departed-heading" style={{ marginTop: 0 }}>
+      <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 mx-auto mb-4 shadow-lg">
+        <UserX size={26} />
+      </div>
+      <h2 id="gate-departed-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
         Former Group Member
       </h2>
-      <p>
-        Your membership status is recorded as <strong>departed</strong>.
-        Historical match records for your player profile are preserved in group
-        history, while active account access to group data is disabled unless a
-        new invitation is issued and approved.
+      <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-4 leading-relaxed">
+        Your membership is recorded as departed. Historical match records are preserved in club archives. If re-invited, you can redeem your token below.
       </p>
       {renderInvitationRedemptionForm('Redeem a Re-Invitation Token')}
-      <div style={{ marginTop: '1rem' }}>
+      <div className="mt-6 pt-4 border-t border-slate-800">
         <button
           type="button"
-          className="touch-target"
+          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
           disabled={isSubmitting}
           onClick={() => void onSignOut()}
         >

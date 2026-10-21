@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Calendar, Home, Trophy, User } from 'lucide-react';
+import { Calendar, Home, Trophy, User, Sun, Moon } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
 import { ShuttlecockBrandMark } from './components/icons/BrandMark.tsx';
 import {
@@ -200,28 +200,47 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
         <header className="app-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <ShuttlecockBrandMark size={28} />
-            <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>
-              Badminton Tracker
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.15rem' }}>
+              <span
+                style={{
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontWeight: 900,
+                  fontSize: '1.35rem',
+                  letterSpacing: '-0.03em',
+                  color: '#ffffff',
+                  lineHeight: 1,
+                }}
+              >
+                SMASH
+              </span>
+              <span
+                style={{
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontWeight: 900,
+                  fontSize: '1.35rem',
+                  letterSpacing: '-0.03em',
+                  color: '#22c55e',
+                  lineHeight: 1,
+                }}
+              >
+                TRACK
+              </span>
+              <span className="sr-only">Badminton Tracker</span>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label htmlFor="theme-select-gate" style={{ fontSize: '0.82rem' }}>
-              Theme:
-            </label>
-            <select
-              id="theme-select-gate"
-              value={theme}
-              onChange={(e) => setTheme(e.target.value as ThemePreference)}
-              style={{
-                minHeight: '44px',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '0.4rem',
+            <button
+              type="button"
+              onClick={() => {
+                const next: ThemePreference = theme === 'dark' ? 'light' : 'dark';
+                setTheme(next);
               }}
+              aria-label={`Toggle theme (currently ${theme})`}
+              className="w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors border border-slate-700/60 cursor-pointer"
             >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              <span className="sr-only">Toggle theme</span>
+            </button>
           </div>
         </header>
         <main className="app-main">

@@ -5,8 +5,17 @@ import {
   useRef,
   useState,
 } from 'react';
-import { StatusBadge } from '../components/StatusBadge.tsx';
-import { PublicationStatusBanner } from '../components/PublicationStatusBanner.tsx';
+import { RefreshCw } from 'lucide-react';
+import {
+  type AdminCategoryTab,
+  AdminHeader,
+} from '../components/admin/AdminHeader.tsx';
+import { AdminInvitationsSection } from '../components/admin/AdminInvitationsSection.tsx';
+import { AdminMembershipsSection } from '../components/admin/AdminMembershipsSection.tsx';
+import { AdminPlayersSection } from '../components/admin/AdminPlayersSection.tsx';
+import { AdminGuestMergeSection } from '../components/admin/AdminGuestMergeSection.tsx';
+import { AdminOwnershipSection } from '../components/admin/AdminOwnershipSection.tsx';
+import { AdminRatingHealthSection } from '../components/admin/AdminRatingHealthSection.tsx';
 import { sanitizeInvitationRpcError } from '../lib/inviteToken.ts';
 import type {
   AdminGovernanceSnapshot,
@@ -153,6 +162,9 @@ export function AdminGovernanceView({
     useState<string>('');
   const [ownershipTransferConfirmed, setOwnershipTransferConfirmed] =
     useState<boolean>(false);
+
+  // Active category navigation tab for admin control room
+  const [activeCategory, setActiveCategory] = useState<AdminCategoryTab>('all');
 
   const loadAdminData = useCallback(async () => {
     setIsLoadingDirectory(true);
@@ -819,67 +831,38 @@ export function AdminGovernanceView({
       m.membership_id !== snapshot.viewerMembership.id,
   );
 
+  const showMembers = activeCategory === 'all' || activeCategory === 'members';
+  const showPlayers = activeCategory === 'all' || activeCategory === 'players';
+  const showSystem = activeCategory === 'all' || activeCategory === 'system';
+
   return (
     <section
-      className="card"
-      aria-labelledby="admin-governance-heading"
       data-testid="admin-governance-panel"
+      aria-labelledby="admin-governance-heading"
+      className="pb-28 max-w-4xl mx-auto px-3 sm:px-4 pt-2 sm:pt-4"
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '0.5rem',
-          flexWrap: 'wrap',
-          marginBottom: '0.75rem',
-        }}
-      >
-        <div>
-          <h2
-            id="admin-governance-heading"
-            style={{ margin: 0, fontSize: '1.15rem' }}
-          >
-            ⚙ Admin &amp; Owner Governance Panel
-          </h2>
-          <p
-            style={{
-              margin: '0.2rem 0 0 0',
-              fontSize: '0.82rem',
-              color: 'var(--text-muted)',
-            }}
-          >
-            Viewer Role: <code>{viewerRole}</code> • All mutations are validated
-            and audited in PostgreSQL (`SECURITY DEFINER` RPCs).
-          </p>
-        </div>
-        <button
-          type="button"
-          className="touch-target"
-          onClick={onClose}
-          data-testid="close-admin-panel-btn"
-        >
-          Close ✕
-        </button>
-      </div>
+      {/* Sticky Header with Category Tabs and Close Button */}
+      <AdminHeader
+        activeCategory={activeCategory}
+        onSelectCategory={setActiveCategory}
+        pendingCount={pendingMemberships.length}
+        onClose={onClose}
+      />
 
+      {/* Global Status Alerts */}
       {isDemoMode && (
         <div
           role="note"
           data-testid="admin-demo-readonly-notice"
-          style={{
-            padding: '0.75rem',
-            background: 'var(--status-warn-bg)',
-            color: 'var(--status-warn-fg)',
-            borderRadius: '0.5rem',
-            fontWeight: 600,
-            marginBottom: '1rem',
-          }}
+          className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-semibold flex items-center gap-3 leading-relaxed"
         >
-          ◈ Demo Mode Read-Only Governance View: You can inspect the invitation,
-          approval, player creation, guest merge, and ownership transfer
-          controls below, but all server mutations are disabled because no
-          Supabase backend is configured.
+          <span className="text-base shrink-0">◈</span>
+          <span>
+            Demo Mode Read-Only Governance View: You can inspect the invitation,
+            approval, player creation, guest merge, and ownership transfer
+            controls below, but all server mutations are disabled because no
+            Supabase backend is configured.
+          </span>
         </div>
       )}
 
@@ -887,16 +870,19 @@ export function AdminGovernanceView({
         <div
           role="alert"
           data-testid="admin-action-error"
-          style={{
-            padding: '0.75rem',
-            background: 'var(--status-stale-bg)',
-            color: 'var(--status-stale-fg)',
-            borderRadius: '0.5rem',
-            fontWeight: 600,
-            marginBottom: '1rem',
-          }}
+          className="mb-4 p-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 animate-in fade-in"
         >
-          ✕ {actionError}
+          <div className="flex items-center gap-2">
+            <span>✕</span>
+            <span>{actionError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="text-rose-400 hover:text-white text-xs underline cursor-pointer shrink-0"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -904,22 +890,30 @@ export function AdminGovernanceView({
         <div
           role="status"
           data-testid="admin-action-success"
-          style={{
-            padding: '0.75rem',
-            background: 'var(--status-ok-bg)',
-            color: 'var(--status-ok-fg)',
-            borderRadius: '0.5rem',
-            fontWeight: 600,
-            marginBottom: '1rem',
-          }}
+          className="mb-4 p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 animate-in fade-in"
         >
-          ✓ {actionSuccessMessage}
+          <div className="flex items-center gap-2">
+            <span>✓</span>
+            <span>{actionSuccessMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionSuccessMessage(null)}
+            className="text-emerald-400 hover:text-white text-xs underline cursor-pointer shrink-0"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
       {isLoadingDirectory && (
-        <p role="status" data-testid="admin-directory-loading">
-          ↻ Loading invitation metadata and member directory...
+        <p
+          role="status"
+          data-testid="admin-directory-loading"
+          className="text-xs text-slate-400 flex items-center gap-2 mb-4 p-3 bg-slate-900/60 border border-slate-800 rounded-xl"
+        >
+          <RefreshCw size={14} className="animate-spin text-emerald-400" />
+          Loading invitation metadata and member directory...
         </p>
       )}
 
@@ -927,1425 +921,135 @@ export function AdminGovernanceView({
         <div
           role="alert"
           data-testid="admin-directory-error"
-          style={{
-            padding: '0.75rem',
-            background: 'var(--status-stale-bg)',
-            color: 'var(--status-stale-fg)',
-            borderRadius: '0.5rem',
-            marginBottom: '1rem',
-          }}
+          className="mb-4 p-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm"
         >
-          <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            ✕ {directoryError}
-          </p>
+          <p className="font-semibold mb-2">✕ {directoryError}</p>
           <button
             type="button"
-            className="touch-target"
             onClick={() => void loadAdminData()}
+            className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-xs font-bold uppercase tracking-wider cursor-pointer"
           >
             ↻ Retry Loading Directory
           </button>
         </div>
       )}
 
-      {/* 1. INVITATION MANAGEMENT */}
-      <div
-        className="card"
-        style={{ background: 'var(--bg-surface-alt)', marginBottom: '1rem' }}
-        data-testid="admin-section-invitations"
-      >
-        <h3 style={{ marginTop: 0 }}>
-          1. Single-Use Invitation Management
-        </h3>
-        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-          Invitations are bound to a normalized email address, expire in up to 7
-          days, and are securely hashed in the database.
-          The token is returned only once upon issuance so you can copy and
-          share the link manually.
-        </p>
-
-        <form onSubmit={(e) => void handleIssueInvitation(e)} noValidate>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '0.75rem',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <div>
-              <label
-                htmlFor="admin-invite-email"
-                style={{
-                  display: 'block',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  marginBottom: '0.25rem',
-                }}
-              >
-                Invited Account Email
-              </label>
-              <input
-                id="admin-invite-email"
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                disabled={isDemoMode || isMutating}
-                placeholder="member@example.com"
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="admin-invite-role"
-                style={{
-                  display: 'block',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  marginBottom: '0.25rem',
-                }}
-              >
-                Intended Role
-              </label>
-              <select
-                id="admin-invite-role"
-                value={inviteRole}
-                onChange={(e) =>
-                  setInviteRole(
-                    e.target.value as Exclude<MembershipRole, 'owner'>,
-                  )
-                }
-                disabled={isDemoMode || isMutating}
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              >
-                <option value="member">member</option>
-                <option value="recorder">recorder</option>
-                <option value="admin" disabled={!isOwner}>
-                  admin {isOwner ? '' : '(Owner only)'}
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="admin-invite-proposed-player"
-                style={{
-                  display: 'block',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  marginBottom: '0.25rem',
-                }}
-              >
-                Proposed Player UUID (Optional)
-              </label>
-              <select
-                id="admin-invite-proposed-player"
-                value={inviteProposedPlayerId}
-                onChange={(e) => setInviteProposedPlayerId(e.target.value)}
-                disabled={isDemoMode || isMutating}
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              >
-                <option value="">None (Decide on approval)</option>
-                {unlinkedPermanentPlayers.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.display_name} ({p.id.slice(-6)})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="admin-invite-expiry"
-                style={{
-                  display: 'block',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  marginBottom: '0.25rem',
-                }}
-              >
-                Expiry (1–7 Days)
-              </label>
-              <input
-                id="admin-invite-expiry"
-                type="number"
-                min={1}
-                max={7}
-                value={inviteExpiresDays}
-                onChange={(e) =>
-                  setInviteExpiresDays(Number(e.target.value) || 7)
-                }
-                disabled={isDemoMode || isMutating}
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="touch-target touch-target-primary"
-            disabled={isDemoMode || isMutating}
-            data-testid="issue-invitation-submit-btn"
-          >
-            {isMutating ? 'Issuing...' : 'Issue Single-Use Invitation'}
-          </button>
-        </form>
-
-        {/* One-time raw token & invite link box (shown ONLY immediately after confirmed issuance) */}
-        {oneTimeIssuedSecret && (
-          <div
-            role="region"
-            aria-label="One-time invitation token"
-            data-testid="one-time-invitation-secret-box"
-            style={{
-              marginTop: '1rem',
-              padding: '0.85rem',
-              border: '2px solid var(--status-ok-fg)',
-              borderRadius: '0.5rem',
-              background: 'var(--status-ok-bg)',
-              color: 'var(--status-ok-fg)',
-            }}
-          >
-            <div style={{ fontWeight: 700, marginBottom: '0.35rem' }}>
-              🔑 One-Time Invitation Secret for{' '}
-              {oneTimeIssuedSecret.invitedEmail}
-            </div>
-            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.82rem' }}>
-              Copy and share this link or token now. It is stored securely — once dismissed, this token can never
-              be viewed again.
-            </p>
-            <div style={{ fontSize: '0.82rem', marginBottom: '0.35rem' }}>
-              <strong>Manual Share Link:</strong>{' '}
-              <code data-testid="one-time-invite-link">
-                {`${typeof window !== 'undefined' ? window.location.origin : 'https://tracker.local'}/?invite=${oneTimeIssuedSecret.rawToken}`}
-              </code>
-            </div>
-            <div style={{ fontSize: '0.82rem', marginBottom: '0.6rem' }}>
-              <strong>Invitation Token:</strong>{' '}
-              <code data-testid="one-time-raw-token">
-                {oneTimeIssuedSecret.rawToken}
-              </code>
-            </div>
-            <button
-              type="button"
-              className="touch-target"
-              onClick={() => setOneTimeIssuedSecret(null)}
-              data-testid="dismiss-one-time-token-btn"
-            >
-              Dismiss One-Time Secret
-            </button>
-          </div>
-        )}
-
-        {/* Invitation Metadata List (never shows raw_token or token_hash) */}
-        <div style={{ marginTop: '1rem' }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.92rem' }}>
-            Issued Invitations
-          </h4>
-          {(adminSnapshot?.invitations ?? []).length === 0 ? (
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              No invitations recorded for this group.
-            </p>
-          ) : (
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              {(adminSnapshot?.invitations ?? []).map((inv) => (
-                <div
-                  key={inv.id}
-                  data-testid={`invitation-row-${inv.id}`}
-                  style={{
-                    padding: '0.65rem',
-                    borderRadius: '0.45rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <div style={{ fontSize: '0.84rem' }}>
-                    <strong>{inv.invited_email_normalized}</strong> • Role:{' '}
-                    <code>{inv.intended_role}</code> • Status:{' '}
-                    <code>{inv.status}</code> • Expires:{' '}
-                    {inv.expires_at.slice(0, 10)}
-                    {inv.revoke_reason && (
-                      <span> • Revoke reason: {inv.revoke_reason}</span>
-                    )}
-                  </div>
-
-                  {inv.status === 'pending' && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '0.4rem',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <input
-                        type="text"
-                        aria-label={`Revocation reason for ${inv.invited_email_normalized}`}
-                        placeholder="Revoke reason (min 3 chars)"
-                        value={revokeReasons[inv.id] ?? ''}
-                        onChange={(e) =>
-                          setRevokeReasons((prev) => ({
-                            ...prev,
-                            [inv.id]: e.target.value,
-                          }))
-                        }
-                        disabled={isDemoMode || isMutating}
-                        style={{
-                          minHeight: '44px',
-                          padding: '0.3rem 0.5rem',
-                          borderRadius: '0.4rem',
-                          border: '1px solid var(--border-color)',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="touch-target"
-                        disabled={isDemoMode || isMutating}
-                        onClick={() => void handleRevokeInvitation(inv.id)}
-                        data-testid={`revoke-invitation-btn-${inv.id}`}
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 2. PENDING MEMBERSHIP APPROVALS & MEMBER ROLES */}
-      <div
-        className="card"
-        style={{ background: 'var(--bg-surface-alt)', marginBottom: '1rem' }}
-        data-testid="admin-section-memberships"
-      >
-        <h3 style={{ marginTop: 0 }}>
-          2. Membership Approvals &amp; Role Management
-        </h3>
-        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-          Pending accounts have zero access to group data until approved. When
-          approving, you must explicitly select whether to link an existing
-          player profile, create a new player profile, or approve as a Viewer
-          without a linked player profile. Display names are never auto-linked.
-        </p>
-
-        <h4 style={{ margin: '0.5rem 0', fontSize: '0.92rem' }}>
-          Pending Membership Requests ({pendingMemberships.length})
-        </h4>
-        {pendingMemberships.length === 0 ? (
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            No pending membership requests.
-          </p>
-        ) : (
-          <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
-            {pendingMemberships.map((entry) => {
-              const draft = getPendingDraft(entry);
-              return (
-                <div
-                  key={entry.membership_id}
-                  data-testid={`pending-membership-card-${entry.membership_id}`}
-                  style={{
-                    padding: '0.85rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      marginBottom: '0.35rem',
-                      fontSize: '0.92rem',
-                    }}
-                  >
-                    {entry.account_email} • Intended Role:{' '}
-                    <code>{entry.role}</code>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.82rem',
-                      color: 'var(--text-secondary)',
-                      marginBottom: '0.6rem',
-                    }}
-                  >
-                    Membership UUID: <code>{entry.membership_id}</code>
-                    {entry.requested_player_id && (
-                      <span>
-                        {' '}
-                        • Requested Player UUID:{' '}
-                        <code>{entry.requested_player_id}</code>
-                      </span>
-                    )}
-                    {entry.requested_new_player_name && (
-                      <span>
-                        {' '}
-                        • Requested New Player Name:{' '}
-                        <strong>{entry.requested_new_player_name}</strong>
-                      </span>
-                    )}
-                  </div>
-
-                  <fieldset
-                    style={{
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '0.45rem',
-                      padding: '0.65rem',
-                      marginBottom: '0.65rem',
-                    }}
-                    disabled={isDemoMode || isMutating}
-                  >
-                    <legend style={{ fontWeight: 600, fontSize: '0.84rem' }}>
-                      Explicit Player-Linking Decision (Required for Approval)
-                    </legend>
-                    <div
-                      style={{
-                        display: 'grid',
-                        gap: '0.45rem',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name={`linking-mode-${entry.membership_id}`}
-                          checked={draft.linkingMode === 'link_existing'}
-                          onChange={() =>
-                            updatePendingDraft(entry.membership_id, entry, {
-                              linkingMode: 'link_existing',
-                            })
-                          }
-                          data-testid={`radio-link-existing-${entry.membership_id}`}
-                        />
-                        <span>
-                          Option A: Link to an existing unlinked player profile
-                          UUID
-                        </span>
-                      </label>
-                      {draft.linkingMode === 'link_existing' && (
-                        <div style={{ marginLeft: '1.5rem' }}>
-                          <select
-                            aria-label={`Select existing player UUID for ${entry.account_email}`}
-                            value={draft.selectedPlayerId}
-                            onChange={(e) =>
-                              updatePendingDraft(entry.membership_id, entry, {
-                                selectedPlayerId: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: '100%',
-                              minHeight: '44px',
-                              padding: '0.35rem 0.5rem',
-                              borderRadius: '0.4rem',
-                              border: '1px solid var(--border-color)',
-                            }}
-                          >
-                            <option value="">
-                              -- Select unlinked player profile UUID --
-                            </option>
-                            {unlinkedPermanentPlayers.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.display_name} (UUID: {p.id})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name={`linking-mode-${entry.membership_id}`}
-                          checked={draft.linkingMode === 'create_new'}
-                          onChange={() =>
-                            updatePendingDraft(entry.membership_id, entry, {
-                              linkingMode: 'create_new',
-                            })
-                          }
-                          data-testid={`radio-create-new-${entry.membership_id}`}
-                        />
-                        <span>
-                          Option B: Create and link a new permanent player
-                          profile
-                        </span>
-                      </label>
-                      {draft.linkingMode === 'create_new' && (
-                        <div style={{ marginLeft: '1.5rem' }}>
-                          <input
-                            type="text"
-                            aria-label={`New player display name for ${entry.account_email}`}
-                            value={draft.newPlayerDisplayName}
-                            onChange={(e) =>
-                              updatePendingDraft(entry.membership_id, entry, {
-                                newPlayerDisplayName: e.target.value,
-                              })
-                            }
-                            placeholder="New player display name"
-                            style={{
-                              width: '100%',
-                              minHeight: '44px',
-                              padding: '0.35rem 0.5rem',
-                              borderRadius: '0.4rem',
-                              border: '1px solid var(--border-color)',
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name={`linking-mode-${entry.membership_id}`}
-                          checked={draft.linkingMode === 'viewer_unlinked'}
-                          onChange={() =>
-                            updatePendingDraft(entry.membership_id, entry, {
-                              linkingMode: 'viewer_unlinked',
-                            })
-                          }
-                          data-testid={`radio-viewer-unlinked-${entry.membership_id}`}
-                        />
-                        <span>
-                          Option C: Approve as Viewer without a linked player profile
-                        </span>
-                      </label>
-                    </div>
-                  </fieldset>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.5rem',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <input
-                      type="text"
-                      aria-label={`Decision reason for ${entry.account_email}`}
-                      placeholder="Optional approval/rejection note"
-                      value={draft.reason}
-                      onChange={(e) =>
-                        updatePendingDraft(entry.membership_id, entry, {
-                          reason: e.target.value,
-                        })
-                      }
-                      disabled={isDemoMode || isMutating}
-                      style={{
-                        flex: 1,
-                        minWidth: '180px',
-                        minHeight: '44px',
-                        padding: '0.35rem 0.5rem',
-                        borderRadius: '0.4rem',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="touch-target touch-target-primary"
-                      disabled={isDemoMode || isMutating}
-                      onClick={() => void handleApproveMembership(entry)}
-                      data-testid={`approve-membership-btn-${entry.membership_id}`}
-                    >
-                      Approve Request
-                    </button>
-                    <button
-                      type="button"
-                      className="touch-target"
-                      disabled={isDemoMode || isMutating}
-                      onClick={() => void handleRejectMembership(entry)}
-                      data-testid={`reject-membership-btn-${entry.membership_id}`}
-                    >
-                      Reject Request
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <h4 style={{ margin: '0.75rem 0 0.5rem 0', fontSize: '0.92rem' }}>
-          Authorized Group Members Directory ({existingMemberships.length})
-        </h4>
-        <div style={{ display: 'grid', gap: '0.65rem' }}>
-          {existingMemberships.map((entry) => {
-            const editDraft = getMemberEditDraft(entry);
-            const linkedPlayer = snapshot.players.find(
-              (p) => p.id === entry.linked_player_id,
-            );
-            const isTargetOwner = entry.role === 'owner';
-
-            return (
-              <div
-                key={entry.membership_id}
-                data-testid={`member-directory-row-${entry.membership_id}`}
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '0.45rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '0.88rem',
-                    fontWeight: 600,
-                    marginBottom: '0.35rem',
-                  }}
-                >
-                  {entry.account_email} • Role: <code>{entry.role}</code> •
-                  Status: <code>{entry.status}</code> • Linked Player:{' '}
-                  {linkedPlayer
-                    ? `${linkedPlayer.display_name} (${linkedPlayer.id.slice(-6)})`
-                    : 'None (Viewer-only)'}
-                </div>
-
-                {!isTargetOwner && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.4rem',
-                      alignItems: 'center',
-                      marginTop: '0.4rem',
-                    }}
-                  >
-                    <select
-                      aria-label={`Role for ${entry.account_email}`}
-                      value={editDraft.role}
-                      onChange={(e) =>
-                        updateMemberEditDraft(entry.membership_id, entry, {
-                          role: e.target.value as MembershipRole,
-                        })
-                      }
-                      disabled={isDemoMode || isMutating}
-                      style={{
-                        minHeight: '44px',
-                        padding: '0.3rem 0.5rem',
-                        borderRadius: '0.4rem',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    >
-                      <option value="member">member</option>
-                      <option value="recorder">recorder</option>
-                      <option value="admin">
-                        admin {isOwner ? '' : '(Owner required)'}
-                      </option>
-                    </select>
-
-                    <select
-                      aria-label={`Status for ${entry.account_email}`}
-                      value={editDraft.status}
-                      onChange={(e) =>
-                        updateMemberEditDraft(entry.membership_id, entry, {
-                          status: e.target.value as MembershipStatus,
-                        })
-                      }
-                      disabled={isDemoMode || isMutating}
-                      style={{
-                        minHeight: '44px',
-                        padding: '0.3rem 0.5rem',
-                        borderRadius: '0.4rem',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    >
-                      <option value="approved">approved</option>
-                      <option value="suspended">suspended</option>
-                      <option value="departed">departed</option>
-                    </select>
-
-                    <input
-                      type="text"
-                      aria-label={`Role update reason for ${entry.account_email}`}
-                      placeholder="Reason (min 3 chars)"
-                      value={editDraft.reason}
-                      onChange={(e) =>
-                        updateMemberEditDraft(entry.membership_id, entry, {
-                          reason: e.target.value,
-                        })
-                      }
-                      disabled={isDemoMode || isMutating}
-                      style={{
-                        minHeight: '44px',
-                        padding: '0.3rem 0.5rem',
-                        borderRadius: '0.4rem',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    />
-
-                    <button
-                      type="button"
-                      className="touch-target"
-                      disabled={isDemoMode || isMutating}
-                      onClick={() => void handleUpdateMemberRoleOrStatus(entry)}
-                      data-testid={`update-member-btn-${entry.membership_id}`}
-                    >
-                      Update Role/Status
-                    </button>
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '0.4rem',
-                    alignItems: 'center',
-                    marginTop: '0.45rem',
-                  }}
-                >
-                  <select
-                    aria-label={`Linked player UUID for ${entry.account_email}`}
-                    value={editDraft.linkPlayerId}
-                    onChange={(e) =>
-                      updateMemberEditDraft(entry.membership_id, entry, {
-                        linkPlayerId: e.target.value,
-                      })
-                    }
-                    disabled={isDemoMode || isMutating}
-                    style={{
-                      minHeight: '44px',
-                      padding: '0.3rem 0.5rem',
-                      borderRadius: '0.4rem',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  >
-                    <option value="">Unlinked (Viewer-only)</option>
-                    {unmergedPermanentPlayers.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.display_name} ({p.id.slice(-6)})
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="text"
-                    aria-label={`Profile link reason for ${entry.account_email}`}
-                    placeholder="Link reason (min 3 chars)"
-                    value={editDraft.linkReason}
-                    onChange={(e) =>
-                      updateMemberEditDraft(entry.membership_id, entry, {
-                        linkReason: e.target.value,
-                      })
-                    }
-                    disabled={isDemoMode || isMutating}
-                    style={{
-                      minHeight: '44px',
-                      padding: '0.3rem 0.5rem',
-                      borderRadius: '0.4rem',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  />
-
-                  <button
-                    type="button"
-                    className="touch-target"
-                    disabled={isDemoMode || isMutating}
-                    onClick={() => void handleLinkMemberProfile(entry)}
-                    data-testid={`link-member-profile-btn-${entry.membership_id}`}
-                  >
-                    Save Profile Link
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. PLAYER PROFILE CREATION & ROSTER */}
-      <div
-        className="card"
-        style={{ background: 'var(--bg-surface-alt)', marginBottom: '1rem' }}
-        data-testid="admin-section-players"
-      >
-        <h3 style={{ marginTop: 0 }}>
-          3. Player Profile Creation &amp; Roster Status
-        </h3>
-        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-          Permanent player profiles and temporary guests can exist before or
-          without user accounts. Duplicate display names are kept as separate
-          profiles and are never automatically linked or merged.
-        </p>
-
-        <form onSubmit={(e) => void handleCreatePlayerProfile(e)} noValidate>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '0.65rem',
-              alignItems: 'center',
-              marginBottom: '0.65rem',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: '220px' }}>
-              <label
-                htmlFor="admin-create-player-name"
-                style={{
-                  display: 'block',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  marginBottom: '0.25rem',
-                }}
-              >
-                New Player Display Name
-              </label>
-              <input
-                id="admin-create-player-name"
-                type="text"
-                value={newPlayerDisplayName}
-                onChange={(e) => setNewPlayerDisplayName(e.target.value)}
-                disabled={isDemoMode || isMutating}
-                placeholder="e.g. Marcus Lim"
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '0.4rem',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-surface)',
-                }}
-              />
-            </div>
-
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                fontSize: '0.88rem',
-                marginTop: '1.25rem',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={newPlayerIsGuest}
-                onChange={(e) => setNewPlayerIsGuest(e.target.checked)}
-                disabled={isDemoMode || isMutating}
-              />
-              <span>Create as Temporary Guest</span>
-            </label>
-
-            <button
-              type="submit"
-              className="touch-target touch-target-primary"
-              disabled={isDemoMode || isMutating}
-              style={{ marginTop: '1.25rem' }}
-              data-testid="create-player-submit-btn"
-            >
-              Create Player Profile
-            </button>
-          </div>
-
-          {duplicateNameWarning && (
-            <p
-              role="note"
-              data-testid="duplicate-player-name-warning"
-              style={{
-                padding: '0.55rem',
-                background: 'var(--status-warn-bg)',
-                color: 'var(--status-warn-fg)',
-                borderRadius: '0.4rem',
-                fontSize: '0.83rem',
-                fontWeight: 600,
-              }}
-            >
-              ℹ An existing player in this group already has the display name
-              &ldquo;{newPlayerDisplayName.trim()}&rdquo;. Creating this profile
-              will assign a separate profile and will never automatically merge or link
-              by display name.
-            </p>
-          )}
-        </form>
-
-        <div style={{ display: 'grid', gap: '0.45rem', marginTop: '0.75rem' }}>
-          {unmergedPlayers.map((p) => (
-            <div
-              key={p.id}
-              data-testid={`admin-player-row-${p.id}`}
-              style={{
-                padding: '0.55rem 0.7rem',
-                borderRadius: '0.4rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  flexWrap: 'wrap',
-                  fontSize: '0.86rem',
-                }}
-              >
-                <strong>{p.display_name}</strong>
-                {p.is_guest && <StatusBadge variant="guest" />}
-                <code>{p.id.slice(-6)}</code>
-                <span>• {p.is_active ? 'Active' : 'Inactive'}</span>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.4rem',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <input
-                  type="text"
-                  aria-label={`Status change reason for ${p.display_name}`}
-                  placeholder="Reason (min 3 chars)"
-                  value={playerStatusReasons[p.id] ?? ''}
-                  onChange={(e) =>
-                    setPlayerStatusReasons((prev) => ({
-                      ...prev,
-                      [p.id]: e.target.value,
-                    }))
-                  }
-                  disabled={isDemoMode || isMutating}
-                  style={{
-                    minHeight: '44px',
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '0.4rem',
-                    border: '1px solid var(--border-color)',
-                  }}
-                />
-                <button
-                  type="button"
-                  className="touch-target"
-                  disabled={isDemoMode || isMutating}
-                  onClick={() =>
-                    void handleTogglePlayerActiveStatus(p.id, !p.is_active)
-                  }
-                  data-testid={`toggle-player-active-btn-${p.id}`}
-                >
-                  {p.is_active ? 'Set Inactive' : 'Set Active'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 4. GUEST-TO-PERMANENT PLAYER MERGE */}
-      <div
-        className="card"
-        style={{ background: 'var(--bg-surface-alt)', marginBottom: '1rem' }}
-        data-testid="admin-section-guest-merge"
-      >
-        <h3 style={{ marginTop: 0 }}>
-          4. Guest-to-Permanent Player Merge
-        </h3>
-        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-          Merging a temporary guest into a permanent player transfers all match
-          history and recalculates ratings chronologically. Same-match conflicts
-          are checked automatically before execution.
-        </p>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '0.75rem',
-            marginBottom: '0.75rem',
-          }}
-        >
-          <div>
-            <label
-              htmlFor="admin-merge-source-guest"
-              style={{
-                display: 'block',
-                fontSize: '0.84rem',
-                fontWeight: 600,
-                marginBottom: '0.25rem',
-              }}
-            >
-              Source Temporary Guest (UUID)
-            </label>
-            <select
-              id="admin-merge-source-guest"
-              value={mergeSourceGuestId}
-              onChange={(e) => {
-                setMergeSourceGuestId(e.target.value);
-                setMergePreview(null);
-                setMergePreviewMatchSeq(null);
-                setMergeConfirmedCheckbox(false);
-              }}
-              disabled={isDemoMode || isMutating}
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                padding: '0.4rem 0.65rem',
-                borderRadius: '0.4rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
-            >
-              <option value="">-- Select unmerged guest UUID --</option>
-              {unmergedGuestPlayers.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.display_name} (UUID: {g.id})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="admin-merge-target-permanent"
-              style={{
-                display: 'block',
-                fontSize: '0.84rem',
-                fontWeight: 600,
-                marginBottom: '0.25rem',
-              }}
-            >
-              Target Permanent Player (UUID)
-            </label>
-            <select
-              id="admin-merge-target-permanent"
-              value={mergeTargetPermanentId}
-              onChange={(e) => {
-                setMergeTargetPermanentId(e.target.value);
-                setMergePreview(null);
-                setMergePreviewMatchSeq(null);
-                setMergeConfirmedCheckbox(false);
-              }}
-              disabled={isDemoMode || isMutating}
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                padding: '0.4rem 0.65rem',
-                borderRadius: '0.4rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
-            >
-              <option value="">-- Select permanent player UUID --</option>
-              {unmergedPermanentPlayers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.display_name} (UUID: {p.id})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="touch-target"
-          disabled={isDemoMode || isMutating}
-          onClick={() => void handlePreviewGuestMerge()}
-          data-testid="preview-guest-merge-btn"
-        >
-          {isMutating
-            ? 'Loading Preview...'
-            : '1. Generate Server Impact Preview'}
-        </button>
-
-        {mergePreview && (
-          <div
-            data-testid="guest-merge-preview-box"
-            style={{
-              marginTop: '0.85rem',
-              padding: '0.85rem',
-              borderRadius: '0.5rem',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-surface)',
-            }}
-          >
-            <h4 style={{ margin: '0 0 0.5rem 0' }}>
-              Server Merge Impact Preview:{' '}
-              {mergePreview.source_guest_display_name} →{' '}
-              {mergePreview.target_permanent_display_name}
-            </h4>
-            <ul
-              style={{
-                margin: '0 0 0.65rem 0',
-                paddingLeft: '1.2rem',
-                fontSize: '0.85rem',
-              }}
-            >
-              <li>
-                <strong>Affected Matches to Re-attribute:</strong>{' '}
-                <span data-testid="preview-affected-matches">
-                  {mergePreview.affected_match_count}
-                </span>
-              </li>
-              <li>
-                <strong>Guest Session Attendances:</strong>{' '}
-                <span data-testid="preview-affected-attendance">
-                  {mergePreview.affected_session_attendance_count}
-                </span>
-              </li>
-              <li>
-                <strong>Overlapping Session Attendances (Deduplicated):</strong>{' '}
-                <span data-testid="preview-overlapping-attendance">
-                  {mergePreview.overlapping_attendance_session_count}
-                </span>
-              </li>
-              <li>
-                <strong>Eligibility:</strong>{' '}
-                {mergePreview.can_merge ? (
-                  <strong style={{ color: 'var(--status-ok-fg)' }}>
-                    ✓ Eligible for Atomic Merge
-                  </strong>
-                ) : (
-                  <strong style={{ color: 'var(--status-stale-fg)' }}>
-                    ✕ Blocked — Same-Match Conflict Detected
-                  </strong>
-                )}
-              </li>
-            </ul>
-
-            {!mergePreview.can_merge && (
-              <div
-                role="alert"
-                data-testid="guest-merge-conflict-alert"
-                style={{
-                  padding: '0.65rem',
-                  background: 'var(--status-stale-bg)',
-                  color: 'var(--status-stale-fg)',
-                  borderRadius: '0.4rem',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                }}
-              >
-                ✕ Cannot merge: both identities participated in the same
-                match(es): {mergePreview.conflicting_match_ids.join(', ')}.
-              </div>
-            )}
-
-            {isPreviewStale && (
-              <div
-                role="alert"
-                data-testid="guest-merge-stale-preview-alert"
-                style={{
-                  padding: '0.65rem',
-                  background: 'var(--status-warn-bg)',
-                  color: 'var(--status-warn-fg)',
-                  borderRadius: '0.4rem',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  marginTop: '0.5rem',
-                }}
-              >
-                ⚠ Group match history changed after this preview was generated.
-                Please click &ldquo;1. Generate Server Impact Preview&rdquo; to
-                refresh before executing.
-              </div>
-            )}
-
-            {mergePreview.can_merge && !isPreviewStale && (
-              <form
-                onSubmit={(e) => void handleExecuteGuestMerge(e)}
-                noValidate
-                style={{ marginTop: '0.75rem' }}
-              >
-                <div style={{ marginBottom: '0.6rem' }}>
-                  <label
-                    htmlFor="admin-merge-reason"
-                    style={{
-                      display: 'block',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    Audit Reason for Guest Merge (Required, min 3 chars)
-                  </label>
-                  <input
-                    id="admin-merge-reason"
-                    type="text"
-                    value={mergeReason}
-                    onChange={(e) => setMergeReason(e.target.value)}
-                    disabled={isDemoMode || isMutating}
-                    placeholder="e.g. Confirmed drop-in guest Ethan is permanent member Diana"
-                    style={{
-                      width: '100%',
-                      minHeight: '44px',
-                      padding: '0.4rem 0.65rem',
-                      borderRadius: '0.4rem',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  />
-                </div>
-
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.85rem',
-                    marginBottom: '0.65rem',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={mergeConfirmedCheckbox}
-                    onChange={(e) =>
-                      setMergeConfirmedCheckbox(e.target.checked)
-                    }
-                    disabled={isDemoMode || isMutating}
-                    data-testid="confirm-guest-merge-checkbox"
-                  />
-                  <span>
-                    I confirm merging guest UUID{' '}
-                    <code>{mergePreview.source_guest_player_id}</code> into
-                    permanent player UUID{' '}
-                    <code>{mergePreview.target_permanent_player_id}</code> and
-                    recalculating chronological Elo ratings.
-                  </span>
-                </label>
-
-                <button
-                  type="submit"
-                  className="touch-target touch-target-primary"
-                  disabled={
-                    isDemoMode ||
-                    isMutating ||
-                    !mergeConfirmedCheckbox ||
-                    isPreviewStale
-                  }
-                  data-testid="execute-guest-merge-btn"
-                >
-                  {isMutating
-                    ? 'Executing Atomic Merge...'
-                    : '2. Confirm & Execute Atomic Guest Merge'}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
-
-        {lastMergeOutcome && (
-          <p
-            style={{
-              fontSize: '0.83rem',
-              color: 'var(--text-secondary)',
-              marginTop: '0.5rem',
-            }}
-          >
-            Last merge published rating version:{' '}
-            <code>{lastMergeOutcome.published_rating_version_id}</code>
-          </p>
-        )}
-      </div>
-
-      {/* 5. OWNERSHIP TRANSFER */}
-      <div
-        className="card"
-        style={{ background: 'var(--bg-surface-alt)' }}
-        data-testid="admin-section-ownership"
-      >
-        <h3 style={{ marginTop: 0 }}>5. Ownership Transfer</h3>
-        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-          Only the current Group Owner may transfer ownership to another
-          approved group member. The current Owner will become an Admin and
-          the recipient will become the new Owner.
-        </p>
-
-        {!isOwner && (
-          <p
-            role="note"
-            data-testid="ownership-transfer-owner-only-note"
-            style={{
-              padding: '0.6rem',
-              background: 'var(--status-warn-bg)',
-              color: 'var(--status-warn-fg)',
-              borderRadius: '0.4rem',
-              fontSize: '0.84rem',
-              fontWeight: 600,
-            }}
-          >
-            🔒 Ownership Transfer is restricted to the current Group Owner
-            (your role is <code>{viewerRole}</code>).
-          </p>
-        )}
-
-        <form onSubmit={(e) => void handleTransferOwnership(e)} noValidate>
-          <div style={{ marginBottom: '0.65rem' }}>
-            <label
-              htmlFor="admin-transfer-owner-target"
-              style={{
-                display: 'block',
-                fontSize: '0.84rem',
-                fontWeight: 600,
-                marginBottom: '0.25rem',
-              }}
-            >
-              Recipient Approved Membership (Explicit Membership UUID)
-            </label>
-            <select
-              id="admin-transfer-owner-target"
-              value={newOwnerMembershipId}
-              onChange={(e) => setNewOwnerMembershipId(e.target.value)}
-              disabled={isDemoMode || isMutating || !isOwner}
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                padding: '0.4rem 0.65rem',
-                borderRadius: '0.4rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
-            >
-              <option value="">
-                -- Select eligible approved membership UUID --
-              </option>
-              {eligibleOwnershipRecipients.map((m) => (
-                <option key={m.membership_id} value={m.membership_id}>
-                  {m.account_email} (Role: {m.role} • Membership UUID:{' '}
-                  {m.membership_id})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ marginBottom: '0.65rem' }}>
-            <label
-              htmlFor="admin-transfer-owner-reason"
-              style={{
-                display: 'block',
-                fontSize: '0.84rem',
-                fontWeight: 600,
-                marginBottom: '0.25rem',
-              }}
-            >
-              Reason for Ownership Transfer (Required, min 3 chars)
-            </label>
-            <input
-              id="admin-transfer-owner-reason"
-              type="text"
-              value={ownershipTransferReason}
-              onChange={(e) => setOwnershipTransferReason(e.target.value)}
-              disabled={isDemoMode || isMutating || !isOwner}
-              placeholder="e.g. Handing over club leadership for 2026"
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                padding: '0.4rem 0.65rem',
-                borderRadius: '0.4rem',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-surface)',
-              }}
+      {/* Main Sections Stack */}
+      <div className="space-y-6">
+        {/* MEMBERS & INVITATIONS CATEGORY */}
+        {showMembers && (
+          <>
+            <AdminInvitationsSection
+              invitations={adminSnapshot?.invitations ?? []}
+              unlinkedPermanentPlayers={unlinkedPermanentPlayers}
+              inviteEmail={inviteEmail}
+              setInviteEmail={setInviteEmail}
+              inviteRole={inviteRole}
+              setInviteRole={setInviteRole}
+              inviteProposedPlayerId={inviteProposedPlayerId}
+              setInviteProposedPlayerId={setInviteProposedPlayerId}
+              inviteExpiresDays={inviteExpiresDays}
+              setInviteExpiresDays={setInviteExpiresDays}
+              handleIssueInvitation={handleIssueInvitation}
+              oneTimeIssuedSecret={oneTimeIssuedSecret}
+              setOneTimeIssuedSecret={setOneTimeIssuedSecret}
+              revokeReasons={revokeReasons}
+              setRevokeReasons={setRevokeReasons}
+              handleRevokeInvitation={handleRevokeInvitation}
+              isOwner={isOwner}
+              isDemoMode={isDemoMode}
+              isMutating={isMutating}
             />
-          </div>
 
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.85rem',
-              marginBottom: '0.65rem',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={ownershipTransferConfirmed}
-              onChange={(e) => setOwnershipTransferConfirmed(e.target.checked)}
-              disabled={isDemoMode || isMutating || !isOwner}
-              data-testid="confirm-ownership-transfer-checkbox"
+            <AdminMembershipsSection
+              pendingMemberships={pendingMemberships}
+              existingMemberships={existingMemberships}
+              unlinkedPermanentPlayers={unlinkedPermanentPlayers}
+              snapshot={snapshot}
+              getPendingDraft={getPendingDraft}
+              updatePendingDraft={updatePendingDraft}
+              handleApproveMembership={handleApproveMembership}
+              handleRejectMembership={handleRejectMembership}
+              getMemberEditDraft={getMemberEditDraft}
+              updateMemberEditDraft={updateMemberEditDraft}
+              handleUpdateMemberRoleOrStatus={handleUpdateMemberRoleOrStatus}
+              handleLinkMemberProfile={handleLinkMemberProfile}
+              isOwner={isOwner}
+              isDemoMode={isDemoMode}
+              isMutating={isMutating}
             />
-            <span>
-              I confirm transferring Group Ownership and demoting my membership
-              to <code>admin</code>.
-            </span>
-          </label>
+          </>
+        )}
 
-          <button
-            type="submit"
-            className="touch-target"
-            disabled={isDemoMode || isMutating || !isOwner}
-            data-testid="transfer-ownership-submit-btn"
-          >
-            {isMutating
-              ? 'Transferring Ownership...'
-              : 'Transfer Group Ownership'}
-          </button>
-        </form>
+        {/* PLAYERS & ROSTER CATEGORY */}
+        {showPlayers && (
+          <>
+            <AdminPlayersSection
+              unmergedPlayers={unmergedPlayers}
+              newPlayerDisplayName={newPlayerDisplayName}
+              setNewPlayerDisplayName={setNewPlayerDisplayName}
+              newPlayerIsGuest={newPlayerIsGuest}
+              setNewPlayerIsGuest={setNewPlayerIsGuest}
+              duplicateNameWarning={duplicateNameWarning}
+              handleCreatePlayerProfile={handleCreatePlayerProfile}
+              playerStatusReasons={playerStatusReasons}
+              setPlayerStatusReasons={setPlayerStatusReasons}
+              handleTogglePlayerActiveStatus={handleTogglePlayerActiveStatus}
+              isDemoMode={isDemoMode}
+              isMutating={isMutating}
+            />
+
+            <AdminGuestMergeSection
+              unmergedGuestPlayers={unmergedGuestPlayers}
+              unmergedPermanentPlayers={unmergedPermanentPlayers}
+              mergeSourceGuestId={mergeSourceGuestId}
+              setMergeSourceGuestId={setMergeSourceGuestId}
+              mergeTargetPermanentId={mergeTargetPermanentId}
+              setMergeTargetPermanentId={setMergeTargetPermanentId}
+              mergePreview={mergePreview}
+              setMergePreview={setMergePreview}
+              setMergePreviewMatchSeq={setMergePreviewMatchSeq}
+              mergeConfirmedCheckbox={mergeConfirmedCheckbox}
+              setMergeConfirmedCheckbox={setMergeConfirmedCheckbox}
+              mergeReason={mergeReason}
+              setMergeReason={setMergeReason}
+              isPreviewStale={isPreviewStale}
+              lastMergeOutcome={lastMergeOutcome}
+              handlePreviewGuestMerge={handlePreviewGuestMerge}
+              handleExecuteGuestMerge={handleExecuteGuestMerge}
+              isDemoMode={isDemoMode}
+              isMutating={isMutating}
+            />
+          </>
+        )}
+
+        {/* CLUB & SYSTEM CATEGORY */}
+        {showSystem && (
+          <>
+            <AdminOwnershipSection
+              isOwner={isOwner}
+              viewerRole={viewerRole}
+              eligibleOwnershipRecipients={eligibleOwnershipRecipients}
+              newOwnerMembershipId={newOwnerMembershipId}
+              setNewOwnerMembershipId={setNewOwnerMembershipId}
+              ownershipTransferReason={ownershipTransferReason}
+              setOwnershipTransferReason={setOwnershipTransferReason}
+              ownershipTransferConfirmed={ownershipTransferConfirmed}
+              setOwnershipTransferConfirmed={setOwnershipTransferConfirmed}
+              handleTransferOwnership={handleTransferOwnership}
+              isDemoMode={isDemoMode}
+              isMutating={isMutating}
+            />
+
+            <AdminRatingHealthSection
+              publication={publication}
+              viewerRole={viewerRole}
+              isDemoMode={isDemoMode}
+              onRetryRecalculation={onRetryRecalculation}
+            />
+          </>
+        )}
       </div>
-
-      {/* 6. RATING SYSTEM HEALTH & RECALCULATION */}
-      {publication && (
-        <div
-          className="card"
-          style={{ background: 'var(--bg-surface-alt)', marginTop: '1rem' }}
-          data-testid="admin-section-ratings"
-        >
-          <h3 style={{ marginTop: 0 }}>6. Rating System Health &amp; Recalculation</h3>
-          <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-            System ratings status. If ratings recalculation is interrupted or fails due to database timeouts, you can trigger a manual recalculation here.
-          </p>
-          <PublicationStatusBanner
-            publication={publication}
-            viewerRole={viewerRole}
-            isDemoMode={isDemoMode}
-            onRetryRecalculation={onRetryRecalculation}
-          />
-        </div>
-      )}
     </section>
   );
 }
