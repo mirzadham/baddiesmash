@@ -16,6 +16,7 @@ This pack contains the following files:
 - [`index.html`](index.html)
 - [`package.json`](package.json)
 - [`tsconfig.json`](tsconfig.json)
+- [`vercel.json`](vercel.json)
 - [`vite.config.ts`](vite.config.ts)
 - [`docs/00-project/decision-register.md`](docs/00-project/decision-register.md)
 - [`docs/00-project/glossary.md`](docs/00-project/glossary.md)

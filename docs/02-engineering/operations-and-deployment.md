@@ -45,14 +45,66 @@
 ## Deployment Gates & Procedures
 
 ### Pre-Deployment Verification Checklist
-1. All automated tests pass: `npx vitest run` (10 test files, 67 tests passing).
+1. All automated tests pass: `npm test` (`vitest run`, 19 test files, 118 tests passing).
 2. TypeScript static typecheck passes: `npm run typecheck` (`tsc --noEmit`, 0 errors).
-3. Production build succeeds: `npm run build` (`dist/` generated cleanly).
+3. Production build succeeds: `npm run build` (`dist/` generated cleanly with `vercel.json` SPA rewrites).
 4. Local seed cleanliness confirmed: `supabase/seed.sql` verified to have 0 synthetic rows.
 5. Migration order verified:
    - `20261018000001_phase1_foundation_schema_and_rls.sql`
    - `20261018000002_phase2_sessions_matches_and_elo_replay.sql`
+   - `20261022000001_player_avatar_cooldown.sql`
 6. Explicit owner approval obtained prior to applying migrations to staging or production.
+
+---
+
+## Step-by-Step Production Deployment Guide
+
+### Phase A: Supabase Production Project Setup
+1. Log in to [supabase.com](https://supabase.com) and click **"New Project"**.
+2. Select your desired region (e.g. `Singapore (ap-southeast-1)` for lowest latency with `Asia/Kuala_Lumpur`).
+3. Set a strong database password and store it safely in your password manager.
+4. Open the **SQL Editor** in the Supabase Dashboard and execute the SQL migrations in strict chronological order:
+   - File 1: `supabase/migrations/20261018000001_phase1_foundation_schema_and_rls.sql`
+   - File 2: `supabase/migrations/20261018000002_phase2_sessions_matches_and_elo_replay.sql`
+   - File 3: `supabase/migrations/20261022000001_player_avatar_cooldown.sql`
+5. Navigate to **Project Settings -> API** to copy credentials:
+   - **Project URL:** e.g. `https://xxxxxxxxxxxxxxxxxxxx.supabase.co`
+   - **Project API Keys -> `anon` (public):** copy this key.
+   - *Security invariant:* NEVER use the `service_role` secret key.
+6. Configure Authentication:
+   - Navigate to **Authentication -> URL Configuration**.
+   - Add your Vercel production URL (e.g. `https://badmintonsystem.vercel.app` or custom domain) to **Site URL** and **Redirect URLs**.
+
+### Phase B: Vercel Frontend Deployment
+1. Log in to [vercel.com](https://vercel.com) using your GitHub account.
+2. Click **"Add New... -> Project"**.
+3. Import the repository: `mirzadham/badmintonsystem`.
+4. Configure Project:
+   - **Framework Preset:** Vite (automatically detected).
+   - **Root Directory:** `./`
+   - **Build Command:** `tsc -b && vite build` (or default `npm run build`).
+   - **Output Directory:** `dist`.
+5. Configure Environment Variables in the Vercel dashboard:
+   - `VITE_SUPABASE_URL`: `https://xxxxxxxxxxxxxxxxxxxx.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY`: `<your-supabase-public-anon-key>`
+6. Click **Deploy**.
+   - The repository's `vercel.json` automatically ensures client-side routes and SPA parameters route to `index.html`.
+
+### Phase C: Group Owner Initial Bootstrap
+1. Once deployed, open your Vercel production URL.
+2. Sign up or sign in using your account (email/password or Google OAuth).
+3. If the group has not been initialized, execute the one-time bootstrap RPC to establish your user ID as the initial group Owner:
+   ```sql
+   -- Run in Supabase SQL Editor if performing initial setup directly:
+   SELECT public.bootstrap_initial_group(
+     'BADDIESMASH Group',
+     'YOUR_AUTH_USER_UUID_HERE',
+     'Your Display Name',
+     'Asia/Kuala_Lumpur',
+     24
+   );
+   ```
+4. Once bootstrapped, the system permanently disables re-bootstrap. The Owner can now issue single-use invitation links from the Admin Tools.
 
 ---
 

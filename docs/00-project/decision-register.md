@@ -270,6 +270,13 @@ When a material decision changes:
   - *App Header Maintained Without Icon:* In strict accordance with the owner's directive ("but don't put it in the app header"), the app header remains pure, stylized typography: bold italic `BADDIE` (white) + `SMASH` (neon green), completely free of any header mark icon.
   - *Verification:* All 19 Vitest test suites (118 tests) pass with 100% success rate (`npm test`); TypeScript typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `public/favicon.png`, `public/apple-touch-icon.png`, `public/icon-192.png`, `public/icon-512.png`, `public/manifest.json`, `index.html`, `docs/00-project/decision-register.md`.
+- **2026-10-23 (Owner approval — Phase 24 Vercel Deployment Preparation & SPA Route Rewrites):**
+  - *Vercel Deployment Architecture (`DEC-067`):* Configured repository for production deployment on Vercel Hobby tier.
+  - *SPA Routing Rewrites (`vercel.json`):* Added `vercel.json` with wildcard rewrite routing (`/(.*) -> /index.html`) ensuring clean client-side routing, query parameter handling (such as `?invite=...` invitations), and zero 404 errors on browser page reloads.
+  - *Deployment Runbook:* Updated `docs/02-engineering/operations-and-deployment.md` with step-by-step guidance for Supabase project creation, migration order (1 to 3), Vercel GitHub project importing, environment variable configuration (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`), and initial group owner bootstrap (`public.bootstrap_initial_group`).
+  - *Verification & Quality Gates:* All 19 Vitest test suites (118 tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `vercel.json`, `docs/02-engineering/operations-and-deployment.md`, `FILE-INDEX.md`, `docs/00-project/decision-register.md`.
+
 
 
 
