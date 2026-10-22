@@ -146,6 +146,7 @@ export function deriveLeaderboardFromSnapshot(
     return {
       id: player.id,
       displayName: player.display_name,
+      avatarUrl: player.avatar_url,
       isGuest: player.is_guest,
       isActive: player.is_active,
       sessionsAttendedCount: attendedCount,
@@ -619,5 +620,63 @@ export function deriveSessionDetailFromSnapshot(
     incompleteMatchCount,
     standings,
     matches: sessionMatchesChronological,
+  };
+}
+
+export interface AvatarCooldownStatus {
+  canUpdate: boolean;
+  daysRemaining: number;
+  nextAvailableDate: string | null;
+  lastUpdatedAt: string | null;
+}
+
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
+ * Calculates 1-year (365 days) rolling cooldown for player display picture updates.
+ */
+export function getAvatarCooldownStatus(
+  avatarUpdatedAt: string | null | undefined,
+  nowMs: number = Date.now(),
+): AvatarCooldownStatus {
+  if (!avatarUpdatedAt) {
+    return {
+      canUpdate: true,
+      daysRemaining: 0,
+      nextAvailableDate: null,
+      lastUpdatedAt: null,
+    };
+  }
+
+  const updatedTime = new Date(avatarUpdatedAt).getTime();
+  if (isNaN(updatedTime)) {
+    return {
+      canUpdate: true,
+      daysRemaining: 0,
+      nextAvailableDate: null,
+      lastUpdatedAt: null,
+    };
+  }
+
+  const nextAvailableMs = updatedTime + ONE_YEAR_MS;
+  const diffMs = nextAvailableMs - nowMs;
+
+  if (diffMs <= 0) {
+    return {
+      canUpdate: true,
+      daysRemaining: 0,
+      nextAvailableDate: null,
+      lastUpdatedAt: avatarUpdatedAt,
+    };
+  }
+
+  const daysRemaining = Math.max(1, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+  const nextDateFormatted = formatMalaysiaDate(new Date(nextAvailableMs).toISOString());
+
+  return {
+    canUpdate: false,
+    daysRemaining,
+    nextAvailableDate: nextDateFormatted,
+    lastUpdatedAt: avatarUpdatedAt,
   };
 }

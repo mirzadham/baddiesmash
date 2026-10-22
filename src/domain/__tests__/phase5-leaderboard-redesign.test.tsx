@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe('Phase 5 — Leaderboard UI Redesign & Theming', () => {
-  it('renders the custom brand mark, header title, and quick theme toggle in App header', async () => {
+  it('renders the custom brand mark, header title, and defaults permanently to dark theme', async () => {
     const repo = createDemoTrackerRepository();
     render(<App repository={repo} />);
 
@@ -24,17 +24,12 @@ describe('Phase 5 — Leaderboard UI Redesign & Theming', () => {
     // Check brand title
     expect(screen.getByText('BADDIESMASH')).toBeTruthy();
 
-    // Check theme toggle button
-    const toggleBtn = screen.getByRole('button', { name: /toggle theme/i });
-    expect(toggleBtn).toBeTruthy();
-
-    // Toggle theme to dark
-    fireEvent.click(toggleBtn);
+    // Verify dark theme is permanently applied to document element
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 
-    // Toggle theme to light
-    fireEvent.click(toggleBtn);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    // Confirm theme toggle button is removed
+    const toggleBtn = screen.queryByRole('button', { name: /toggle theme/i });
+    expect(toggleBtn).toBeNull();
   });
 
   it('renders custom 3D podium for top 3 and ranking list for rank 4 and below', async () => {

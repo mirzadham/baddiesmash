@@ -51,7 +51,7 @@
 - Abandoned-session warning after 12 hours since meaningful activity; never auto-close.
 - Match history filters by session/date, player, status; newest first.
 - Copyable WhatsApp session summary after finalization and for older sessions; no shareable image in V1 (Stage 2).
-- Light/dark themes; follow device by default, manual switch; English V1.
+- Dark theme only; defaulted and locked to dark theme; manual theme switching and light theme removed per owner directive; English V1.
 - Optional avatar; no unnecessary personal data; emails private.
 - Basic PWA install support, no offline recording or browser push (Stage 2 polish).
 - CSV historical import is optional admin-only, preview/validate entire batch, atomic commit; no raw Notes/WhatsApp parser in V1 (Stage 2).
@@ -243,13 +243,35 @@ When a material decision changes:
   - *Accessibility & Integrity:* The icon includes `aria-label="Winner"` and `data-testid="winner-tick"`. Losing pairs, voided matches, and incomplete drafts never render the winner tick.
   - *Test Evidence & Quality Gates:* Added `src/domain/__tests__/phase15-winner-tick-badge.test.tsx` (4 automated tests). All 17 Vitest test suites (105 automated tests) pass with 100% success rate (`npm test`); TypeScript compilation (`tsc --noEmit`) passes cleanly with 0 errors.
   - *Affected Files:* `src/components/sessions/SessionMatchHistorySection.tsx`, `src/components/sessions/PastSessionAccordionCard.tsx`, `src/components/profile/ProfileMatchHistorySection.tsx`, `src/domain/__tests__/phase15-winner-tick-badge.test.tsx`, `docs/00-project/decision-register.md`.
-- **2026-10-22 (Owner approval — Phase 20 Long History Scroll Management & Progressive Disclosure):**
-  - *Long History Scroll Management (`DEC-063`):* Implemented mobile-first progressive disclosure and date filtering to prevent excessive vertical scrolling as group match and session history grow over time:
-    - *Session History Progressive Disclosure & Month Filter (`SessionsView.tsx`):* Displays a maximum of 5 past sessions by default with high-contrast tactile action buttons: `Show More Sessions (+5)` and `Show All ({total})`. Integrated a Month & Year dropdown filter (`session-month-filter`) grouping sessions chronologically in `Asia/Kuala_Lumpur` time (`All Months`, `October 2026 (4)`, `September 2026 (3)`), instantly narrowing session lists and resetting the pagination slice.
-    - *Past Session Match Drawer Limit (`PastSessionAccordionCard.tsx`):* Inside expanded past sessions, limits completed matches to the first 4 matches by default with an in-place toggle button (`toggle-all-matches-{sessionId}`) displaying `Show all {total} matches ({remaining} more) ⌵` and collapsible to `Show fewer matches ⌃` with stopPropagation to preserve accordion state.
-    - *Profile Match History Progressive Loading (`ProfileMatchHistorySection.tsx`):* Limits player match history cards to 10 by default with a `Load More Matches (+10)` action button and `Show All ({total})` option. Automatically resets the pagination slice to 10 when switching between Session or Status filters.
-  - *Test Evidence & Quality Gates:* Added `src/domain/__tests__/phase16-scroll-management.test.tsx` (3 automated tests). All 18 Vitest test suites (108 automated tests) pass with 100% success rate (`npm test`); TypeScript typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
-  - *Affected Files:* `src/services/readViewModels.ts`, `src/views/SessionsView.tsx`, `src/components/sessions/PastSessionAccordionCard.tsx`, `src/components/profile/ProfileMatchHistorySection.tsx`, `src/domain/__tests__/phase16-scroll-management.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Dark Theme Only Enforcement & Theme Switcher Removal):**
+  - *Dark Theme Locked (`DEC-064`):* In accordance with explicit owner instruction ("remove change theme feature. so, this app will be defaulted to dark theme only"), the theme switching capability was completely removed across the application.
+  - *Header & Profile Controls Removed:* Removed the sun/moon quick toggle button from the unauthenticated gate header, the hidden accessible theme toggle button from the main header, and the "Display Theme" select dropdown from the Preferences & Account section in `ProfileView.tsx`.
+  - *Dark Theme Default Enforced:* The root `<html>` element in `index.html` is declared with `data-theme="dark"` so dark mode styles and Tailwind `dark:` variants apply immediately upon initial paint without flash. `src/lib/theme.ts` ensures `data-theme="dark"` is set and cleans up any legacy `badminton_tracker_theme_pref` localStorage key. Unused light mode tokens in `src/styles/index.css` (`:root[data-theme='light']`) have been removed.
+  - *Test Verification:* Updated `src/domain/__tests__/phase5-leaderboard-redesign.test.tsx` and `src/domain/__tests__/phase13-interface-accessibility.test.tsx` to assert that dark theme is permanently applied and theme toggle buttons are absent. All 18 Vitest test suites (108 automated tests) pass with 100% success rate (`npm test`); TypeScript typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `index.html`, `src/App.tsx`, `src/views/ProfileView.tsx`, `src/lib/theme.ts`, `src/styles/index.css`, `src/domain/__tests__/phase5-leaderboard-redesign.test.tsx`, `src/domain/__tests__/phase13-interface-accessibility.test.tsx`, `docs/00-project/decision-register.md`, `docs/01-product/ui-and-accessibility.md`.
+- **2026-10-22 (Owner approval — Player Display Picture Upload with 1-Year Cooldown & Confirmation Reminder):**
+  - *Profile Picture Upload & 1-Year Cooldown (`DEC-065`):* In accordance with explicit owner instructions ("add new feature where users can upload display picture/profile picture but it can only be upload once in a year", "put a message telling something like choose ur display picture carefully since you can update only once a year", "when user about to click update/save display again a reminder message"):
+    - *Advisory Warning Banner:* Displayed prominently in `AvatarUploadModal.tsx` using the owner's exact wording: `"pilih betul-betul au gambar, sebab setahun sekali je boleh update profile picture. jangan menyesal :p"`.
+    - *Confirmation Reminder Step:* Intercepts save/update attempts with a modal dialogue displaying the owner's exact wording: `"betul ni? confirm ni? dah pikir masak-mask belom"` with options to cancel or confirm.
+    - *1-Year (365 Days) Rolling Cooldown:* Enforced on the database server in a `SECURITY DEFINER` stored procedure (`update_player_avatar`) checking `avatar_updated_at > (clock_timestamp() - INTERVAL '365 days')` and recording an audit event in `public.audit_events`.
+    - *Admin Override Privilege:* Admins and Owners can override the cooldown in special cases and reset or remove inappropriate avatars via `reset_player_avatar`.
+    - *Universal Avatar Rendering:* Uploaded avatars render across the App header, Profile hero card, 3D tournament podium stage, and leaderboard ranking rows with initials fallbacks on error.
+  - *Test Evidence & Quality Gates:* Added `src/domain/__tests__/phase21-avatar-upload-cooldown.test.tsx` (10 automated tests). All 19 Vitest test suites (118 automated tests) pass with 100% success rate (`npm test`); TypeScript compilation (`tsc --noEmit`) passes cleanly with 0 errors.
+  - *Affected Files:* `supabase/migrations/20261022000001_player_avatar_cooldown.sql`, `src/types/database.ts`, `src/services/trackerRepository.ts`, `src/services/demoData.ts`, `src/services/readViewModels.ts`, `src/components/profile/AvatarUploadModal.tsx`, `src/components/profile/ProfileHeroCard.tsx`, `src/views/ProfileView.tsx`, `src/App.tsx`, `src/domain/standings.ts`, `src/components/leaderboard/PlayerAvatar.tsx`, `src/components/leaderboard/RankingRow.tsx`, `src/components/TournamentPodiumStage.tsx`, `src/domain/__tests__/phase21-avatar-upload-cooldown.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Candidate C1 Favicon & PWA Icons Integration):**
+  - *Candidate C1 Chosen as App Favicon & PWA Icon (`DEC-066`):* In accordance with explicit owner instructions ("make candidate c1 as favicon and pwa icon but don't put it in the app header"):
+    - Generated high-resolution, bicubic-filtered PNG assets from the 1024x1024 Candidate C1 source image into the `public/` directory:
+      - `public/favicon.png` (64×64)
+      - `public/apple-touch-icon.png` (180×180)
+      - `public/icon-192.png` (192×192)
+      - `public/icon-512.png` (512×512)
+    - Created `public/manifest.json` configured for standalone PWA installation with theme color `#22c55e` and background color `#090d16`.
+    - Updated `index.html` with `<link rel="icon">`, `<link rel="apple-touch-icon">`, `<link rel="manifest">`, and `<meta name="theme-color">`.
+  - *App Header Maintained Without Icon:* In strict accordance with the owner's directive ("but don't put it in the app header"), the app header remains pure, stylized typography: bold italic `BADDIE` (white) + `SMASH` (neon green), completely free of any header mark icon.
+  - *Verification:* All 19 Vitest test suites (118 tests) pass with 100% success rate (`npm test`); TypeScript typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `public/favicon.png`, `public/apple-touch-icon.png`, `public/icon-192.png`, `public/icon-512.png`, `public/manifest.json`, `index.html`, `docs/00-project/decision-register.md`.
+
+
 
 
 

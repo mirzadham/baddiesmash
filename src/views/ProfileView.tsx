@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Settings, LogOut, SunMoon } from 'lucide-react';
+import { Settings, LogOut } from 'lucide-react';
 import { ProfileHeroCard } from '../components/profile/ProfileHeroCard.tsx';
+import { AvatarUploadModal } from '../components/profile/AvatarUploadModal.tsx';
 import { PerformanceMetricsGrid } from '../components/profile/PerformanceMetricsGrid.tsx';
 import {
   H2HRivalrySection,
@@ -21,9 +22,8 @@ export interface ProfileViewProps {
   snapshot: GroupReadSnapshot;
   selectedPlayerId: string | null;
   onSelectPlayer: (playerId: string) => void;
-  theme?: 'system' | 'light' | 'dark';
-  onSelectTheme?: (theme: 'system' | 'light' | 'dark') => void;
   onOpenAdminTools?: () => void;
+  onUpdateAvatar?: (file: File) => Promise<void>;
   onSignOut?: () => void;
 }
 
@@ -41,14 +41,14 @@ export function ProfileView({
   snapshot,
   selectedPlayerId,
   onSelectPlayer,
-  theme,
-  onSelectTheme,
   onOpenAdminTools,
+  onUpdateAvatar,
   onSignOut,
 }: ProfileViewProps) {
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all');
   const [sessionFilter, setSessionFilter] = useState<string>('all');
   const [selectedOpponentId, setSelectedOpponentId] = useState<string>('');
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState<boolean>(false);
 
   const leaderboardAll = deriveLeaderboardFromSnapshot(snapshot, true);
   const viewerLinkedPlayerId = snapshot.viewerMembership.linked_player_id;
@@ -221,6 +221,23 @@ export function ProfileView({
             effectivePlayerId={selectedRow.playerId}
             onSelectPlayer={onSelectPlayer}
             formatMalaysiaDate={formatMalaysiaDate}
+            onOpenAvatarUpload={() => setIsAvatarModalOpen(true)}
+          />
+
+          {/* Avatar Upload Modal with 1-Year Cooldown */}
+          <AvatarUploadModal
+            player={selectedPlayerRecord}
+            isOpen={isAvatarModalOpen}
+            onClose={() => setIsAvatarModalOpen(false)}
+            onSaveAvatar={async (file) => {
+              if (onUpdateAvatar) {
+                await onUpdateAvatar(file);
+              }
+            }}
+            isAdmin={
+              snapshot.viewerMembership.role === 'admin' ||
+              snapshot.viewerMembership.role === 'owner'
+            }
           />
 
           {/* 2x2 Performance Metrics Grid matching profile.jfif */}
@@ -267,36 +284,6 @@ export function ProfileView({
         </div>
 
         <div className="flex flex-col gap-3">
-          {/* Theme Selection */}
-          {onSelectTheme && (
-            <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <SunMoon size={18} className="text-slate-400" />
-                <div>
-                  <strong className="text-xs sm:text-sm font-semibold text-white block">
-                    Display Theme
-                  </strong>
-                  <span className="text-[11px] text-slate-400 block">
-                    Switch between Dark, Light, or follow system
-                  </span>
-                </div>
-              </div>
-
-              <select
-                aria-label="Profile theme select"
-                value={theme ?? 'dark'}
-                onChange={(e) =>
-                  onSelectTheme(e.target.value as 'system' | 'light' | 'dark')
-                }
-                className="bg-[#101722] text-slate-200 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700/80 focus:outline-none focus:border-emerald-500"
-              >
-                <option value="system">System</option>
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-              </select>
-            </div>
-          )}
-
           {/* Admin Tools Button (Restricted to Admin/Owner only) */}
           {(snapshot.viewerMembership.role === 'admin' ||
             snapshot.viewerMembership.role === 'owner') &&

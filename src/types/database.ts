@@ -50,6 +50,7 @@ export interface DbPlayerRow {
   group_id: string;
   display_name: string;
   avatar_url: string | null;
+  avatar_updated_at?: string | null;
   is_guest: boolean;
   is_active: boolean;
   merged_into_player_id: string | null;

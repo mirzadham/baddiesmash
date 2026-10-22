@@ -1,4 +1,5 @@
 import React from 'react';
+import { Camera } from 'lucide-react';
 import { StatusBadge } from '../StatusBadge.tsx';
 import type { deriveLeaderboardFromSnapshot } from '../../services/readViewModels.ts';
 import type { DbPlayerRow } from '../../types/database.ts';
@@ -13,6 +14,7 @@ export interface ProfileHeroCardProps {
   effectivePlayerId: string;
   onSelectPlayer: (playerId: string) => void;
   formatMalaysiaDate: (iso: string) => string;
+  onOpenAvatarUpload?: () => void;
 }
 
 export function getPlayerTier(
@@ -67,6 +69,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   effectivePlayerId,
   onSelectPlayer,
   formatMalaysiaDate,
+  onOpenAvatarUpload,
 }) => {
   const isLinkedViewer = selectedRow.playerId === viewerLinkedPlayerId;
   const ratingNum = parseFloat(selectedRow.ratingNumeric4) || 1200;
@@ -114,18 +117,38 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
       <div className="flex items-center gap-3.5 sm:gap-4">
         {/* Avatar Circle */}
         <div className="relative flex-shrink-0">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-emerald-500/40 flex items-center justify-center">
-            <span className="text-xl sm:text-2xl font-black text-white tracking-wider">
-              {initials || 'P'}
-            </span>
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-emerald-500/40 flex items-center justify-center overflow-hidden">
+            {selectedPlayerRecord.avatar_url ? (
+              <img
+                src={selectedPlayerRecord.avatar_url}
+                alt={selectedRow.displayName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-xl sm:text-2xl font-black text-white tracking-wider">
+                {initials || 'P'}
+              </span>
+            )}
           </div>
           {isLinkedViewer && (
             <span
-              className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-slate-950"
+              className="absolute -top-1 -left-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-slate-950 shadow"
               title="Your Linked Profile"
             >
               You
             </span>
+          )}
+          {isLinkedViewer && onOpenAvatarUpload && (
+            <button
+              type="button"
+              onClick={onOpenAvatarUpload}
+              data-testid="edit-avatar-btn"
+              title="Update Display Picture"
+              aria-label="Update display picture"
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shadow-lg transition-transform hover:scale-105 cursor-pointer border border-slate-900"
+            >
+              <Camera size={13} strokeWidth={2.5} />
+            </button>
           )}
         </div>
 

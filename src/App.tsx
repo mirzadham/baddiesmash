@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Calendar, Home, Trophy, User, Sun, Moon } from 'lucide-react';
+import { Calendar, Home, Trophy, User } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
 import {
   captureAndStripInviteTokenFromUrl,
@@ -11,8 +11,6 @@ import {
 } from './lib/supabase.ts';
 import {
   applyThemeToDocument,
-  getInitialThemePreference,
-  persistThemePreference,
   type ThemePreference,
 } from './lib/theme.ts';
 import { scrollToTop } from './lib/scroll.ts';
@@ -98,9 +96,6 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     useState<boolean>(false);
   const [showAdminContextualModal, setShowAdminContextualModal] =
     useState<boolean>(false);
-  const [theme, setTheme] = useState<ThemePreference>(() =>
-    getInitialThemePreference(),
-  );
 
   const handleOpenAdminTools = useCallback(() => {
     setShowAdminContextualModal(true);
@@ -123,9 +118,8 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
   }, []);
 
   useEffect(() => {
-    applyThemeToDocument(theme);
-    persistThemePreference(theme);
-  }, [theme]);
+    applyThemeToDocument();
+  }, []);
 
   const loadGateState = useCallback(async () => {
     if (!repository) {
@@ -232,20 +226,6 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               <span>BADDIE</span><span style={{ color: '#22c55e' }}>SMASH</span>
             </span>
             <span className="sr-only">BADDIESMASH</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => {
-                const next: ThemePreference = theme === 'dark' ? 'light' : 'dark';
-                setTheme(next);
-              }}
-              aria-label={`Toggle theme (currently ${theme})`}
-              className="w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors border border-slate-700/60 cursor-pointer"
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              <span className="sr-only">Toggle theme</span>
-            </button>
           </div>
         </header>
         <main className="app-main">
@@ -382,17 +362,6 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             </button>
           )}
 
-          <button
-            type="button"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-32 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:text-xs focus:font-bold"
-            onClick={() => {
-              const next: ThemePreference = theme === 'dark' ? 'light' : 'dark';
-              setTheme(next);
-            }}
-            aria-label={`Toggle theme (currently ${theme})`}
-          >
-            Toggle theme
-          </button>
 
           {/* User Profile Avatar (1-Tap to Profile Tab) */}
           <button
@@ -507,9 +476,23 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
                 snapshot={snapshot}
                 selectedPlayerId={selectedPlayerId}
                 onSelectPlayer={(playerId) => setSelectedPlayerId(playerId)}
-                theme={theme}
-                onSelectTheme={(t) => setTheme(t)}
                 onOpenAdminTools={handleOpenAdminTools}
+                onUpdateAvatar={async (file: File) => {
+                  if (!snapshot.viewerMembership.linked_player_id) {
+                    throw new Error('Viewer account is not linked to any player profile.');
+                  }
+                  const avatarUrl = await repository.uploadAvatarImage({
+                    groupId: snapshot.group.id,
+                    playerId: snapshot.viewerMembership.linked_player_id,
+                    file,
+                  });
+                  await repository.updatePlayerAvatar({
+                    groupId: snapshot.group.id,
+                    playerId: snapshot.viewerMembership.linked_player_id,
+                    avatarUrl,
+                  });
+                  await loadGateState();
+                }}
                 onSignOut={async () => {
                   await repository.signOut();
                   await loadGateState();

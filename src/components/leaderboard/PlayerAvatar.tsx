@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export interface PlayerAvatarProps {
   displayName: string;
-  avatarUrl?: string | null;
+  avatarUrl?: string | null | undefined;
   playerId?: string;
   size?: number;
   rank?: number;

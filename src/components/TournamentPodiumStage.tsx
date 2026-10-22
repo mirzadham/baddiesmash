@@ -47,8 +47,16 @@ export function TournamentPodiumStage({
           {top2 ? (
             <>
               <div className="avatar-wrap avatar-wrap-2">
-                <div className="stage-avatar stage-avatar-2">
-                  {getPlayerInitials(top2.displayName)}
+                <div className="stage-avatar stage-avatar-2 overflow-hidden">
+                  {top2.avatarUrl ? (
+                    <img
+                      src={top2.avatarUrl}
+                      alt={top2.displayName}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    getPlayerInitials(top2.displayName)
+                  )}
                 </div>
               </div>
 
@@ -82,8 +90,16 @@ export function TournamentPodiumStage({
               </div>
 
               <div className="avatar-wrap avatar-wrap-1">
-                <div className="stage-avatar stage-avatar-1">
-                  {getPlayerInitials(top1.displayName)}
+                <div className="stage-avatar stage-avatar-1 overflow-hidden">
+                  {top1.avatarUrl ? (
+                    <img
+                      src={top1.avatarUrl}
+                      alt={top1.displayName}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    getPlayerInitials(top1.displayName)
+                  )}
                 </div>
               </div>
 
@@ -114,8 +130,16 @@ export function TournamentPodiumStage({
           {top3 ? (
             <>
               <div className="avatar-wrap avatar-wrap-3">
-                <div className="stage-avatar stage-avatar-3">
-                  {getPlayerInitials(top3.displayName)}
+                <div className="stage-avatar stage-avatar-3 overflow-hidden">
+                  {top3.avatarUrl ? (
+                    <img
+                      src={top3.avatarUrl}
+                      alt={top3.displayName}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    getPlayerInitials(top3.displayName)
+                  )}
                 </div>
               </div>
 

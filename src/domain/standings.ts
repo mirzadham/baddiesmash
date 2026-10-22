@@ -8,6 +8,7 @@ import { validateMatchScore } from './scoring.ts';
 export interface LeaderboardPlayerProfile {
   id: string;
   displayName: string;
+  avatarUrl?: string | null;
   isGuest: boolean;
   isActive: boolean;
   createdAtSessionIndex?: number;
@@ -20,6 +21,7 @@ export interface AllTimeLeaderboardRow {
   isTiedRank: boolean;
   playerId: string;
   displayName: string;
+  avatarUrl?: string | null;
   isGuest: boolean;
   guestLabel: 'Guest' | null;
   isActive: boolean;
@@ -77,6 +79,7 @@ export function buildAllTimeLeaderboard(params: {
     return {
       playerId: profile.id,
       displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl ?? null,
       isGuest: profile.isGuest,
       guestLabel: profile.isGuest ? ('Guest' as const) : null,
       isActive: profile.isActive,

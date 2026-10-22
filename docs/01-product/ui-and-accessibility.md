@@ -7,7 +7,7 @@
 - **Brand Mark:** Custom SVG shuttlecock icon (`ShuttlecockBrandMark`) paired with "Badminton Tracker".
 - Avoid generic oversized dashboard cards, excessive gradients, and decorative animation that slows match entry.
 - Group name, logo/avatar and theme are configurable; temporary working name during development.
-- Light and dark modes; follow device setting by default with quick sun/moon toggle pill and explicit select dropdown; persisted safely without polluting localStorage on initial visits.
+- Dark theme only; permanently defaulted and locked to athletic dark mode with signature emerald and volt accents. Manual theme switching, light theme, and header sun/moon controls have been removed per owner directive.
 - English throughout V1.
 
 ## Navigation

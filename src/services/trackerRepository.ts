@@ -158,6 +158,29 @@ export interface SetPlayerActiveStatusInput {
   reason: string;
 }
 
+export interface UpdatePlayerAvatarInput {
+  groupId: string;
+  playerId: string;
+  avatarUrl: string;
+  adminOverride?: boolean;
+}
+
+export interface ResetPlayerAvatarInput {
+  groupId: string;
+  playerId: string;
+}
+
+export interface UploadAvatarFileInput {
+  groupId: string;
+  playerId: string;
+  file: File;
+}
+
+export interface UpdatePlayerAvatarResponse {
+  avatarUrl: string;
+  avatarUpdatedAt: string;
+}
+
 export interface PreviewGuestMergeInput {
   groupId: string;
   sourceGuestPlayerId: string;
@@ -356,6 +379,11 @@ export interface TrackerRepository {
   linkMemberPlayerProfile(input: LinkMemberPlayerProfileInput): Promise<void>;
   createPlayerProfile(input: CreatePlayerProfileInput): Promise<string>;
   setPlayerActiveStatus(input: SetPlayerActiveStatusInput): Promise<void>;
+  uploadAvatarImage(input: UploadAvatarFileInput): Promise<string>;
+  updatePlayerAvatar(
+    input: UpdatePlayerAvatarInput,
+  ): Promise<UpdatePlayerAvatarResponse>;
+  resetPlayerAvatar(input: ResetPlayerAvatarInput): Promise<void>;
   previewGuestIntoPlayerMerge(
     input: PreviewGuestMergeInput,
   ): Promise<GuestMergePreviewResponse>;
@@ -485,6 +513,36 @@ export function createDemoTrackerRepository(
       throw new Error(
         'Demo Mode is read-only and cannot change player active status.',
       );
+    },
+    async uploadAvatarImage(input: UploadAvatarFileInput): Promise<string> {
+      return `https://demo-storage.local/avatars/${input.playerId}-${Date.now()}.jpg`;
+    },
+    async updatePlayerAvatar(
+      input: UpdatePlayerAvatarInput,
+    ): Promise<UpdatePlayerAvatarResponse> {
+      const player = snapshot.players.find((p) => p.id === input.playerId);
+      if (!player) {
+        throw new Error('player not found in specified group');
+      }
+      if (!input.adminOverride && player.avatar_updated_at) {
+        const lastUpdated = new Date(player.avatar_updated_at).getTime();
+        const diffMs = Date.now() - lastUpdated;
+        if (diffMs < 365 * 24 * 60 * 60 * 1000) {
+          throw new Error('Profile picture can only be updated once a year.');
+        }
+      }
+      const nowIso = new Date().toISOString();
+      player.avatar_url = input.avatarUrl;
+      player.avatar_updated_at = nowIso;
+      return { avatarUrl: input.avatarUrl, avatarUpdatedAt: nowIso };
+    },
+    async resetPlayerAvatar(input: ResetPlayerAvatarInput): Promise<void> {
+      const player = snapshot.players.find((p) => p.id === input.playerId);
+      if (!player) {
+        throw new Error('player not found in specified group');
+      }
+      player.avatar_url = null;
+      player.avatar_updated_at = null;
     },
     async previewGuestIntoPlayerMerge(): Promise<GuestMergePreviewResponse> {
       throw new Error(
@@ -1050,6 +1108,58 @@ export function createSupabaseTrackerRepository(
         p_is_active: input.isActive,
         p_reason: input.reason,
       });
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+
+    async uploadAvatarImage(input: UploadAvatarFileInput): Promise<string> {
+      const fileExt = input.file.name.split('.').pop() || 'jpg';
+      const fileName = `${input.groupId}/${input.playerId}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await client.storage
+        .from('avatars')
+        .upload(fileName, input.file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload avatar: ${uploadError.message}`);
+      }
+
+      const { data: publicUrlData } = client.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    },
+
+    async updatePlayerAvatar(
+      input: UpdatePlayerAvatarInput,
+    ): Promise<UpdatePlayerAvatarResponse> {
+      const { data, error } = await client.rpc('update_player_avatar', {
+        p_group_id: input.groupId,
+        p_player_id: input.playerId,
+        p_avatar_url: input.avatarUrl,
+        p_admin_override: input.adminOverride ?? false,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return {
+        avatarUrl: data.avatar_url,
+        avatarUpdatedAt: data.avatar_updated_at,
+      };
+    },
+
+    async resetPlayerAvatar(input: ResetPlayerAvatarInput): Promise<void> {
+      const { error } = await client.rpc('reset_player_avatar', {
+        p_group_id: input.groupId,
+        p_player_id: input.playerId,
+      });
+
       if (error) {
         throw new Error(error.message);
       }

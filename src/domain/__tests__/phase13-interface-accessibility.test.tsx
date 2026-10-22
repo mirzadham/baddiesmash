@@ -33,9 +33,9 @@ describe('Phase 13 — Cross-Discipline Interface & Accessibility Remediation', 
     // Verify focus styles ensure visibility on focus
     expect(adminBtn.className).toContain('focus:not-sr-only');
 
-    const themeBtn = screen.getByRole('button', { name: /toggle theme/i });
-    expect(themeBtn).toBeTruthy();
-    expect(themeBtn.className).toContain('focus:not-sr-only');
+    // Confirm obsolete theme button is not present
+    const themeBtn = screen.queryByRole('button', { name: /toggle theme/i });
+    expect(themeBtn).toBeNull();
   });
 
   it('exposes aria-pressed states and minimum hit targets on Leaderboard Singles/Doubles toggle', async () => {

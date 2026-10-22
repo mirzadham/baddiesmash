@@ -49,6 +49,7 @@ export function RankingRow({ row, isCurrentUser, onSelectPlayer }: RankingRowPro
         {/* Player Avatar */}
         <PlayerAvatar
           displayName={row.displayName}
+          avatarUrl={row.avatarUrl}
           playerId={row.playerId}
           size={40}
           isCurrentUser={isCurrentUser}
