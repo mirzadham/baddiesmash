@@ -101,6 +101,8 @@ This pack contains the following files:
 - [`src/domain/__tests__/phase12-profile-redesign.test.tsx`](src/domain/__tests__/phase12-profile-redesign.test.tsx)
 - [`src/domain/__tests__/phase13-interface-accessibility.test.tsx`](src/domain/__tests__/phase13-interface-accessibility.test.tsx)
 - [`src/domain/__tests__/phase14-auto-scroll.test.tsx`](src/domain/__tests__/phase14-auto-scroll.test.tsx)
+- [`src/domain/__tests__/phase15-winner-tick-badge.test.tsx`](src/domain/__tests__/phase15-winner-tick-badge.test.tsx)
+- [`src/domain/__tests__/phase16-scroll-management.test.tsx`](src/domain/__tests__/phase16-scroll-management.test.tsx)
 - [`src/domain/__tests__/scoring.test.ts`](src/domain/__tests__/scoring.test.ts)
 - [`src/domain/__tests__/standings.test.ts`](src/domain/__tests__/standings.test.ts)
 - [`src/lib/inviteToken.ts`](src/lib/inviteToken.ts)

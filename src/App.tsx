@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, Home, Trophy, User, Sun, Moon } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
-import { ShuttlecockBrandMark } from './components/icons/BrandMark.tsx';
 import {
   captureAndStripInviteTokenFromUrl,
   clearCapturedInviteToken,
@@ -160,7 +159,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
       <div className="app-shell">
         <header className="app-header">
           <h1 style={{ margin: 0, fontSize: '1.2rem' }}>
-            Badminton Group Tracker
+            BADDIESMASH
           </h1>
         </header>
         <main className="app-main">
@@ -193,7 +192,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
       <div className="app-shell">
         <header className="app-header">
           <h1 style={{ margin: 0, fontSize: '1.2rem' }}>
-            Badminton Group Tracker
+            BADDIESMASH
           </h1>
         </header>
         <main className="app-main">
@@ -219,35 +218,20 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     return (
       <div className="app-shell">
         <header className="app-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <ShuttlecockBrandMark size={28} />
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.15rem' }}>
-              <span
-                style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  fontWeight: 900,
-                  fontSize: '1.35rem',
-                  letterSpacing: '-0.03em',
-                  color: '#ffffff',
-                  lineHeight: 1,
-                }}
-              >
-                SMASH
-              </span>
-              <span
-                style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  fontWeight: 900,
-                  fontSize: '1.35rem',
-                  letterSpacing: '-0.03em',
-                  color: '#22c55e',
-                  lineHeight: 1,
-                }}
-              >
-                TRACK
-              </span>
-              <span className="sr-only">Badminton Tracker</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span
+              style={{
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                letterSpacing: '0.04em',
+                color: '#ffffff',
+              }}
+            >
+              <span>BADDIE</span><span style={{ color: '#22c55e' }}>SMASH</span>
+            </span>
+            <span className="sr-only">BADDIESMASH</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
@@ -356,11 +340,10 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
         </div>
       )}
 
-      {/* SMASHTRACK Header */}
+      {/* BADDIESMASH Header */}
       <header className="app-header">
-        {/* Brand Logo: SMASHTRACK */}
+        {/* Brand Logo: BADDIESMASH */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-          <ShuttlecockBrandMark size={28} />
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span
               style={{
@@ -372,9 +355,9 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
                 color: '#ffffff',
               }}
             >
-              SMASH<span style={{ color: '#22c55e' }}>TRACK</span>
+              <span>BADDIE</span><span style={{ color: '#22c55e' }}>SMASH</span>
             </span>
-            <span className="sr-only">Badminton Tracker</span>
+            <span className="sr-only">BADDIESMASH</span>
           </div>
           {isDemoMode && (
             <span className="hidden sm:inline-flex">

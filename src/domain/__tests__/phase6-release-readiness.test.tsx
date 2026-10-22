@@ -83,7 +83,7 @@ function createPhase6MockRepository(
 }
 
 describe('Phase 6 — Release Readiness, Data Privacy UX & Incomplete Draft Resilience', () => {
-  it('renders the Data Privacy & Account Lifecycle section in ProfileView fulfilling PRIV-02', async () => {
+  it('confirms the Data Privacy & Account Lifecycle section is removed from ProfileView per owner directive', async () => {
     const { repo } = createPhase6MockRepository();
 
     render(<App repository={repo} envConfig={CONFIGURED_ENV} />);
@@ -103,18 +103,9 @@ describe('Phase 6 — Release Readiness, Data Privacy UX & Incomplete Draft Resi
       expect(screen.getByTestId('view-profile')).toBeTruthy();
     });
 
-    // Assert that the PRIV-02 Privacy & Account Lifecycle card is rendered
-    await waitFor(() => {
-      expect(screen.getByTestId('privacy-lifecycle-card')).toBeTruthy();
-    });
-
-    const privacyCard = screen.getByTestId('privacy-lifecycle-card');
-    expect(privacyCard.textContent).toContain('Data Privacy & Account Lifecycle');
-    expect(privacyCard.textContent).toContain('Rating Ledger & Match History Immutability');
-    expect(privacyCard.textContent).toContain('Account Deletion & Player Profile Unlinking');
-    expect(privacyCard.textContent).toContain('Confidentiality of Contact Details & Invitations');
-    expect(privacyCard.textContent).toContain('linked_player_id = NULL');
-    expect(privacyCard.textContent).toContain('departed');
+    // Assert that the privacy-lifecycle-card is no longer rendered in ProfileView
+    expect(screen.queryByTestId('privacy-lifecycle-card')).toBeNull();
+    expect(screen.queryByText(/Data Privacy & Account Lifecycle/i)).toBeNull();
   });
 
   it('handles draft void failure resilience when resuming and completing a draft (SES-03)', async () => {

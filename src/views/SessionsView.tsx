@@ -10,6 +10,7 @@ import {
   type EnrichedMatchCard,
   formatMalaysiaDate,
   formatMalaysiaDateTime,
+  formatMalaysiaMonthYear,
 } from '../services/readViewModels.ts';
 import type {
   TrackerRepository,
@@ -885,11 +886,30 @@ export function SessionsView({
     isSessionOpenForRecording && (isViewerController || isAdminOrOwner);
 
   const [sessionFilter, setSessionFilter] = useState<'all' | 'doubles' | 'singles'>('all');
+  const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('all');
+  const [visibleSessionsCount, setVisibleSessionsCount] = useState<number>(5);
 
-  const sessionHistoryList = useMemo(
-    () => snapshot.sessions,
-    [snapshot.sessions],
-  );
+  const availableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    for (const s of snapshot.sessions) {
+      const my = formatMalaysiaMonthYear(s.session_started_at);
+      if (my) monthSet.add(my);
+    }
+    return Array.from(monthSet);
+  }, [snapshot.sessions]);
+
+  const filteredSessionHistoryList = useMemo(() => {
+    if (selectedMonthFilter === 'all') {
+      return snapshot.sessions;
+    }
+    return snapshot.sessions.filter(
+      (s) => formatMalaysiaMonthYear(s.session_started_at) === selectedMonthFilter,
+    );
+  }, [snapshot.sessions, selectedMonthFilter]);
+
+  const displayedSessionHistoryList = useMemo(() => {
+    return filteredSessionHistoryList.slice(0, visibleSessionsCount);
+  }, [filteredSessionHistoryList, visibleSessionsCount]);
 
   const handleCorrectionPayloadSubmit = async (
     matchId: string,
@@ -1089,7 +1109,7 @@ export function SessionsView({
           >
             <Info size={14} className="text-amber-400 shrink-0" />
             <span>
-              Singles is not currently tracked. SMASHTRACK is exclusively configured for doubles matches in accordance with group rules.
+              Singles is not currently tracked. BADDIESMASH is exclusively configured for doubles matches in accordance with group rules.
             </span>
           </div>
         )}
@@ -1303,22 +1323,59 @@ export function SessionsView({
 
       {/* Past Completed Sessions Accordion Section (matching sessions.jfif) */}
       <div className="flex flex-col gap-3 mt-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight">
-            Session History
-          </h2>
-          <span className="text-xs text-slate-400">
-            {sessionHistoryList.length} sessions
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight">
+              Session History
+            </h2>
+            <span className="text-xs text-slate-400">
+              ({filteredSessionHistoryList.length}{' '}
+              {filteredSessionHistoryList.length === 1 ? 'session' : 'sessions'})
+            </span>
+          </div>
+
+          {/* Month / Year Filter Dropdown */}
+          {availableMonths.length > 0 && (
+            <div className="flex items-center gap-1.5 self-start sm:self-auto">
+              <label
+                htmlFor="session-month-filter"
+                className="text-xs font-semibold text-slate-400"
+              >
+                Month:
+              </label>
+              <select
+                id="session-month-filter"
+                data-testid="session-month-filter"
+                value={selectedMonthFilter}
+                onChange={(e) => {
+                  setSelectedMonthFilter(e.target.value);
+                  setVisibleSessionsCount(5);
+                }}
+                className="bg-[#16202e] text-slate-200 text-xs font-semibold py-1.5 px-2.5 rounded-lg border border-slate-700/80 focus:outline-none focus:border-emerald-500 cursor-pointer"
+              >
+                <option value="all">All Months ({snapshot.sessions.length})</option>
+                {availableMonths.map((m) => {
+                  const countInMonth = snapshot.sessions.filter(
+                    (s) => formatMalaysiaMonthYear(s.session_started_at) === m,
+                  ).length;
+                  return (
+                    <option key={m} value={m}>
+                      {m} ({countInMonth})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          )}
         </div>
 
-        {sessionHistoryList.length === 0 ? (
+        {filteredSessionHistoryList.length === 0 ? (
           <div className="p-6 rounded-2xl bg-[#121a24] border border-slate-800 text-center text-xs text-slate-500 italic">
-            No sessions recorded yet.
+            No sessions match the selected filter.
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {sessionHistoryList.map((session) => {
+            {displayedSessionHistoryList.map((session) => {
               const pastDetail = deriveSessionDetailFromSnapshot(snapshot, session.id);
               const isExpanded = expandedSessionHistoryId === session.id;
               return (
@@ -1338,6 +1395,31 @@ export function SessionsView({
                 />
               );
             })}
+
+            {/* Show More Sessions Progressive Disclosure */}
+            {filteredSessionHistoryList.length > visibleSessionsCount && (
+              <div className="flex items-center gap-2 pt-1 pb-2">
+                <button
+                  type="button"
+                  data-testid="show-more-sessions-btn"
+                  onClick={() => setVisibleSessionsCount((prev) => prev + 5)}
+                  className="flex-1 py-2 px-3 rounded-xl bg-[#16202e] hover:bg-[#1c293a] border border-slate-700/80 text-emerald-400 hover:text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span>Show More Sessions (+5)</span>
+                  <span className="text-slate-500 text-[11px] font-normal">
+                    ({displayedSessionHistoryList.length} of {filteredSessionHistoryList.length})
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="show-all-sessions-btn"
+                  onClick={() => setVisibleSessionsCount(filteredSessionHistoryList.length)}
+                  className="py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                >
+                  Show All ({filteredSessionHistoryList.length})
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

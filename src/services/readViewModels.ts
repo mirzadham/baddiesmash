@@ -71,6 +71,21 @@ export function formatMalaysiaDate(isoString: string): string {
 }
 
 /**
+ * Formats an ISO UTC timestamp into `MMMM YYYY` in `Asia/Kuala_Lumpur` (e.g. "October 2026").
+ */
+export function formatMalaysiaMonthYear(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return isoString;
+  }
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Kuala_Lumpur',
+  }).format(date);
+}
+
+/**
  * Formats an ISO UTC timestamp into `DD MMM YYYY, HH:mm MYT` in `Asia/Kuala_Lumpur`.
  */
 export function formatMalaysiaDateTime(isoString: string): string {

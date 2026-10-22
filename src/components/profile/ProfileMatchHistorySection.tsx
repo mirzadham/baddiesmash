@@ -1,5 +1,5 @@
-import React from 'react';
-import { History } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, History } from 'lucide-react';
 import { StatusBadge } from '../StatusBadge.tsx';
 import type { EnrichedMatchCard } from '../../services/readViewModels.ts';
 import type { DbSessionRow } from '../../types/database.ts';
@@ -27,6 +27,15 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
   onStatusFilterChange,
   formatMalaysiaDate,
 }) => {
+  const [visibleCount, setVisibleCount] = useState<number>(10);
+
+  // Reset pagination slice whenever filters change or player changes
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [sessionFilter, statusFilter, effectivePlayerId]);
+
+  const displayedMatches = filteredMatches.slice(0, visibleCount);
+
   return (
     <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-4">
       {/* Header & Filter Controls */}
@@ -102,7 +111,7 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filteredMatches.map((card) => {
+          {displayedMatches.map((card) => {
             const playerSlot = [...card.teamA, ...card.teamB].find(
               (s) => s.playerId === effectivePlayerId,
             )!;
@@ -151,9 +160,9 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                 {/* Scoreboard Strip: Team 1 (Left) | Score (Center) | Team 2 (Right) */}
                 <div className="flex items-center justify-between gap-2 sm:gap-4 bg-[#101722] p-2.5 rounded-xl border border-slate-800/80">
                   {/* Left Team */}
-                  <div className="flex-1 min-w-0 text-left">
+                  <div className="flex-1 min-w-0 flex items-center justify-start gap-1.5 text-left">
                     <span
-                      className={`text-xs sm:text-sm leading-snug truncate block ${
+                      className={`text-xs sm:text-sm leading-snug truncate ${
                         teamAWon
                           ? 'font-bold text-white'
                           : 'font-medium text-slate-300'
@@ -162,6 +171,14 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                       {card.teamA[0]?.displayName} &amp;{' '}
                       {card.teamA[1]?.displayName}
                     </span>
+                    {teamAWon && (
+                      <CheckCircle2
+                        size={15}
+                        className="text-emerald-400 shrink-0"
+                        aria-label="Winner"
+                        data-testid="winner-tick"
+                      />
+                    )}
                   </div>
 
                   {/* Scores (Center) */}
@@ -188,9 +205,17 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                   </div>
 
                   {/* Right Team */}
-                  <div className="flex-1 min-w-0 text-right">
+                  <div className="flex-1 min-w-0 flex items-center justify-end gap-1.5 text-right">
+                    {!teamAWon && card.winnerSide === 'B' && (
+                      <CheckCircle2
+                        size={15}
+                        className="text-emerald-400 shrink-0"
+                        aria-label="Winner"
+                        data-testid="winner-tick"
+                      />
+                    )}
                     <span
-                      className={`text-xs sm:text-sm leading-snug truncate block ${
+                      className={`text-xs sm:text-sm leading-snug truncate ${
                         !teamAWon
                           ? 'font-bold text-white'
                           : 'font-medium text-slate-300'
@@ -243,6 +268,31 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
               </article>
             );
           })}
+
+          {/* Load More Matches Progressive Disclosure */}
+          {filteredMatches.length > visibleCount && (
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                data-testid="load-more-matches-btn"
+                onClick={() => setVisibleCount((prev) => prev + 10)}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-[#16202e] hover:bg-[#1c293a] border border-slate-700/80 text-emerald-400 hover:text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>Load More Matches (+10)</span>
+                <span className="text-slate-500 text-[11px] font-normal">
+                  (Showing {displayedMatches.length} of {filteredMatches.length})
+                </span>
+              </button>
+              <button
+                type="button"
+                data-testid="show-all-matches-btn"
+                onClick={() => setVisibleCount(filteredMatches.length)}
+                className="py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+              >
+                Show All ({filteredMatches.length})
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>

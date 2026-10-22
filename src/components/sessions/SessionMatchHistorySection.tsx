@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, History } from 'lucide-react';
+import { CheckCircle2, Edit2, History } from 'lucide-react';
 import type { DbPlayerRow } from '../../types/database.ts';
 import type { EnrichedMatchCard } from '../../services/readViewModels.ts';
 import { StatusBadge } from '../StatusBadge.tsx';
@@ -156,8 +156,8 @@ export function SessionMatchHistorySection({
                 {/* Teams & Score Box: Team 1 (Left) | Scores (Center) | Team 2 (Right) */}
                 <div className="flex items-center justify-between gap-2 sm:gap-4 bg-[#101722] p-3 rounded-xl border border-slate-800/80">
                   {/* Left Team */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <span className={`text-xs sm:text-sm leading-snug truncate block ${teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                  <div className="flex-1 min-w-0 flex items-center justify-start gap-1.5 text-left">
+                    <span className={`text-xs sm:text-sm leading-snug truncate ${teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                       <button
                         type="button"
                         onClick={() => card.teamA[0] && onSelectPlayer(card.teamA[0].playerId)}
@@ -174,6 +174,14 @@ export function SessionMatchHistorySection({
                         {card.teamA[1]?.displayName}
                       </button>
                     </span>
+                    {teamAWon && (
+                      <CheckCircle2
+                        size={15}
+                        className="text-emerald-400 shrink-0"
+                        aria-label="Winner"
+                        data-testid="winner-tick"
+                      />
+                    )}
                   </div>
 
                   {/* Scores (Center) */}
@@ -188,8 +196,16 @@ export function SessionMatchHistorySection({
                   </div>
 
                   {/* Right Team */}
-                  <div className="flex-1 min-w-0 text-right">
-                    <span className={`text-xs sm:text-sm leading-snug truncate block ${!teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                  <div className="flex-1 min-w-0 flex items-center justify-end gap-1.5 text-right">
+                    {!teamAWon && card.winnerSide === 'B' && (
+                      <CheckCircle2
+                        size={15}
+                        className="text-emerald-400 shrink-0"
+                        aria-label="Winner"
+                        data-testid="winner-tick"
+                      />
+                    )}
+                    <span className={`text-xs sm:text-sm leading-snug truncate ${!teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                       <button
                         type="button"
                         onClick={() => card.teamB[0] && onSelectPlayer(card.teamB[0].playerId)}

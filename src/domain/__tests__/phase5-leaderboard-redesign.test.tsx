@@ -22,7 +22,7 @@ describe('Phase 5 — Leaderboard UI Redesign & Theming', () => {
     });
 
     // Check brand title
-    expect(screen.getByText('Badminton Tracker')).toBeTruthy();
+    expect(screen.getByText('BADDIESMASH')).toBeTruthy();
 
     // Check theme toggle button
     const toggleBtn = screen.getByRole('button', { name: /toggle theme/i });

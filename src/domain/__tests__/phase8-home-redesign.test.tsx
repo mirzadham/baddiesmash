@@ -21,9 +21,9 @@ describe('Phase 8 — SMASHTRACK Home Interface & Shell Redesign', () => {
       expect(screen.getByTestId('view-home')).toBeTruthy();
     });
 
-    // Verify SMASHTRACK brand text
+    // Verify BADDIESMASH brand text
+    expect(screen.getByText('BADDIE')).toBeTruthy();
     expect(screen.getByText('SMASH')).toBeTruthy();
-    expect(screen.getByText('TRACK')).toBeTruthy();
 
     // Verify NO hamburger menu icon exists
     expect(screen.queryByLabelText(/menu/i)).toBeNull();

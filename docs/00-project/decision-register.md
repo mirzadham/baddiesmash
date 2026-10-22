@@ -225,6 +225,34 @@ When a material decision changes:
     - *WCAG 2.2 / Reduced Motion Compliance:* The shared `scrollToTop()` utility in `src/lib/scroll.ts` respects `prefers-reduced-motion: reduce`. Users with reduced-motion preferences receive instant scrolling (`behavior: 'auto'`), while other users receive smooth scrolling (`behavior: 'smooth'`).
   - *Test Verification:* Created `src/domain/__tests__/phase14-auto-scroll.test.tsx` (9 automated tests). All 16 Vitest test suites (101 tests) pass with 100% success rate (`npm test`); TypeScript check (`tsc -b`) and Vite production build pass cleanly with zero errors.
   - *Affected Files:* `src/lib/scroll.ts`, `src/App.tsx`, `src/views/AdminGovernanceView.tsx`, `src/views/SessionsView.tsx`, `src/components/sessions/PastSessionAccordionCard.tsx`, `src/components/admin/AdminHeader.tsx`, `src/domain/__tests__/phase14-auto-scroll.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Phase 19 App Rebrand to BADDIESMASH & Shuttlecock Removal):**
+  - *Brand Name & Accent Styling (`DEC-060`):* Renamed the application across all headers, gates, browser titles, and user-facing copy from SMASHTRACK / Badminton Group Tracker to `BADDIESMASH`. The brand typography features pure stylized italic text: `BADDIE` (bold white italic `#ffffff`) + `SMASH` (vibrant neon green italic `#22c55e`), maintaining letter spacing (`0.04em`) and 700 font weight.
+  - *Shuttlecock Brand Mark Removal:* In accordance with explicit owner instruction ("remove the shuttlecock"), the `ShuttlecockBrandMark` icon was completely removed from the authenticated main header and the unauthenticated/gate header.
+  - *Copy & CSS Tokens:* Updated the doubles invariant notice in `SessionsView.tsx` to reference `BADDIESMASH`. Added `.baddiesmash-*` component aliases in `src/styles/index.css` alongside `.smashtrack-*` for continuous backwards compatibility. Updated HTML document `<title>` in `index.html` to `BADDIESMASH`.
+  - *Test Evidence & Quality Gates:* Updated brand assertions in `src/domain/__tests__/phase8-home-redesign.test.tsx` and `src/domain/__tests__/phase5-leaderboard-redesign.test.tsx`. All 16 Vitest test suites (101 automated tests) pass with 100% success rate (`npm test`); TypeScript compilation (`tsc --noEmit`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `index.html`, `src/App.tsx`, `src/views/SessionsView.tsx`, `src/styles/index.css`, `src/domain/__tests__/phase8-home-redesign.test.tsx`, `src/domain/__tests__/phase5-leaderboard-redesign.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Winner Pair Green Circular Checkmark Indicator):**
+  - *Winning Pair Visual Indicator (`DEC-062`):* In accordance with explicit owner instruction ("put a tick in a circle besides winning pair indicating as winner. i want the green color" with "the icon should be inside"), added a vibrant green circular checkmark (`CheckCircle2` from `lucide-react`, `text-emerald-400`, `size={15}`) placed inside beside the winning pair names facing the central score box.
+  - *Symmetrical Inside Layout:*
+    - Team A (Left) Win: Placed to the right of Team A's names, on the inside facing the central score box: `[ Player A1 & Player A2 (✓) ] [ 21 - 18 ] [ Player B1 & Player B2 ]`.
+    - Team B (Right) Win: Placed to the left of Team B's names, on the inside facing the central score box: `[ Player A1 & Player A2 ] [ 18 - 21 ] [ (✓) Player B1 & Player B2 ]`.
+  - *Universal Consistency Across Match Views:* Implemented identically across:
+    - `SessionMatchHistorySection.tsx` (active/selected session Match Corrections & History)
+    - `PastSessionAccordionCard.tsx` (past sessions accordion match history list)
+    - `ProfileMatchHistorySection.tsx` (player profile match history list)
+  - *Accessibility & Integrity:* The icon includes `aria-label="Winner"` and `data-testid="winner-tick"`. Losing pairs, voided matches, and incomplete drafts never render the winner tick.
+  - *Test Evidence & Quality Gates:* Added `src/domain/__tests__/phase15-winner-tick-badge.test.tsx` (4 automated tests). All 17 Vitest test suites (105 automated tests) pass with 100% success rate (`npm test`); TypeScript compilation (`tsc --noEmit`) passes cleanly with 0 errors.
+  - *Affected Files:* `src/components/sessions/SessionMatchHistorySection.tsx`, `src/components/sessions/PastSessionAccordionCard.tsx`, `src/components/profile/ProfileMatchHistorySection.tsx`, `src/domain/__tests__/phase15-winner-tick-badge.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Phase 20 Long History Scroll Management & Progressive Disclosure):**
+  - *Long History Scroll Management (`DEC-063`):* Implemented mobile-first progressive disclosure and date filtering to prevent excessive vertical scrolling as group match and session history grow over time:
+    - *Session History Progressive Disclosure & Month Filter (`SessionsView.tsx`):* Displays a maximum of 5 past sessions by default with high-contrast tactile action buttons: `Show More Sessions (+5)` and `Show All ({total})`. Integrated a Month & Year dropdown filter (`session-month-filter`) grouping sessions chronologically in `Asia/Kuala_Lumpur` time (`All Months`, `October 2026 (4)`, `September 2026 (3)`), instantly narrowing session lists and resetting the pagination slice.
+    - *Past Session Match Drawer Limit (`PastSessionAccordionCard.tsx`):* Inside expanded past sessions, limits completed matches to the first 4 matches by default with an in-place toggle button (`toggle-all-matches-{sessionId}`) displaying `Show all {total} matches ({remaining} more) ⌵` and collapsible to `Show fewer matches ⌃` with stopPropagation to preserve accordion state.
+    - *Profile Match History Progressive Loading (`ProfileMatchHistorySection.tsx`):* Limits player match history cards to 10 by default with a `Load More Matches (+10)` action button and `Show All ({total})` option. Automatically resets the pagination slice to 10 when switching between Session or Status filters.
+  - *Test Evidence & Quality Gates:* Added `src/domain/__tests__/phase16-scroll-management.test.tsx` (3 automated tests). All 18 Vitest test suites (108 automated tests) pass with 100% success rate (`npm test`); TypeScript typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/services/readViewModels.ts`, `src/views/SessionsView.tsx`, `src/components/sessions/PastSessionAccordionCard.tsx`, `src/components/profile/ProfileMatchHistorySection.tsx`, `src/domain/__tests__/phase16-scroll-management.test.tsx`, `docs/00-project/decision-register.md`.
+
+
+
 
 
 

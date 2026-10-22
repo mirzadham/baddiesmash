@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { StatusBadge } from '../StatusBadge.tsx';
 import type { DbSessionRow } from '../../types/database.ts';
 import type { EnrichedMatchCard } from '../../services/readViewModels.ts';
@@ -39,10 +39,15 @@ export function PastSessionAccordionCard({
   const [internalExpanded, setInternalExpanded] = useState<boolean>(false);
   const isExpanded =
     controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
+  const [showAllMatches, setShowAllMatches] = useState<boolean>(false);
 
   const completedMatches = matches.filter(
     (m) => m.match.status === 'completed',
   );
+
+  const displayedMatches = showAllMatches
+    ? completedMatches
+    : completedMatches.slice(0, 4);
 
   const handleToggle = (e?: React.MouseEvent) => {
     if (e) {
@@ -147,7 +152,7 @@ export function PastSessionAccordionCard({
               No completed matches recorded in this session.
             </div>
           ) : (
-            completedMatches.map((card) => {
+            displayedMatches.map((card) => {
               const teamAWon = card.winnerSide === 'A';
               const pA1 = card.teamA[0];
               const pA2 = card.teamA[1];
@@ -169,8 +174,8 @@ export function PastSessionAccordionCard({
 
                   <div className="flex items-center justify-between gap-2 sm:gap-4 bg-[#101722] p-2.5 rounded-lg border border-slate-800/80">
                     {/* Left Team */}
-                    <div className="flex-1 min-w-0 text-left">
-                      <span className={`text-xs sm:text-sm leading-snug truncate block ${teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                    <div className="flex-1 min-w-0 flex items-center justify-start gap-1.5 text-left">
+                      <span className={`text-xs sm:text-sm leading-snug truncate ${teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                         <button
                           type="button"
                           onClick={() => pA1 && onSelectPlayer(pA1.playerId)}
@@ -187,6 +192,14 @@ export function PastSessionAccordionCard({
                           {pA2?.displayName ?? 'Player A2'}
                         </button>
                       </span>
+                      {teamAWon && (
+                        <CheckCircle2
+                          size={15}
+                          className="text-emerald-400 shrink-0"
+                          aria-label="Winner"
+                          data-testid="winner-tick"
+                        />
+                      )}
                     </div>
 
                     {/* Scores (Center) */}
@@ -201,8 +214,16 @@ export function PastSessionAccordionCard({
                     </div>
 
                     {/* Right Team */}
-                    <div className="flex-1 min-w-0 text-right">
-                      <span className={`text-xs sm:text-sm leading-snug truncate block ${!teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                    <div className="flex-1 min-w-0 flex items-center justify-end gap-1.5 text-right">
+                      {!teamAWon && card.winnerSide === 'B' && (
+                        <CheckCircle2
+                          size={15}
+                          className="text-emerald-400 shrink-0"
+                          aria-label="Winner"
+                          data-testid="winner-tick"
+                        />
+                      )}
+                      <span className={`text-xs sm:text-sm leading-snug truncate ${!teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                         <button
                           type="button"
                           onClick={() => pB1 && onSelectPlayer(pB1.playerId)}
@@ -224,6 +245,27 @@ export function PastSessionAccordionCard({
                 </div>
               );
             })
+          )}
+
+          {/* Show All Matches Progressive Disclosure Toggle */}
+          {completedMatches.length > 4 && (
+            <div className="pt-1 flex justify-center">
+              <button
+                type="button"
+                data-testid={`toggle-all-matches-${session.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllMatches((prev) => !prev);
+                }}
+                className="w-full py-1.5 px-3 rounded-lg bg-[#101722] hover:bg-[#16202e] border border-slate-800 text-xs text-slate-300 hover:text-emerald-400 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>
+                  {showAllMatches
+                    ? 'Show fewer matches ⌃'
+                    : `Show all ${completedMatches.length} matches (${completedMatches.length - 4} more) ⌵`}
+                </span>
+              </button>
+            </div>
           )}
 
           {/* Admin Reopen Action (if session is completed and viewer is Admin/Owner) */}

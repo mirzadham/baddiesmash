@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Shield, Settings, LogOut, SunMoon } from 'lucide-react';
+import { Settings, LogOut, SunMoon } from 'lucide-react';
 import { ProfileHeroCard } from '../components/profile/ProfileHeroCard.tsx';
 import { PerformanceMetricsGrid } from '../components/profile/PerformanceMetricsGrid.tsx';
 import {
@@ -36,7 +36,6 @@ export interface ProfileViewProps {
  * - Displays 2x2 Performance Grid (Recent Form, Win Rate, Win Streak, Elo points, Attendance Rate).
  * - Displays H2H Rivalry & Partnerships with visual split comparison bars.
  * - Displays mobile-first Match History cards with filters.
- * - Displays Data Privacy & Account Lifecycle disclosures (`PRIV-02`).
  */
 export function ProfileView({
   snapshot,
@@ -258,70 +257,7 @@ export function ProfileView({
         </section>
       )}
 
-      {/* 4. Data Privacy & Account Lifecycle (PRIV-02) */}
-      <section
-        className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-3.5"
-        data-testid="privacy-lifecycle-card"
-        aria-labelledby="privacy-lifecycle-heading"
-      >
-        <div className="flex items-center gap-2">
-          <Shield size={20} className="text-emerald-400" />
-          <h3
-            id="privacy-lifecycle-heading"
-            className="text-base sm:text-lg font-bold text-white tracking-tight"
-          >
-            Data Privacy &amp; Account Lifecycle
-          </h3>
-        </div>
-
-        <p className="text-xs text-slate-400 leading-relaxed">
-          This tracker is built for a trusted badminton group with strict privacy
-          separation, deterministic ratings, and audited data integrity.
-        </p>
-
-        <div className="grid gap-2.5 text-xs">
-          <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1">
-            <strong className="text-white font-semibold text-xs sm:text-sm">
-              1. Rating Ledger &amp; Match History Immutability
-            </strong>
-            <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed">
-              Completed doubles matches, scores, and sequential order numbers are
-              immutable historical facts. Because all Elo ratings and leaderboard
-              standings are mathematically derived from past matches, match history
-              cannot be silently erased without corrupting all subsequent ratings.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1">
-            <strong className="text-white font-semibold text-xs sm:text-sm">
-              2. Account Deletion &amp; Player Profile Unlinking
-            </strong>
-            <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed">
-              If a member departs or requests account deletion, their login
-              authentication record is removed and their membership status
-              transitions to <code className="text-slate-300">departed</code>. The
-              player profile remains with{' '}
-              <code className="text-slate-300">linked_player_id = NULL</code>,
-              preserving historical match scorecards and group rating integrity
-              while severing all personal authentication credentials.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1">
-            <strong className="text-white font-semibold text-xs sm:text-sm">
-              3. Confidentiality of Contact Details &amp; Invitations
-            </strong>
-            <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed">
-              Member email addresses and raw invitation tokens are never displayed
-              to other players or sent in client-side data.
-              Invitation links are single-use and securely encrypted before database
-              storage.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Preferences & Account Settings Section */}
+      {/* 4. Preferences & Account Settings Section */}
       <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Settings size={20} className="text-slate-400" />

@@ -903,7 +903,8 @@ canvas {
   width: 100%;
 }
 
-/* SMASHTRACK Home Interface Design Tokens & Components */
+/* BADDIESMASH Home Interface Design Tokens & Components */
+.baddiesmash-cta-btn,
 .smashtrack-cta-btn {
   width: 100%;
   min-height: 52px;
@@ -922,15 +923,18 @@ canvas {
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
+.baddiesmash-cta-btn:hover,
 .smashtrack-cta-btn:hover {
   background: #16a34a;
   transform: translateY(-1px);
 }
 
+.baddiesmash-cta-btn:active:not(:disabled),
 .smashtrack-cta-btn:active:not(:disabled) {
   transform: scale(0.96);
 }
 
+.baddiesmash-session-card,
 .smashtrack-session-card {
   background: var(--bg-surface);
   border: 2px solid #22c55e;
@@ -939,6 +943,7 @@ canvas {
   transition: border-color 0.2s ease;
 }
 
+.baddiesmash-blue-btn,
 .smashtrack-blue-btn {
   width: 100%;
   min-height: 46px;
@@ -956,15 +961,18 @@ canvas {
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
+.baddiesmash-blue-btn:hover,
 .smashtrack-blue-btn:hover {
   background: #1d4ed8;
   transform: translateY(-1px);
 }
 
+.baddiesmash-blue-btn:active:not(:disabled),
 .smashtrack-blue-btn:active:not(:disabled) {
   transform: scale(0.96);
 }
 
+.baddiesmash-leaderboard-card,
 .smashtrack-leaderboard-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
@@ -972,6 +980,7 @@ canvas {
   overflow: hidden;
 }
 
+.baddiesmash-weekly-row,
 .smashtrack-weekly-row {
   display: flex;
   align-items: center;
@@ -981,10 +990,12 @@ canvas {
   transition: background-color 0.15s ease;
 }
 
+.baddiesmash-weekly-row:last-child,
 .smashtrack-weekly-row:last-child {
   border-bottom: none;
 }
 
+.baddiesmash-weekly-row:hover,
 .smashtrack-weekly-row:hover {
   background: var(--bg-surface-subtle);
 }

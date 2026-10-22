@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('Phase 12 — SMASHTRACK Profile Interface Redesign', () => {
-  it('renders Profile view with Hero card, 2x2 Performance Grid, H2H section, Match History, and Privacy Card', async () => {
+  it('renders Profile view with Hero card, 2x2 Performance Grid, H2H section, and Match History without Data Privacy card', async () => {
     const repo = createDemoTrackerRepository();
     render(<App repository={repo} />);
 
@@ -54,10 +54,8 @@ describe('Phase 12 — SMASHTRACK Profile Interface Redesign', () => {
     expect(screen.getByLabelText(/Session:/i)).toBeTruthy();
     expect(screen.getByLabelText(/Status:/i)).toBeTruthy();
 
-    // 5. Data Privacy Card
-    const privacyCard = screen.getByTestId('privacy-lifecycle-card');
-    expect(privacyCard).toBeTruthy();
-    expect(privacyCard.textContent).toContain('Data Privacy & Account Lifecycle');
+    // 5. Data Privacy Card removed per user directive
+    expect(screen.queryByTestId('privacy-lifecycle-card')).toBeNull();
   });
 
   it('switches player profiles and updates Hero, metrics, and H2H data', async () => {
