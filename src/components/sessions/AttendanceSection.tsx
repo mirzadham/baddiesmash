@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Plus, UserPlus, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, UserPlus, Users, AlertTriangle } from 'lucide-react';
 import type { DbPlayerRow } from '../../types/database.ts';
 import { PlayerAvatar } from '../leaderboard/PlayerAvatar.tsx';
 import { StatusBadge } from '../StatusBadge.tsx';
@@ -121,7 +121,7 @@ export function AttendanceSection({
             <div
               key={player.id}
               onClick={() => onSelectPlayer(player.id)}
-              className="cursor-pointer transition-transform hover:scale-110 hover:z-10 rounded-full border border-slate-900 shadow"
+              className="cursor-pointer transition-transform hover:scale-110 hover:z-10 rounded-full border border-slate-900"
               title={player.display_name}
             >
               <PlayerAvatar
@@ -132,7 +132,7 @@ export function AttendanceSection({
             </div>
           ))}
           {remainingCount > 0 && (
-            <div className="w-[30px] h-[30px] rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center text-[10px] font-bold text-slate-300 shadow flex-shrink-0">
+            <div className="w-[30px] h-[30px] rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center text-[10px] font-bold text-slate-300 flex-shrink-0">
               +{remainingCount}
             </div>
           )}
@@ -210,7 +210,7 @@ export function AttendanceSection({
                             {player.is_guest && <StatusBadge variant="guest" />}
                           </div>
                           <span className="text-[10px] text-slate-400">
-                            {isPresent ? '✓ Present' : 'Absent'}
+                            {isPresent ? 'Present' : 'Absent'}
                             {playedInSession ? ' • Played' : ''}
                           </span>
                         </div>
@@ -230,7 +230,7 @@ export function AttendanceSection({
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer flex-shrink-0 ${
                             isPresent
                               ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
-                              : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow'
+                              : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
                           }`}
                         >
                           {isPresent ? 'Remove' : 'Check In'}
@@ -280,11 +280,14 @@ export function AttendanceSection({
                     <p
                       role="note"
                       data-testid="guest-duplicate-name-warning"
-                      className="text-[11px] text-amber-300 font-medium"
+                      className="text-[11px] text-amber-300 font-medium flex items-center gap-1"
                     >
-                      ⚠ A player with this name exists in this group. Creating
-                      a guest creates a separate UUID identity and will never
-                      automatically merge profiles.
+                      <AlertTriangle size={12} className="shrink-0" />
+                      <span>
+                        A player with this name exists in this group. Creating
+                        a guest creates a separate UUID identity and will never
+                        automatically merge profiles.
+                      </span>
                     </p>
                   )}
                 </form>

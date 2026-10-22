@@ -73,7 +73,7 @@ export const AdminInvitationsSection: React.FC<AdminInvitationsSectionProps> = (
 
   return (
     <div
-      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-4"
+      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-4"
       data-testid="admin-section-invitations"
     >
       <div>
@@ -102,7 +102,7 @@ export const AdminInvitationsSection: React.FC<AdminInvitationsSectionProps> = (
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               disabled={isDemoMode || isMutating}
-              placeholder="member@example.com"
+              placeholder="member@court.org"
               className="w-full min-h-[44px] px-3 py-2 rounded-lg bg-[#0d131d] border border-slate-700/80 text-white text-xs sm:text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
             />
           </div>
@@ -181,7 +181,7 @@ export const AdminInvitationsSection: React.FC<AdminInvitationsSectionProps> = (
             type="submit"
             disabled={isDemoMode || isMutating}
             data-testid="issue-invitation-submit-btn"
-            className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Send size={15} />
             <span>{isMutating ? 'Issuing...' : 'Issue Single-Use Invitation'}</span>
@@ -195,7 +195,7 @@ export const AdminInvitationsSection: React.FC<AdminInvitationsSectionProps> = (
           role="region"
           aria-label="One-time invitation token"
           data-testid="one-time-invitation-secret-box"
-          className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/60 text-emerald-200 flex flex-col gap-2.5 shadow-lg shadow-emerald-500/10"
+          className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/60 text-emerald-200 flex flex-col gap-2.5"
         >
           <div className="flex items-center gap-2 font-bold text-white text-sm">
             <Key size={16} className="text-emerald-400" />
@@ -203,7 +203,7 @@ export const AdminInvitationsSection: React.FC<AdminInvitationsSectionProps> = (
           </div>
 
           <p className="text-xs text-emerald-300/90 m-0">
-            Copy and share this link or token now. It is stored securely — once dismissed, this token can never be viewed again.
+            Copy and share this link or token now. It is stored securely; once dismissed, this token can never be viewed again.
           </p>
 
           <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-[#0b1118]/80 border border-emerald-500/30 text-xs">

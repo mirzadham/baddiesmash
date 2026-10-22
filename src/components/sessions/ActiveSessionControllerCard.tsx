@@ -5,6 +5,7 @@ import {
   Clock,
   ShieldCheck,
   Zap,
+  AlertTriangle,
 } from 'lucide-react';
 import { StatusBadge } from '../StatusBadge.tsx';
 import type {
@@ -225,17 +226,17 @@ export function ActiveSessionControllerCard({
   return (
     <div
       data-testid="active-session-card"
-      className="rounded-2xl border border-emerald-500/30 bg-[#121a24] shadow-2xl transition-all duration-200 overflow-hidden mb-6"
+      className="rounded-2xl border border-emerald-500/30 bg-[#121a24] overflow-hidden mb-6"
     >
       <div data-testid="session-detail-panel">
       {/* Active Session Header Bar */}
-      <div className="p-4 sm:p-4.5 bg-gradient-to-r from-emerald-950/40 via-[#121a24] to-[#121a24] border-b border-slate-800/80">
+      <div className="p-4 sm:p-4.5 bg-[#121a24] border-b border-slate-800/80">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span
               className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
                 session.status === 'active'
-                  ? 'bg-emerald-400 animate-pulse'
+                  ? 'bg-emerald-400'
                   : 'bg-amber-400'
               }`}
             />
@@ -243,7 +244,7 @@ export function ActiveSessionControllerCard({
               id="session-detail-heading"
               className="font-bold text-base sm:text-lg text-white tracking-tight truncate"
             >
-              Session — {formatMalaysiaDate(session.session_started_at)}
+              Session: {formatMalaysiaDate(session.session_started_at)}
             </h2>
           </div>
 
@@ -408,7 +409,7 @@ export function ActiveSessionControllerCard({
                     className="py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-40"
                   >
                     <Zap size={12} />
-                    <span>Takeover Controller 🏸</span>
+                    <span>Takeover Controller</span>
                   </button>
                 </form>
               )}
@@ -425,7 +426,7 @@ export function ActiveSessionControllerCard({
           data-testid="stale-session-warning-banner"
           className="p-3 bg-amber-500/10 border-b border-amber-500/30 text-amber-300 text-xs flex items-center gap-2"
         >
-          <span>⚠</span>
+          <AlertTriangle size={14} className="shrink-0" />
           <span>
             <strong>Inactive Session Notice:</strong> This session has
             had no match activity for 12+ hours. Sessions are never automatically
@@ -492,9 +493,10 @@ export function ActiveSessionControllerCard({
                           <>
                             <span
                               data-testid={`failed-void-notice-${draft.match.id}`}
-                              className="text-rose-400 font-semibold text-[11px]"
+                              className="text-rose-400 font-semibold text-[11px] flex items-center gap-1"
                             >
-                              ⚠ Void Failed
+                              <AlertTriangle size={12} />
+                              <span>Void Failed</span>
                             </span>
                             <button
                               type="button"

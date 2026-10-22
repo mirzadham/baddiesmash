@@ -120,7 +120,7 @@ export function LeaderboardView({
             type="button"
             id="leaderboard-filter-dropdown-btn"
             onClick={() => setIsFilterOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface-subtle)] text-xs sm:text-sm font-semibold text-[var(--text-primary)] shadow-sm hover:bg-[var(--bg-surface-elevated)] transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface-subtle)] text-xs sm:text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-surface-elevated)] transition-colors cursor-pointer"
             aria-expanded={isFilterOpen}
             aria-label="Filter leaderboard"
           >
@@ -140,9 +140,9 @@ export function LeaderboardView({
 
           {/* Filter Dropdown Menu (Always accessible for tests, visually floating when open) */}
           <div
-            className={`transition-all duration-150 z-40 ${
+            className={`transition-opacity duration-150 z-40 ${
               isFilterOpen
-                ? 'absolute top-full left-0 mt-1.5 w-60 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl p-1.5'
+                ? 'absolute top-full left-0 mt-1.5 w-60 rounded-xl bg-slate-900 border border-slate-700 p-1.5'
                 : 'opacity-0 pointer-events-none absolute top-full left-0 -z-50'
             }`}
             role="menu"
@@ -328,7 +328,7 @@ export function LeaderboardView({
 
                   {/* Dark Rounded Ranking Card for Rank 4 and Below */}
                   <div
-                    className="mt-3 rounded-2xl overflow-hidden border border-slate-800/90 shadow-xl"
+                    className="mt-3 rounded-2xl overflow-hidden border border-slate-800/90"
                     style={{ background: 'var(--bg-surface)' }}
                   >
                     {/* Header bar of ranking card */}
@@ -508,8 +508,8 @@ export function LeaderboardView({
                   className="mt-6 p-4 rounded-xl bg-[var(--bg-surface-subtle)]/60 border border-[var(--border-color)]"
                   data-testid="session-bench-attendance"
                 >
-                  <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider mb-1">
-                    Attended Session — 0 Matches Played (Bench)
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] mb-1">
+                    Attended Session: 0 Matches Played (Bench)
                   </h3>
                   <p className="text-xs text-[var(--text-muted)] mb-3">
                     Attendance is recorded separately from match participation. Attending without playing counts toward session attendance without altering standings or Elo ratings.
@@ -525,7 +525,7 @@ export function LeaderboardView({
                           <strong className="text-[var(--text-primary)]">
                             {att.displayName}
                           </strong>{' '}
-                          {att.isGuest ? '(Guest) ' : ''}— Present (0 matches played)
+                          {att.isGuest ? '(Guest) ' : ''}: Present (0 matches played)
                         </li>
                       ))}
                     </ul>

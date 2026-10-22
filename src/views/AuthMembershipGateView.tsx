@@ -12,6 +12,8 @@ import {
   ChevronRight,
   UserX,
   AlertOctagon,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 import {
   clearCapturedInviteToken,
@@ -259,9 +261,10 @@ export function AuthMembershipGateView({
         <div
           role="note"
           data-testid="redeem-demo-disabled-notice"
-          className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold"
+          className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1.5"
         >
-          ◈ Demo Mode is read-only. Invitation redemption is disabled.
+          <ShieldAlert size={14} className="shrink-0" />
+          <span>Demo Mode is read-only. Invitation redemption is disabled.</span>
         </div>
       )}
 
@@ -269,7 +272,7 @@ export function AuthMembershipGateView({
       <div>
         <label
           htmlFor="invite-raw-token-input"
-          className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
+          className="block text-xs font-semibold text-slate-300 mb-1.5"
         >
           Single-Use Invitation Token
         </label>
@@ -283,7 +286,7 @@ export function AuthMembershipGateView({
             onChange={(e) => setRawTokenInput(e.target.value)}
             disabled={isDemoMode || isSubmitting}
             placeholder="Paste your invitation token"
-            className="flex-1 h-11 px-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors disabled:opacity-50"
+            className="flex-1 h-11 px-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors disabled:opacity-50"
           />
           <button
             type="button"
@@ -301,7 +304,7 @@ export function AuthMembershipGateView({
         className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2 text-xs"
         disabled={isDemoMode || isSubmitting}
       >
-        <legend className="text-xs font-semibold text-slate-300 uppercase tracking-wider px-1">
+        <legend className="text-xs font-semibold text-slate-300 px-1">
           Player Profile Request (Optional)
         </legend>
         <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
@@ -371,7 +374,7 @@ export function AuthMembershipGateView({
               onChange={(e) => setRequestedExistingPlayerId(e.target.value)}
               disabled={isDemoMode || isSubmitting}
               placeholder="e.g. 00000000-0000-4000-8000-000000000201"
-              className="w-full h-10 px-3 bg-[#0b121b] border border-slate-700 rounded-lg text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full h-10 px-3 bg-[#0b121b] border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
           </div>
         )}
@@ -381,9 +384,10 @@ export function AuthMembershipGateView({
         <div
           role="alert"
           data-testid="redeem-invitation-error"
-          className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold leading-relaxed"
+          className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold leading-relaxed flex items-center gap-1.5"
         >
-          ✕ {redeemError}
+          <X size={14} className="shrink-0" />
+          <span>{redeemError}</span>
         </div>
       )}
 
@@ -391,7 +395,7 @@ export function AuthMembershipGateView({
         type="submit"
         disabled={isDemoMode || isSubmitting}
         data-testid="redeem-invitation-submit-btn"
-        className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-[0.98] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-xs disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2 cursor-pointer"
       >
         {isSubmitting ? 'Redeeming Invitation...' : 'Redeem Invitation & Request Membership'}
       </button>
@@ -402,12 +406,12 @@ export function AuthMembershipGateView({
   if (gateState.status === 'membership_check_failed') {
     return (
       <section
-        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
         role="alert"
         aria-labelledby="gate-error-heading"
         data-testid="gate-membership-check-failed"
       >
-        <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4 shadow-lg shadow-rose-500/10">
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4">
           <ShieldAlert size={26} />
         </div>
         <h2 id="gate-error-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -421,7 +425,7 @@ export function AuthMembershipGateView({
         </div>
         <button
           type="button"
-          className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs active:scale-[0.98] transition-colors flex items-center justify-center gap-2 cursor-pointer"
           onClick={() => void onRetryCheck()}
         >
           <RefreshCw size={14} />
@@ -435,16 +439,12 @@ export function AuthMembershipGateView({
   if (gateState.status === 'unauthenticated') {
     return (
       <section
-        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
         aria-labelledby="auth-signin-heading"
         data-testid="gate-unauthenticated"
       >
-        {/* Subtle decorative background glows */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-
         {/* Hero Lock Badge */}
-        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-4 shadow-lg shadow-emerald-500/10">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-4">
           <Lock size={26} />
         </div>
 
@@ -476,7 +476,7 @@ export function AuthMembershipGateView({
             role="note"
             className="p-3.5 mb-5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-start gap-2.5 text-left leading-relaxed"
           >
-            <span className="text-base shrink-0">◈</span>
+            <ShieldAlert size={14} className="text-amber-400 shrink-0 mt-0.5" />
             <span>
               Demo Mode Notice: Live authentication and membership mutations are disabled because no Supabase backend is configured.
             </span>
@@ -489,7 +489,7 @@ export function AuthMembershipGateView({
             type="button"
             disabled={isDemoMode || isSubmitting}
             onClick={() => void handleGoogleClick()}
-            className="w-full h-12 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-sm tracking-wide shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full h-12 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-sm tracking-wide disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center justify-center gap-3 cursor-pointer"
           >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path
@@ -521,7 +521,7 @@ export function AuthMembershipGateView({
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800" />
           </div>
-          <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
+          <div className="relative flex justify-center text-xs font-medium">
             <span className="bg-[#121c28] px-3 text-slate-500">
               Or Sign In with Email
             </span>
@@ -533,7 +533,7 @@ export function AuthMembershipGateView({
           <div>
             <label
               htmlFor="auth-email-input"
-              className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
+              className="block text-xs font-semibold text-slate-300 mb-1.5"
             >
               Email Address
             </label>
@@ -549,7 +549,7 @@ export function AuthMembershipGateView({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isDemoMode || isSubmitting}
-                placeholder="you@example.com"
+                placeholder="you@court.org"
                 className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
               />
             </div>
@@ -558,7 +558,7 @@ export function AuthMembershipGateView({
           <div>
             <label
               htmlFor="auth-password-input"
-              className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
+              className="block text-xs font-semibold text-slate-300 mb-1.5"
             >
               Password
             </label>
@@ -585,7 +585,7 @@ export function AuthMembershipGateView({
               role="alert"
               className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed"
             >
-              <span className="text-base shrink-0">✕</span>
+              <X size={14} className="shrink-0 mt-0.5" />
               <span>{authError}</span>
             </div>
           )}
@@ -593,7 +593,7 @@ export function AuthMembershipGateView({
           <button
             type="submit"
             disabled={isDemoMode || isSubmitting}
-            className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white font-bold text-xs uppercase tracking-wider border border-slate-700 shadow-md disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white font-bold text-xs border border-slate-700 disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -614,7 +614,7 @@ export function AuthMembershipGateView({
             </span>
             <a
               href="?demo=true"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 font-semibold text-xs border border-slate-700/80 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 font-semibold text-xs border border-slate-700/80 transition-colors cursor-pointer"
             >
               <Sparkles size={13} />
               Try Interactive Demo Mode →
@@ -629,11 +629,11 @@ export function AuthMembershipGateView({
   if (gateState.status === 'no_membership') {
     return (
       <section
-        className="max-w-lg mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        className="max-w-lg mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
         aria-labelledby="gate-nomember-heading"
         data-testid="gate-no-membership"
       >
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-lg shadow-amber-500/10">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
           <Key size={26} />
         </div>
         <h2 id="gate-nomember-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -649,9 +649,10 @@ export function AuthMembershipGateView({
         {!gateState.emailVerified && (
           <div
             role="alert"
-            className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-left"
+            className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-left flex items-center gap-2"
           >
-            ⚠ Your account email is not yet verified. Please verify your email before redeeming an invitation.
+            <AlertTriangle size={14} className="shrink-0" />
+            <span>Your account email is not yet verified. Please verify your email before redeeming an invitation.</span>
           </div>
         )}
 
@@ -718,7 +719,7 @@ export function AuthMembershipGateView({
                   onChange={(e) => setBootstrapGroupSlug(e.target.value)}
                   disabled={isDemoMode || isSubmitting}
                   placeholder="e.g. kl-badminton-regulars"
-                  className="w-full h-10 px-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full h-10 px-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -744,9 +745,10 @@ export function AuthMembershipGateView({
                 <div
                   role="alert"
                   data-testid="bootstrap-group-error"
-                  className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold"
+                  className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1.5"
                 >
-                  ✕ {bootstrapError}
+                  <X size={14} className="shrink-0" />
+                  <span>{bootstrapError}</span>
                 </div>
               )}
 
@@ -754,7 +756,7 @@ export function AuthMembershipGateView({
                 type="submit"
                 disabled={isDemoMode || isSubmitting || !onBootstrapGroup}
                 data-testid="bootstrap-group-submit-btn"
-                className="w-full h-11 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs active:scale-[0.98] transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? 'Setting Up Initial Group...' : 'Bootstrap Initial Group'}
               </button>
@@ -766,15 +768,16 @@ export function AuthMembershipGateView({
         <div className="flex items-center justify-center gap-3 mt-6 pt-5 border-t border-slate-800">
           <button
             type="button"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
             disabled={isSubmitting}
             onClick={() => void onRetryCheck()}
           >
-            ↻ Re-check Status
+            <RefreshCw size={12} className="shrink-0" />
+            <span>Re-check Status</span>
           </button>
           <button
             type="button"
-            className="px-4 py-2.5 rounded-xl bg-slate-800/60 hover:bg-rose-500/20 text-rose-300 font-bold text-xs uppercase tracking-wider border border-slate-700/80 hover:border-rose-500/40 transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-slate-800/60 hover:bg-rose-500/20 text-rose-300 font-bold text-xs border border-slate-700/80 hover:border-rose-500/40 transition-colors cursor-pointer"
             disabled={isSubmitting}
             onClick={() => void onSignOut()}
           >
@@ -789,12 +792,12 @@ export function AuthMembershipGateView({
   if (gateState.status === 'pending_approval') {
     return (
       <section
-        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
         aria-labelledby="gate-pending-heading"
         data-testid="gate-pending-approval"
       >
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-lg shadow-amber-500/10">
-          <Clock size={26} className="animate-pulse" />
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
+          <Clock size={26} />
         </div>
         <h2 id="gate-pending-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
           Membership Pending Approval
@@ -803,20 +806,21 @@ export function AuthMembershipGateView({
           Signed in as <strong className="text-slate-200">{gateState.userEmail ?? gateState.userId}</strong>.
         </p>
         <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
-          Your invitation has been redeemed and your membership request is currently awaiting organizer approval (intended role: <code className="text-amber-300 font-bold">{gateState.membership.role}</code>). Group leaderboards and sessions will unlock once approved.
+          Your invitation has been redeemed and your membership request is currently awaiting organizer approval (intended role: <code className="text-amber-300 font-bold">{gateState.membership.role}</code>). Group leaderboards and sessions will become available once approved.
         </p>
 
         <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs active:scale-[0.98] transition-colors cursor-pointer flex items-center gap-1.5"
             onClick={() => void onRetryCheck()}
           >
-            ↻ Check Approval Status
+            <RefreshCw size={12} className="shrink-0" />
+            <span>Check Approval Status</span>
           </button>
           <button
             type="button"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition-colors cursor-pointer"
             onClick={() => void onSignOut()}
           >
             Sign Out
@@ -830,11 +834,11 @@ export function AuthMembershipGateView({
   if (gateState.status === 'rejected') {
     return (
       <section
-        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
         aria-labelledby="gate-rejected-heading"
         data-testid="gate-rejected"
       >
-        <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4 shadow-lg shadow-rose-500/10">
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4">
           <UserX size={26} />
         </div>
         <h2 id="gate-rejected-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -847,7 +851,7 @@ export function AuthMembershipGateView({
         <div className="mt-6 pt-4 border-t border-slate-800">
           <button
             type="button"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition-colors cursor-pointer"
             disabled={isSubmitting}
             onClick={() => void onSignOut()}
           >
@@ -862,11 +866,11 @@ export function AuthMembershipGateView({
   if (gateState.status === 'suspended') {
     return (
       <section
-        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+        className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
         aria-labelledby="gate-suspended-heading"
         data-testid="gate-suspended"
       >
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-lg shadow-amber-500/10">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
           <AlertOctagon size={26} />
         </div>
         <h2 id="gate-suspended-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -877,7 +881,7 @@ export function AuthMembershipGateView({
         </p>
         <button
           type="button"
-          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition-colors cursor-pointer"
           onClick={() => void onSignOut()}
         >
           Sign Out
@@ -889,11 +893,11 @@ export function AuthMembershipGateView({
   // 7. Departed membership state
   return (
     <section
-      className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 shadow-2xl relative overflow-hidden text-center"
+      className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
       aria-labelledby="gate-departed-heading"
       data-testid="gate-departed"
     >
-      <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 mx-auto mb-4 shadow-lg">
+      <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 mx-auto mb-4">
         <UserX size={26} />
       </div>
       <h2 id="gate-departed-heading" className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -906,7 +910,7 @@ export function AuthMembershipGateView({
       <div className="mt-6 pt-4 border-t border-slate-800">
         <button
           type="button"
-          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition-colors cursor-pointer"
           disabled={isSubmitting}
           onClick={() => void onSignOut()}
         >

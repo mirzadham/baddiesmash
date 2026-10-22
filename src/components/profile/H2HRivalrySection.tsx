@@ -33,7 +33,7 @@ export const H2HRivalrySection: React.FC<H2HRivalrySectionProps> = ({
   return (
     <section
       data-testid="profile-h2h-section"
-      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-3.5"
+      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-3.5"
     >
       {/* Section Title matching profile.jfif */}
       <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export const H2HRivalrySection: React.FC<H2HRivalrySectionProps> = ({
             <div className="mt-3">
               {h2hStats.vsMatches > 0 ? (
                 <>
-                  <div className="flex h-8 sm:h-9 rounded-lg overflow-hidden text-xs font-bold shadow-sm">
+                  <div className="flex h-8 sm:h-9 rounded-lg overflow-hidden text-xs font-bold">
                     {h2hStats.vsWins > 0 && (
                       <div
                         style={{ flex: h2hStats.vsWins }}
@@ -137,7 +137,7 @@ export const H2HRivalrySection: React.FC<H2HRivalrySectionProps> = ({
             <div className="mt-3">
               {h2hStats.partnerMatches > 0 ? (
                 <>
-                  <div className="flex h-8 sm:h-9 rounded-lg overflow-hidden text-xs font-bold shadow-sm">
+                  <div className="flex h-8 sm:h-9 rounded-lg overflow-hidden text-xs font-bold">
                     {h2hStats.partnerWins > 0 && (
                       <div
                         style={{ flex: h2hStats.partnerWins }}

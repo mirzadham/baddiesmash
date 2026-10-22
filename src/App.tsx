@@ -16,6 +16,7 @@ import {
   persistThemePreference,
   type ThemePreference,
 } from './lib/theme.ts';
+import { scrollToTop } from './lib/scroll.ts';
 import {
   createDemoTrackerRepository,
   createSupabaseTrackerRepository,
@@ -102,6 +103,26 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     getInitialThemePreference(),
   );
 
+  const handleOpenAdminTools = useCallback(() => {
+    setShowAdminContextualModal(true);
+    scrollToTop();
+  }, []);
+
+  const handleToggleAdminTools = useCallback(() => {
+    setShowAdminContextualModal((prev) => {
+      const next = !prev;
+      if (next) {
+        scrollToTop();
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectSession = useCallback((sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    scrollToTop();
+  }, []);
+
   useEffect(() => {
     applyThemeToDocument(theme);
     persistThemePreference(theme);
@@ -149,7 +170,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             data-testid="env-invalid-configuration"
           >
             <h2 style={{ marginTop: 0 }}>
-              ⚠ Invalid or Unsafe Environment Configuration
+              Invalid or Unsafe Environment Configuration
             </h2>
             <p>{envConfig.diagnosticMessage}</p>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
@@ -311,7 +332,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
         >
           <div style={{ flex: '1 1 auto', minWidth: 0, wordBreak: 'break-word' }}>
             <span>
-              ◈ DEMO MODE — DETERMINISTIC MOCK DATA (READ-ONLY). No Supabase
+              DEMO MODE: DETERMINISTIC MOCK DATA (READ-ONLY). No Supabase
               backend is configured; sign-in, invitations, approvals, merges,
               and database writes are disabled.
             </span>
@@ -369,9 +390,9 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             snapshot.viewerMembership.role === 'owner') && (
             <button
               type="button"
-              className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:shadow-xl focus:text-xs focus:font-bold"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:text-xs focus:font-bold"
               aria-expanded={showAdminContextualModal}
-              onClick={() => setShowAdminContextualModal((prev) => !prev)}
+              onClick={handleToggleAdminTools}
               data-testid="toggle-admin-tools-btn"
             >
               Admin Tools
@@ -380,7 +401,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
 
           <button
             type="button"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-32 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:shadow-xl focus:text-xs focus:font-bold"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-32 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-slate-900 focus:text-white focus:border focus:border-emerald-500 focus:rounded-lg focus:text-xs focus:font-bold"
             onClick={() => {
               const next: ThemePreference = theme === 'dark' ? 'light' : 'dark';
               setTheme(next);
@@ -399,7 +420,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               height: '40px',
               borderRadius: '9999px',
               border: '2px solid var(--border-color)',
-              background: 'linear-gradient(135deg, #1e293b, #334155)',
+              background: 'var(--bg-surface-elevated)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -409,7 +430,6 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               cursor: 'pointer',
               padding: 0,
               overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
               transition: 'transform 0.15s ease',
             }}
             aria-label="View user profile"
@@ -471,7 +491,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
                 snapshot={snapshot}
                 onNavigateTab={(tab) => setActiveTab(tab)}
                 onSelectPlayer={(playerId) => setSelectedPlayerId(playerId)}
-                onSelectSession={(sessionId) => setSelectedSessionId(sessionId)}
+                onSelectSession={handleSelectSession}
               />
             )}
 
@@ -490,7 +510,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
                 snapshot={snapshot}
                 repository={repository}
                 selectedSessionId={selectedSessionId}
-                onSelectSession={(sessionId) => setSelectedSessionId(sessionId)}
+                onSelectSession={handleSelectSession}
                 onSelectPlayer={(playerId) => {
                   setSelectedPlayerId(playerId);
                   setActiveTab('profile');
@@ -506,7 +526,7 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
                 onSelectPlayer={(playerId) => setSelectedPlayerId(playerId)}
                 theme={theme}
                 onSelectTheme={(t) => setTheme(t)}
-                onOpenAdminTools={() => setShowAdminContextualModal(true)}
+                onOpenAdminTools={handleOpenAdminTools}
                 onSignOut={async () => {
                   await repository.signOut();
                   await loadGateState();

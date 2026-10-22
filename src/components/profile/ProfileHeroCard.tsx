@@ -83,11 +83,8 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   return (
     <section
       data-testid="selected-player-summary"
-      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-4 relative overflow-hidden"
+      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-4 relative overflow-hidden"
     >
-      {/* Background glow accent */}
-      <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
       {/* Top Bar: Profile Switcher Dropdown */}
       <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
         <label
@@ -117,14 +114,14 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
       <div className="flex items-center gap-3.5 sm:gap-4">
         {/* Avatar Circle */}
         <div className="relative flex-shrink-0">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-2 border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-emerald-500/40 flex items-center justify-center">
             <span className="text-xl sm:text-2xl font-black text-white tracking-wider">
               {initials || 'P'}
             </span>
           </div>
           {isLinkedViewer && (
             <span
-              className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-slate-950 shadow"
+              className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-slate-950"
               title="Your Linked Profile"
             >
               You

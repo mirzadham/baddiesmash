@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { Check, RefreshCw, ShieldAlert, X } from 'lucide-react';
 import {
   type AdminCategoryTab,
   AdminHeader,
@@ -17,6 +17,7 @@ import { AdminGuestMergeSection } from '../components/admin/AdminGuestMergeSecti
 import { AdminOwnershipSection } from '../components/admin/AdminOwnershipSection.tsx';
 import { AdminRatingHealthSection } from '../components/admin/AdminRatingHealthSection.tsx';
 import { sanitizeInvitationRpcError } from '../lib/inviteToken.ts';
+import { scrollToTop } from '../lib/scroll.ts';
 import type {
   AdminGovernanceSnapshot,
   GroupReadSnapshot,
@@ -187,6 +188,11 @@ export function AdminGovernanceView({
     void loadAdminData();
   }, [loadAdminData]);
 
+  // Ensure viewport scrolls to the top so Admin Tools panel is immediately visible
+  useEffect(() => {
+    scrollToTop();
+  }, []);
+
   // Clear one-time raw invitation token on unmount
   useEffect(() => {
     return () => {
@@ -308,7 +314,7 @@ export function AdminGovernanceView({
       setInviteProposedPlayerId('');
       await loadAdminData();
       setActionSuccessMessage(
-        `Invitation issued for ${trimmedEmail}. Copy the one-time token or link below immediately — it will never be shown again.`,
+        `Invitation issued for ${trimmedEmail}. Copy the one-time token or link below immediately: it will never be shown again.`,
       );
     } catch (err) {
       setActionError(
@@ -856,7 +862,7 @@ export function AdminGovernanceView({
           data-testid="admin-demo-readonly-notice"
           className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-semibold flex items-center gap-3 leading-relaxed"
         >
-          <span className="text-base shrink-0">◈</span>
+          <ShieldAlert size={16} className="text-amber-400 shrink-0" />
           <span>
             Demo Mode Read-Only Governance View: You can inspect the invitation,
             approval, player creation, guest merge, and ownership transfer
@@ -873,7 +879,7 @@ export function AdminGovernanceView({
           className="mb-4 p-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 animate-in fade-in"
         >
           <div className="flex items-center gap-2">
-            <span>✕</span>
+            <X size={14} className="shrink-0" />
             <span>{actionError}</span>
           </div>
           <button
@@ -893,7 +899,7 @@ export function AdminGovernanceView({
           className="mb-4 p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 animate-in fade-in"
         >
           <div className="flex items-center gap-2">
-            <span>✓</span>
+            <Check size={14} className="shrink-0" />
             <span>{actionSuccessMessage}</span>
           </div>
           <button
@@ -923,13 +929,17 @@ export function AdminGovernanceView({
           data-testid="admin-directory-error"
           className="mb-4 p-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm"
         >
-          <p className="font-semibold mb-2">✕ {directoryError}</p>
+          <p className="font-semibold mb-2 flex items-center gap-1.5">
+            <X size={14} className="shrink-0" />
+            <span>{directoryError}</span>
+          </p>
           <button
             type="button"
             onClick={() => void loadAdminData()}
-            className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-xs font-bold uppercase tracking-wider cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
           >
-            ↻ Retry Loading Directory
+            <RefreshCw size={12} className="shrink-0" />
+            <span>Retry Loading Directory</span>
           </button>
         </div>
       )}

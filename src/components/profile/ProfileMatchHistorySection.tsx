@@ -28,7 +28,7 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
   formatMalaysiaDate,
 }) => {
   return (
-    <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-4">
+    <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-4">
       {/* Header & Filter Controls */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
@@ -119,7 +119,7 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                 className={`p-3.5 rounded-xl border flex flex-col gap-2.5 transition-colors ${
                   isVoided
                     ? 'bg-slate-900/30 border-slate-800/50 opacity-65'
-                    : 'bg-[#16202e] border-slate-800/80 shadow-sm'
+                    : 'bg-[#16202e] border-slate-800/80'
                 }`}
               >
                 {/* Header: Session Date, Match #, and Status */}
@@ -165,7 +165,7 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                   </div>
 
                   {/* Scores (Center) */}
-                  <div className="flex-shrink-0 px-3 py-1 rounded-lg bg-[#16202e] border border-slate-700/60 font-bold rating-mono text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-inner">
+                  <div className="flex-shrink-0 px-3 py-1 rounded-lg bg-[#16202e] border border-slate-700/60 font-bold rating-mono text-xs sm:text-sm flex items-center justify-center gap-1.5">
                     <span
                       className={
                         teamAWon

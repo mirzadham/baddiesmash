@@ -1,5 +1,5 @@
 import type React from 'react';
-import { ArrowUpDown, RotateCcw, Shuffle } from 'lucide-react';
+import { ArrowUpDown, RotateCcw, Shuffle, AlertTriangle, Check, Clock, X } from 'lucide-react';
 import type { DbPlayerRow } from '../../types/database.ts';
 import type { ScoreValidationResult } from '../../domain/scoring.ts';
 
@@ -259,9 +259,10 @@ export function LiveDoublesRecorderCard({
           <div
             role="alert"
             data-testid="match-duplicate-player-error"
-            className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium"
+            className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center gap-1.5"
           >
-            ⚠ {duplicateParticipantError}
+            <AlertTriangle size={13} className="shrink-0" />
+            <span>{duplicateParticipantError}</span>
           </div>
         )}
 
@@ -321,10 +322,11 @@ export function LiveDoublesRecorderCard({
           {scoreValidation.valid ? (
             <div
               data-testid="match-score-validation-valid"
-              className="text-[11px] font-medium text-emerald-400 flex items-center gap-1"
+              className="text-[11px] font-medium text-emerald-400 flex items-center gap-1.5"
             >
+              <Check size={12} className="shrink-0" />
               <span>
-                ✓ Valid score: Team {scoreValidation.winner} wins
+                Valid score: Team {scoreValidation.winner} wins
               </span>
             </div>
           ) : (
@@ -349,7 +351,10 @@ export function LiveDoublesRecorderCard({
             data-testid="match-save-failed-alert"
             className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center justify-between gap-2"
           >
-            <span>✕ {matchSaveError}</span>
+            <span className="flex items-center gap-1.5">
+              <X size={13} className="shrink-0" />
+              <span>{matchSaveError}</span>
+            </span>
             {onRetryMatchSave && (
               <button
                 type="button"
@@ -379,7 +384,7 @@ export function LiveDoublesRecorderCard({
             type="submit"
             data-testid="record-match-submit-btn"
             disabled={!canSubmit}
-            className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+            className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition-colors duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
           >
             {isSaving ? 'Recording...' : 'Record Match'}
           </button>
@@ -392,10 +397,10 @@ export function LiveDoublesRecorderCard({
           role="region"
           aria-label="Immediate match undo window"
           data-testid="immediate-undo-banner"
-          className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-between gap-2 animate-pulse"
+          className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-between gap-2"
         >
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-300">
-            <span>⏱</span>
+            <Clock size={13} className="shrink-0" />
             <span>
               Match #{activeUndoPrompt.sequenceNumber} Recorded! Undo window: (
               {undoSecondsRemaining}s)
@@ -420,7 +425,7 @@ export function LiveDoublesRecorderCard({
               className="text-slate-400 hover:text-white text-xs px-2 py-1 min-h-[28px] min-w-[28px] inline-flex items-center justify-center rounded hover:bg-slate-800/60 cursor-pointer"
               title="Dismiss"
             >
-              <span aria-hidden="true">✕</span>
+              <X size={12} aria-hidden="true" />
             </button>
           </div>
         </div>

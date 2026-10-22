@@ -79,7 +79,7 @@ export const AdminMembershipsSection: React.FC<AdminMembershipsSectionProps> = (
   const getRoleBadgeClass = (role: MembershipRole) => {
     switch (role) {
       case 'owner':
-        return 'bg-purple-500/15 text-purple-300 border border-purple-500/40';
+        return 'bg-amber-500/15 text-amber-300 border border-amber-500/40';
       case 'admin':
         return 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
       case 'recorder':
@@ -93,7 +93,7 @@ export const AdminMembershipsSection: React.FC<AdminMembershipsSectionProps> = (
 
   return (
     <div
-      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-5"
+      className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-5"
       data-testid="admin-section-memberships"
     >
       <div>

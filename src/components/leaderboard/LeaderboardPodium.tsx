@@ -157,25 +157,16 @@ export function LeaderboardPodium({
   }
 
   // Unified dark slate body background for all three front faces
-  const sharedFrontFaceBg = 'linear-gradient(180deg, #182232 0%, #0e1520 100%)';
+  const sharedFrontFaceBg = '#111827';
 
   return (
     <div
       className="relative w-full mx-auto pt-4 pb-2 select-none"
       data-testid="leaderboard-podium"
     >
-      {/* Background Stadium Glow */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-44 pointer-events-none opacity-20 blur-3xl -z-10"
-        style={{
-          background: 'radial-gradient(circle, #22c55e 0%, #3b82f6 50%, transparent 70%)',
-        }}
-        aria-hidden="true"
-      />
-
       {/* Contiguous Monolithic Stepped Podium Platform (Zero Gap, Full Width) */}
       <div
-        className="w-full grid grid-cols-3 items-end gap-0 shadow-2xl relative"
+        className="w-full grid grid-cols-3 items-end gap-0 relative"
         style={{
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         }}
@@ -213,8 +204,7 @@ export function LeaderboardPodium({
                   <div
                     className="relative z-10 rounded-full p-0.5"
                     style={{
-                      background: 'linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 50%, #64748b 100%)',
-                      boxShadow: '0 0 14px rgba(203, 213, 225, 0.45)',
+                      background: '#94a3b8',
                     }}
                   >
                     <PlayerAvatar
@@ -334,8 +324,7 @@ export function LeaderboardPodium({
                   <div
                     className="relative z-10 rounded-full p-0.5"
                     style={{
-                      background: 'linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%)',
-                      boxShadow: '0 0 20px rgba(234, 179, 8, 0.55)',
+                      background: '#f59e0b',
                     }}
                   >
                     <PlayerAvatar
@@ -458,8 +447,7 @@ export function LeaderboardPodium({
                   <div
                     className="relative z-10 rounded-full p-0.5"
                     style={{
-                      background: 'linear-gradient(135deg, #fed7aa 0%, #d97706 50%, #78350f 100%)',
-                      boxShadow: '0 0 14px rgba(217, 119, 6, 0.45)',
+                      background: '#d97706',
                     }}
                   >
                     <PlayerAvatar

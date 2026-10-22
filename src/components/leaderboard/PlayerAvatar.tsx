@@ -41,12 +41,12 @@ function getDeterministicPalette(str: string): { bg: string; text: string; borde
     hash |= 0;
   }
   const palettes = [
-    { bg: 'linear-gradient(135deg, #ede9fe 0%, #c4b5fd 100%)', text: '#5b21b6', border: '#a78bfa' },
-    { bg: 'linear-gradient(135deg, #e0e7ff 0%, #a5b4fc 100%)', text: '#3730a3', border: '#818cf8' },
-    { bg: 'linear-gradient(135deg, #fae8ff 0%, #f0abfc 100%)', text: '#86198f', border: '#e879f9' },
-    { bg: 'linear-gradient(135deg, #fce7f3 0%, #f472b6 100%)', text: '#9d174d', border: '#f472b6' },
-    { bg: 'linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%)', text: '#1e40af', border: '#60a5fa' },
-    { bg: 'linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%)', text: '#334155', border: '#94a3b8' },
+    { bg: '#064e3b', text: '#6ee7b7', border: '#059669' },
+    { bg: '#0c4a6e', text: '#7dd3fc', border: '#0284c7' },
+    { bg: '#1e293b', text: '#f8fafc', border: '#334155' },
+    { bg: '#134e4a', text: '#5eead4', border: '#0d9488' },
+    { bg: '#451a03', text: '#fde68a', border: '#d97706' },
+    { bg: '#1c1917', text: '#e7e5e4', border: '#44403c' },
   ];
   const index = Math.abs(hash) % palettes.length;
   return palettes[index]!;

@@ -19,7 +19,7 @@ export const PerformanceMetricsGrid: React.FC<PerformanceMetricsGridProps> = ({
       {/* 2x2 Card Grid matching profile.jfif */}
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {/* Card 1: Recent Form (Last 5) */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between shadow-sm">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between">
           <div className="text-[11px] sm:text-xs font-semibold text-slate-400">
             Recent Form <span className="text-[10px] text-slate-500">(Last 5)</span>
           </div>
@@ -31,10 +31,10 @@ export const PerformanceMetricsGrid: React.FC<PerformanceMetricsGridProps> = ({
               recentForm.map((res, i) => (
                 <span
                   key={i}
-                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center font-black text-xs shadow-sm ${
+                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center font-black text-xs ${
                     res === 'W'
-                      ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/20'
-                      : 'bg-rose-500 text-white shadow-rose-500/20'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-rose-500 text-white'
                   }`}
                 >
                   {res}
@@ -45,7 +45,7 @@ export const PerformanceMetricsGrid: React.FC<PerformanceMetricsGridProps> = ({
         </div>
 
         {/* Card 2: Win Rate */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between shadow-sm">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between">
           <div className="text-[11px] sm:text-xs font-semibold text-slate-400">
             Win Rate:
           </div>
@@ -61,7 +61,7 @@ export const PerformanceMetricsGrid: React.FC<PerformanceMetricsGridProps> = ({
         </div>
 
         {/* Card 3: Win Streak */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between shadow-sm">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between">
           <div className="text-[11px] sm:text-xs font-semibold text-slate-400">
             Win Streak:
           </div>
@@ -77,7 +77,7 @@ export const PerformanceMetricsGrid: React.FC<PerformanceMetricsGridProps> = ({
         </div>
 
         {/* Card 4: Total Points / Elo Rating */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between shadow-sm">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-[#121a24] border border-sky-500/30 flex flex-col justify-between">
           <div className="text-[11px] sm:text-xs font-semibold text-slate-400">
             Total Points:
           </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Flag, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Flag, RotateCcw, AlertTriangle } from 'lucide-react';
 import { formatMalaysiaDateTime } from '../../services/readViewModels.ts';
 
 export interface SessionWrapUpSectionProps {
@@ -73,16 +73,19 @@ export function SessionWrapUpSection({
             <div
               role="alert"
               data-testid="finalize-blocked-incomplete-warning"
-              className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium"
+              className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium flex items-center gap-1.5"
             >
-              ⚠ <strong>Finalization Blocker:</strong> {incompleteDraftsCount}{' '}
-              incomplete match draft(s) must be completed or voided below before this
-              session can be finalized.
+              <AlertTriangle size={13} className="shrink-0" />
+              <span>
+                <strong>Finalization Blocker:</strong> {incompleteDraftsCount}{' '}
+                incomplete match draft(s) must be completed or voided below before this
+                session can be finalized.
+              </span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
               <CheckCircle2 size={13} />
-              <span>Ready to close — All drafts resolved</span>
+              <span>Ready to close: All drafts resolved</span>
             </div>
           )}
 
@@ -93,7 +96,7 @@ export function SessionWrapUpSection({
               data-testid="finalize-session-btn"
               onClick={onFinalizeSession}
               disabled={isDemoMode || isFinalizing}
-              className="w-full py-3 px-4 rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-white font-bold text-xs sm:text-sm transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-rose-950/40"
+              className="w-full py-3 px-4 rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-white font-bold text-xs sm:text-sm transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Flag size={15} strokeWidth={2.5} />
               <span>{isFinalizing ? 'Finalizing...' : 'Finalize & Lock Session'}</span>
@@ -123,7 +126,7 @@ export function SessionWrapUpSection({
                   htmlFor="reopen-session-reason-input"
                   className="block text-[11px] font-semibold text-slate-300 mb-1"
                 >
-                  Reopen Session Reason (Admin/Owner — Policy 3C):
+                  Reopen Session Reason (Admin/Owner, Policy 3C):
                 </label>
                 <input
                   id="reopen-session-reason-input"
@@ -144,7 +147,7 @@ export function SessionWrapUpSection({
                   !reopenReason.trim()
                 }
                 data-testid="reopen-session-btn"
-                className="py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs border border-amber-600 shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-40"
+                className="py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs border border-amber-600 transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-40"
               >
                 <RotateCcw size={13} strokeWidth={2.5} />
                 <span>

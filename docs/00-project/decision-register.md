@@ -217,6 +217,15 @@ When a material decision changes:
     - Replaced raw ASCII `&gt;` with clean button copy and an SVG chevron in `HomeView.tsx`.
   - *Test Evidence & Quality Gates:* Created `src/domain/__tests__/phase13-interface-accessibility.test.tsx` (5 automated tests). All 15 test suites and all 92 automated tests pass with 100% success rate (`npm test -- --run`). TypeScript check (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `index.html`, `src/App.tsx`, `src/styles/index.css`, `src/lib/theme.ts`, `src/views/HomeView.tsx`, `src/views/LeaderboardView.tsx`, `src/views/SessionsView.tsx`, `src/components/leaderboard/LeaderboardPodium.tsx`, `src/components/leaderboard/RankingRow.tsx`, `src/components/sessions/LiveDoublesRecorderCard.tsx`, `src/components/admin/AdminHeader.tsx`, `src/domain/__tests__/phase13-interface-accessibility.test.tsx`, `FILE-INDEX.md`, `docs/00-project/decision-register.md`.
+- **2026-10-22 (Owner approval — Phase 18 Viewport Auto-Scroll for Admin Tools & Session Selection):**
+  - *Viewport Auto-Scroll & Exclusive Accordion UX (`DEC-059`):*
+    - *Admin Tools Auto-Scroll:* Opening Admin Tools (via "Open Admin Tools" button in ProfileView or the accessible header toggle) automatically scrolls the viewport to `top: 0` so the Admin & Governance header and tools are immediately in view without requiring manual scrolling from the bottom of the Profile page.
+    - *Session Selection Auto-Scroll:* Selecting/expanding any session (from the Session History list or the Home view "View Session" CTA) expands its match history, auto-minimizes any previously opened session (only 1 session open at a time), and smoothly scrolls the viewport to `top: 0` so the full session details and standings at the top are immediately in view.
+    - *In-Place Minimize (Zero Scroll):* Clicking the minimize arrow/chevron (`^`) on an already expanded session collapses it in place without scrolling to the top.
+    - *WCAG 2.2 / Reduced Motion Compliance:* The shared `scrollToTop()` utility in `src/lib/scroll.ts` respects `prefers-reduced-motion: reduce`. Users with reduced-motion preferences receive instant scrolling (`behavior: 'auto'`), while other users receive smooth scrolling (`behavior: 'smooth'`).
+  - *Test Verification:* Created `src/domain/__tests__/phase14-auto-scroll.test.tsx` (9 automated tests). All 16 Vitest test suites (101 tests) pass with 100% success rate (`npm test`); TypeScript check (`tsc -b`) and Vite production build pass cleanly with zero errors.
+  - *Affected Files:* `src/lib/scroll.ts`, `src/App.tsx`, `src/views/AdminGovernanceView.tsx`, `src/views/SessionsView.tsx`, `src/components/sessions/PastSessionAccordionCard.tsx`, `src/components/admin/AdminHeader.tsx`, `src/domain/__tests__/phase14-auto-scroll.test.tsx`, `docs/00-project/decision-register.md`.
+
 
 
 

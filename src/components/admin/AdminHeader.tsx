@@ -29,15 +29,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-30 bg-[#0d131f]/95 backdrop-blur-md border-b border-slate-800 pb-3 mb-4">
+    <header className="sticky top-0 z-30 bg-[#0d131f] border-b border-slate-800 pb-3 mb-4">
       {/* Top Bar with Title and Close Button */}
       <div className="flex items-center justify-between gap-3 pt-1 pb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm shadow-emerald-500/10">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
             <ShieldCheck size={20} />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight m-0 flex items-center gap-2">
+            <h2
+              id="admin-governance-heading"
+              className="text-base sm:text-lg font-bold text-white tracking-tight m-0 flex items-center gap-2"
+            >
               Admin &amp; Governance
             </h2>
             <p className="text-[11px] text-slate-400 m-0">
@@ -71,9 +74,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               type="button"
               aria-pressed={isActive}
               onClick={() => onSelectCategory(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm shadow-emerald-500/10'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                   : 'bg-[#16202e] text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700'
               }`}
             >

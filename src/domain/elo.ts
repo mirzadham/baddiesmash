@@ -58,7 +58,7 @@ export function deriveRatingPublicationState(
     return {
       health: 'stale_or_failed',
       isCurrent: false,
-      bannerTitle: 'Ratings out of date — recalculation required',
+      bannerTitle: 'Ratings out of date: recalculation required',
       bannerMessage: `Published ratings reflect match state #${publishedSeq >= 0n ? publishedSeq.toString() : 'none'} and do not yet include the latest match history (#${requiredSeq.toString()}).${detail}`,
       canAdminRetry: true,
     };

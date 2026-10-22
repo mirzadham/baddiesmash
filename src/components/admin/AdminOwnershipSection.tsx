@@ -45,20 +45,20 @@ export function AdminOwnershipSection({
   return (
     <div
       data-testid="admin-section-ownership"
-      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden"
+      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
     >
       {/* Decorative accent glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
             <Crown size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-purple-400 bg-purple-950/60 border border-purple-800/50 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-rose-400 bg-rose-950/60 border border-rose-800/50 px-2 py-0.5 rounded-full">
                 Governance Hierarchy
               </span>
               <span className="text-xs text-slate-500">Section 5</span>
@@ -70,8 +70,8 @@ export function AdminOwnershipSection({
         </div>
 
         <div className="self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-xs font-semibold text-purple-300">
-            <KeyRound size={13} className="text-purple-400" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs font-semibold text-rose-300">
+            <KeyRound size={13} className="text-rose-400" />
             Group Owner Exclusive
           </span>
         </div>
@@ -122,7 +122,7 @@ export function AdminOwnershipSection({
                 value={newOwnerMembershipId}
                 onChange={(e) => setNewOwnerMembershipId(e.target.value)}
                 disabled={isDemoMode || isMutating || !isOwner}
-                className="w-full h-11 px-3 bg-slate-900 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+                className="w-full h-11 px-3 bg-slate-900 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-rose-500 transition-colors disabled:opacity-50"
               >
                 <option value="">-- Select eligible approved membership UUID --</option>
                 {eligibleOwnershipRecipients.map((m) => (
@@ -152,7 +152,7 @@ export function AdminOwnershipSection({
               onChange={(e) => setOwnershipTransferReason(e.target.value)}
               disabled={isDemoMode || isMutating || !isOwner}
               placeholder="e.g. Handing over club leadership for 2026"
-              className="w-full h-11 px-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+              className="w-full h-11 px-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors disabled:opacity-50"
             />
           </div>
 
@@ -165,11 +165,11 @@ export function AdminOwnershipSection({
                 onChange={(e) => setOwnershipTransferConfirmed(e.target.checked)}
                 disabled={isDemoMode || isMutating || !isOwner}
                 data-testid="confirm-ownership-transfer-checkbox"
-                className="w-4 h-4 mt-0.5 rounded border-slate-700 bg-slate-900 text-purple-500 focus:ring-0 focus:ring-offset-0 disabled:opacity-50"
+                className="w-4 h-4 mt-0.5 rounded border-slate-700 bg-slate-900 text-rose-500 focus:ring-0 focus:ring-offset-0 disabled:opacity-50"
               />
               <span className="leading-relaxed">
                 I confirm transferring Group Ownership and demoting my membership to{' '}
-                <code className="text-purple-300 font-mono font-bold">admin</code>.
+                <code className="text-rose-300 font-bold">admin</code>.
                 I understand this action takes effect immediately upon submission.
               </span>
             </label>
@@ -180,7 +180,7 @@ export function AdminOwnershipSection({
             type="submit"
             disabled={isDemoMode || isMutating || !isFormValid}
             data-testid="transfer-ownership-submit-btn"
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-500/20 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-[0.98] text-white font-bold text-sm disabled:opacity-40 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2"
           >
             {isMutating ? (
               'Transferring Ownership...'

@@ -210,7 +210,6 @@ export function Svg3DPodiumStage({ className = '' }: { className?: string }) {
             fontWeight="900"
             fontSize="18"
             fill="url(#silverMedalGrad)"
-            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }}
           >
             2
           </text>
@@ -312,7 +311,6 @@ export function Svg3DPodiumStage({ className = '' }: { className?: string }) {
             fontWeight="900"
             fontSize="16"
             fill="url(#bronzeMedalGrad)"
-            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }}
           >
             3
           </text>
@@ -437,7 +435,6 @@ export function Svg3DPodiumStage({ className = '' }: { className?: string }) {
             fontWeight="900"
             fontSize="24"
             fill="url(#goldMedalGrad)"
-            style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}
           >
             1
           </text>
@@ -446,7 +443,7 @@ export function Svg3DPodiumStage({ className = '' }: { className?: string }) {
         {/* Champion Gold Ribbon Banner */}
         <g transform="translate(230, 142)">
           {/* Ribbon Shadow */}
-          <rect x="-38" y="-7" width="76" height="18" rx="4" fill="#000000" opacity="0.5" />
+          <rect x="-38" y="-7" width="76" height="18" rx="4" fill="#000000" opacity="0.3" />
           {/* Ribbon Body */}
           <rect
             x="-36"
@@ -454,7 +451,7 @@ export function Svg3DPodiumStage({ className = '' }: { className?: string }) {
             width="72"
             height="18"
             rx="4"
-            fill="linear-gradient(180deg, #92400e 0%, #451a03 100%)"
+            fill="#451a03"
             stroke="url(#goldRim)"
             strokeWidth="1.2"
           />
@@ -467,7 +464,6 @@ export function Svg3DPodiumStage({ className = '' }: { className?: string }) {
             fontSize="10"
             letterSpacing="1.5"
             fill="#fef08a"
-            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
           >
             CHAMPION
           </text>

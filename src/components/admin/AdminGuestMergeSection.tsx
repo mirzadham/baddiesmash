@@ -55,7 +55,7 @@ export function AdminGuestMergeSection({
   return (
     <div
       data-testid="admin-section-guest-merge"
-      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden"
+      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
     >
       {/* Decorative accent glow */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -100,7 +100,7 @@ export function AdminGuestMergeSection({
           <div>
             <label
               htmlFor="admin-merge-source-guest"
-              className="block text-xs font-semibold text-amber-300 uppercase tracking-wider mb-2"
+              className="block text-xs font-semibold text-amber-300 mb-2"
             >
               Source Temporary Guest (UUID)
             </label>
@@ -134,7 +134,7 @@ export function AdminGuestMergeSection({
           <div>
             <label
               htmlFor="admin-merge-target-permanent"
-              className="block text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2"
+              className="block text-xs font-semibold text-emerald-400 mb-2"
             >
               Target Permanent Player (UUID)
             </label>
@@ -179,7 +179,7 @@ export function AdminGuestMergeSection({
             disabled={isDemoMode || isMutating || !isFormReadyForPreview}
             onClick={() => void handlePreviewGuestMerge()}
             data-testid="preview-guest-merge-btn"
-            className="h-11 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider border border-slate-700 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-2"
+            className="h-11 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2"
           >
             {isMutating ? (
               <>
@@ -206,11 +206,11 @@ export function AdminGuestMergeSection({
             <ArrowRight size={16} className="text-amber-400" />
             <h4 className="text-sm font-bold text-white tracking-tight">
               Server Merge Impact Preview:{' '}
-              <span className="text-amber-300 font-mono">
+              <span className="text-amber-300 tabular-nums font-semibold">
                 {mergePreview.source_guest_display_name}
               </span>{' '}
               →{' '}
-              <span className="text-emerald-400 font-mono">
+              <span className="text-emerald-400 tabular-nums font-semibold">
                 {mergePreview.target_permanent_display_name}
               </span>
             </h4>
@@ -219,36 +219,36 @@ export function AdminGuestMergeSection({
           {/* Impact Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
-              <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="block text-[11px] font-semibold text-slate-400">
                 Matches to Re-attribute
               </span>
               <span
                 data-testid="preview-affected-matches"
-                className="text-xl font-black text-white font-mono mt-0.5 block"
+                className="text-xl font-bold text-white tabular-nums mt-0.5 block"
               >
                 {mergePreview.affected_match_count}
               </span>
             </div>
 
             <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
-              <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="block text-[11px] font-semibold text-slate-400">
                 Guest Attendances
               </span>
               <span
                 data-testid="preview-affected-attendance"
-                className="text-xl font-black text-white font-mono mt-0.5 block"
+                className="text-xl font-bold text-white tabular-nums mt-0.5 block"
               >
                 {mergePreview.affected_session_attendance_count}
               </span>
             </div>
 
             <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
-              <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="block text-[11px] font-semibold text-slate-400">
                 Overlap (Deduplicated)
               </span>
               <span
                 data-testid="preview-overlapping-attendance"
-                className="text-xl font-black text-amber-300 font-mono mt-0.5 block"
+                className="text-xl font-bold text-amber-300 tabular-nums mt-0.5 block"
               >
                 {mergePreview.overlapping_attendance_session_count}
               </span>
@@ -266,7 +266,7 @@ export function AdminGuestMergeSection({
             ) : (
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400 bg-rose-950/60 border border-rose-800/60 px-3 py-1 rounded-lg">
                 <XCircle size={14} />
-                Blocked — Same-Match Conflict Detected
+                Blocked: Same-Match Conflict Detected
               </span>
             )}
           </div>
@@ -281,7 +281,7 @@ export function AdminGuestMergeSection({
               <AlertTriangle size={16} className="shrink-0 mt-0.5 text-rose-400" />
               <div>
                 <strong>Cannot merge:</strong> both identities participated in the same match(es):{' '}
-                <span className="font-mono">{mergePreview.conflicting_match_ids.join(', ')}</span>.
+                <code>{mergePreview.conflicting_match_ids.join(', ')}</code>.
                 Merging would create an impossible state where a player plays against or with themselves.
               </div>
             </div>
@@ -361,7 +361,7 @@ export function AdminGuestMergeSection({
                   mergeReason.trim().length < 3
                 }
                 data-testid="execute-guest-merge-btn"
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 active:scale-[0.98] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2"
               >
                 {isMutating ? (
                   <>
@@ -382,7 +382,7 @@ export function AdminGuestMergeSection({
 
       {/* Last Merge Outcome Notification */}
       {lastMergeOutcome && (
-        <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400 flex items-center gap-2 font-mono">
+        <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400 flex items-center gap-2 tabular-nums">
           <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
           <span>Last merge published rating version: {lastMergeOutcome.published_rating_version_id}</span>
         </div>

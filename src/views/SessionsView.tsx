@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { AlertTriangle, Check, Info, Plus, X } from 'lucide-react';
 import { ActiveSessionControllerCard } from '../components/sessions/ActiveSessionControllerCard.tsx';
 import { PastSessionAccordionCard } from '../components/sessions/PastSessionAccordionCard.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
@@ -92,6 +92,10 @@ export function SessionsView({
       ),
     [snapshot.players],
   );
+
+  // Track exclusively expanded past session in the session history list
+  const [expandedSessionHistoryId, setExpandedSessionHistoryId] =
+    useState<string | null>(null);
 
   // Feedback & recalculation outcome banners
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -955,8 +959,9 @@ export function SessionsView({
           data-testid="mutation-recalc-failure-alert"
         >
           <div className="flex items-center justify-between gap-2">
-            <strong>
-              ⚠ {mutationRecalcFailure.actionLabel} Saved — Elo Rating Recalculation Failed (Stale / Failed)
+            <strong className="flex items-center gap-1.5">
+              <AlertTriangle size={14} className="shrink-0" />
+              <span>{mutationRecalcFailure.actionLabel} Saved: Elo Rating Recalculation Failed (Stale / Failed)</span>
             </strong>
             <StatusBadge variant="stale_or_failed" />
           </div>
@@ -973,10 +978,10 @@ export function SessionsView({
           role="status"
           aria-live="polite"
           data-testid="sessions-status-notice"
-          className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center justify-between gap-2 shadow-lg transition-all duration-200"
+          className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center justify-between gap-2 transition-colors duration-200"
         >
           <div className="flex items-center gap-2">
-            <span className="text-emerald-400 font-bold">✓</span>
+            <Check size={14} className="text-emerald-400 shrink-0" />
             <span>{statusNotice}</span>
           </div>
           <button
@@ -996,7 +1001,10 @@ export function SessionsView({
           data-testid="sessions-action-error"
           className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-center justify-between gap-2"
         >
-          <span>✕ {actionError}</span>
+          <span className="flex items-center gap-1.5">
+            <X size={13} className="shrink-0" />
+            <span>{actionError}</span>
+          </span>
           <button
             type="button"
             onClick={() => setActionError(null)}
@@ -1014,7 +1022,10 @@ export function SessionsView({
           data-testid="undo-expired-alert"
           className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm flex items-center justify-between gap-2"
         >
-          <span>⚠ {undoExpiredMessage}</span>
+          <span className="flex items-center gap-1.5">
+            <AlertTriangle size={13} className="shrink-0" />
+            <span>{undoExpiredMessage}</span>
+          </span>
           <button
             type="button"
             onClick={() => setUndoExpiredMessage(null)}
@@ -1057,9 +1068,9 @@ export function SessionsView({
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => setSessionFilter(tab)}
-                className={`py-2 px-3 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
+                className={`py-2 px-3 rounded-lg text-xs font-semibold capitalize transition-colors cursor-pointer text-center ${
                   isActive
-                    ? 'bg-[#1c2738] text-emerald-400 border border-slate-700/80 shadow-sm'
+                    ? 'bg-[#1c2738] text-emerald-400 border border-slate-700/80'
                     : 'bg-transparent text-slate-400 hover:text-slate-200 border border-transparent'
                 }`}
               >
@@ -1076,7 +1087,7 @@ export function SessionsView({
             data-testid="singles-preview-banner"
             className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 text-xs flex items-center gap-2"
           >
-            <span className="text-amber-400 text-sm">ℹ</span>
+            <Info size={14} className="text-amber-400 shrink-0" />
             <span>
               Singles is not currently tracked. SMASHTRACK is exclusively configured for doubles matches in accordance with group rules.
             </span>
@@ -1089,7 +1100,7 @@ export function SessionsView({
         <form
           onSubmit={handleStartSession}
           data-testid="start-session-panel"
-          className="p-4 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-3"
+          className="p-4 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-3"
         >
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-sm sm:text-base text-white m-0">
@@ -1102,9 +1113,10 @@ export function SessionsView({
             <div
               role="note"
               data-testid="existing-active-session-warning"
-              className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium"
+              className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium flex items-center gap-1.5"
             >
-              ⚠ An active session ({formatMalaysiaDate(activeGroupSession.session_started_at)}) is already open. Only one active session is permitted per group at a time; finalize it before starting a new session.
+              <AlertTriangle size={13} className="shrink-0" />
+              <span>An active session ({formatMalaysiaDate(activeGroupSession.session_started_at)}) is already open. Only one active session is permitted per group at a time; finalize it before starting a new session.</span>
             </div>
           )}
 
@@ -1112,9 +1124,10 @@ export function SessionsView({
             <div
               role="alert"
               data-testid="start-session-error-alert"
-              className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium"
+              className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center gap-1.5"
             >
-              ✕ {startSessionError}
+              <X size={13} className="shrink-0" />
+              <span>{startSessionError}</span>
             </div>
           )}
 
@@ -1307,6 +1320,7 @@ export function SessionsView({
           <div className="flex flex-col gap-2">
             {sessionHistoryList.map((session) => {
               const pastDetail = deriveSessionDetailFromSnapshot(snapshot, session.id);
+              const isExpanded = expandedSessionHistoryId === session.id;
               return (
                 <PastSessionAccordionCard
                   key={session.id}
@@ -1314,6 +1328,10 @@ export function SessionsView({
                   matches={pastDetail?.matches ?? []}
                   attendeeCount={pastDetail?.attendeeCount ?? 0}
                   isSelected={session.id === effectiveSessionId}
+                  isExpanded={isExpanded}
+                  onToggleExpand={(expanding) => {
+                    setExpandedSessionHistoryId(expanding ? session.id : null);
+                  }}
                   isAdminOrOwner={isAdminOrOwner}
                   onSelectSession={onSelectSession}
                   onSelectPlayer={onSelectPlayer}

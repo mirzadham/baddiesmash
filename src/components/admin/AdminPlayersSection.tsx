@@ -56,11 +56,8 @@ export function AdminPlayersSection({
   return (
     <div
       data-testid="admin-section-players"
-      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden"
+      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
     >
-      {/* Decorative accent glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
@@ -69,7 +66,7 @@ export function AdminPlayersSection({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-md">
                 Roster Control
               </span>
               <span className="text-xs text-slate-500">Section 3</span>
@@ -82,7 +79,7 @@ export function AdminPlayersSection({
 
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-xs font-semibold text-slate-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             {activeCount} Active
           </span>
           {inactiveCount > 0 && (
@@ -105,7 +102,7 @@ export function AdminPlayersSection({
 
       {/* Create Player Profile Box */}
       <div className="bg-[#0b121b] border border-slate-800 rounded-xl p-4 sm:p-5 mb-5">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 mb-3">
           <UserPlus size={14} className="text-cyan-400" />
           Create New Player Profile
         </div>
@@ -148,7 +145,7 @@ export function AdminPlayersSection({
                 type="submit"
                 disabled={isDemoMode || isMutating || !newPlayerDisplayName.trim()}
                 data-testid="create-player-submit-btn"
-                className="w-full h-11 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2"
+                className="w-full h-11 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2"
               >
                 <Sparkles size={14} />
                 Create Profile
@@ -177,12 +174,12 @@ export function AdminPlayersSection({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <label
             htmlFor="admin-roster-player-select"
-            className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"
+            className="text-xs font-semibold text-slate-300 flex items-center gap-2"
           >
             <ListFilter size={14} className="text-cyan-400" />
             Manage Roster Status
           </label>
-          <span className="text-[11px] text-slate-500 font-mono">
+          <span className="text-[11px] text-slate-500 tabular-nums">
             {unmergedPlayers.length} total profiles
           </span>
         </div>
@@ -220,7 +217,7 @@ export function AdminPlayersSection({
               <div
                 key={selectedPlayer.id}
                 data-testid={`admin-player-row-${selectedPlayer.id}`}
-                className="p-4 bg-slate-900/80 border border-slate-700/80 rounded-xl hover:border-slate-600/80 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                className="p-4 bg-slate-900/80 border border-slate-700/80 rounded-xl hover:border-slate-600/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4"
               >
                 {/* Identity info */}
                 <div className="flex items-center gap-3.5 min-w-0">
@@ -240,7 +237,7 @@ export function AdminPlayersSection({
                       </span>
                       {selectedPlayer.is_guest && <StatusBadge variant="guest" />}
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
                           selectedPlayer.is_active
                             ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                             : 'bg-slate-800 border-slate-700 text-slate-400'
@@ -249,7 +246,7 @@ export function AdminPlayersSection({
                         {selectedPlayer.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 font-mono mt-0.5">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 tabular-nums mt-0.5">
                       <span>ID: {selectedPlayer.id.slice(-8)}</span>
                       <span>•</span>
                       <span>
@@ -288,7 +285,7 @@ export function AdminPlayersSection({
                       )
                     }
                     data-testid={`toggle-player-active-btn-${selectedPlayer.id}`}
-                    className={`h-10 px-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] ${
+                    className={`h-10 px-3.5 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] ${
                       selectedPlayer.is_active
                         ? 'bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25'
                         : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
@@ -335,7 +332,7 @@ export function AdminPlayersSection({
                     <div
                       key={p.id}
                       data-testid={`admin-player-row-${p.id}`}
-                      className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl hover:border-slate-700 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 text-xs"
+                      className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
@@ -350,7 +347,7 @@ export function AdminPlayersSection({
                         <span className="font-bold text-white truncate">{p.display_name}</span>
                         {p.is_guest && <StatusBadge variant="guest" />}
                         <span
-                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                          className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
                             p.is_active
                               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                               : 'bg-slate-800 border-slate-700 text-slate-400'
@@ -382,7 +379,7 @@ export function AdminPlayersSection({
                             void handleTogglePlayerActiveStatus(p.id, !p.is_active)
                           }
                           data-testid={`toggle-player-active-btn-${p.id}`}
-                          className={`h-8 px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 disabled:pointer-events-none ${
+                          className={`h-8 px-2.5 rounded-lg text-[11px] font-semibold transition-colors disabled:opacity-40 disabled:pointer-events-none ${
                             p.is_active
                               ? 'bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25'
                               : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'

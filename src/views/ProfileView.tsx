@@ -260,7 +260,7 @@ export function ProfileView({
 
       {/* 4. Data Privacy & Account Lifecycle (PRIV-02) */}
       <section
-        className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-3.5"
+        className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-3.5"
         data-testid="privacy-lifecycle-card"
         aria-labelledby="privacy-lifecycle-heading"
       >
@@ -322,7 +322,7 @@ export function ProfileView({
       </section>
 
       {/* 5. Preferences & Account Settings Section */}
-      <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 shadow-xl flex flex-col gap-4">
+      <section className="p-4 sm:p-5 rounded-2xl bg-[#121a24] border border-slate-800 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Settings size={20} className="text-slate-400" />
           <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">

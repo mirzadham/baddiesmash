@@ -177,7 +177,7 @@ export function SessionMatchHistorySection({
                   </div>
 
                   {/* Scores (Center) */}
-                  <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[#16202e] border border-slate-700/60 font-bold rating-mono text-sm sm:text-base flex items-center justify-center gap-1.5 shadow-inner">
+                  <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[#16202e] border border-slate-700/60 font-bold rating-mono text-sm sm:text-base flex items-center justify-center gap-1.5">
                     <span className={teamAWon ? 'text-emerald-400 font-extrabold' : 'text-slate-400'}>
                       {card.match.team_a_score ?? 0}
                     </span>

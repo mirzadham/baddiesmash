@@ -10,6 +10,8 @@ export interface PastSessionAccordionCardProps {
   matches: readonly EnrichedMatchCard[];
   attendeeCount: number;
   isSelected?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: (isExpanding: boolean) => void;
   isAdminOrOwner?: boolean;
   onSelectSession: (sessionId: string) => void;
   onSelectPlayer: (playerId: string) => void;
@@ -27,12 +29,16 @@ export function PastSessionAccordionCard({
   matches,
   attendeeCount,
   isSelected = false,
+  isExpanded: controlledExpanded,
+  onToggleExpand,
   isAdminOrOwner = false,
   onSelectSession,
   onSelectPlayer,
   onRequestReopen,
 }: PastSessionAccordionCardProps) {
-  const [isExpanded, setIsExpanded] = useState(isSelected);
+  const [internalExpanded, setInternalExpanded] = useState<boolean>(false);
+  const isExpanded =
+    controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
 
   const completedMatches = matches.filter(
     (m) => m.match.status === 'completed',
@@ -42,12 +48,33 @@ export function PastSessionAccordionCard({
     if (e) {
       e.stopPropagation();
     }
-    setIsExpanded((prev) => !prev);
-    onSelectSession(session.id);
+    const next = !isExpanded;
+    if (onToggleExpand) {
+      onToggleExpand(next);
+    } else {
+      setInternalExpanded(next);
+    }
+    // Only select session (and trigger scroll-to-top) when expanding!
+    // When minimizing (closing), do NOT call onSelectSession, so user stays in place.
+    if (next) {
+      onSelectSession(session.id);
+    }
   };
 
-  const handleCardClick = () => {
-    onSelectSession(session.id);
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent toggle if clicking on an interactive child button or link
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+    if (!isExpanded) {
+      if (onToggleExpand) {
+        onToggleExpand(true);
+      } else {
+        setInternalExpanded(true);
+      }
+      onSelectSession(session.id);
+    }
   };
 
   return (
@@ -56,7 +83,7 @@ export function PastSessionAccordionCard({
       onClick={handleCardClick}
       className={`rounded-2xl border ${
         isSelected ? 'border-emerald-500/60 bg-[#14202d]' : 'border-slate-800/80 bg-[#121a24]'
-      } shadow-md transition-all duration-200 overflow-hidden mb-3 hover:border-slate-700/80 cursor-pointer`}
+      } transition-colors duration-200 overflow-hidden mb-3 hover:border-slate-700/80 cursor-pointer`}
     >
       {/* Accordion Header (Clickable) */}
       <button
@@ -68,7 +95,7 @@ export function PastSessionAccordionCard({
       >
         <div className="flex items-center justify-between gap-2 w-full">
           <span className="font-semibold text-sm sm:text-base text-white tracking-tight">
-            Session — {formatMalaysiaDate(session.session_started_at)}
+            Session: {formatMalaysiaDate(session.session_started_at)}
           </span>
           <div className="flex items-center gap-2 flex-shrink-0">
             <StatusBadge
@@ -163,7 +190,7 @@ export function PastSessionAccordionCard({
                     </div>
 
                     {/* Scores (Center) */}
-                    <div className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#16202e] border border-slate-700/60 font-bold rating-mono text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-inner">
+                    <div className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#16202e] border border-slate-700/60 font-bold rating-mono text-xs sm:text-sm flex items-center justify-center gap-1.5">
                       <span className={teamAWon ? 'text-emerald-400 font-extrabold' : 'text-slate-400'}>
                         {card.match.team_a_score ?? 0}
                       </span>

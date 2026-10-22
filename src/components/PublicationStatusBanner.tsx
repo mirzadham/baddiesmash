@@ -100,7 +100,7 @@ export function PublicationStatusBanner({
               }}
             >
               {publication.bannerTitle ??
-                'Ratings out of date — recalculation required'}
+                'Ratings out of date: recalculation required'}
             </p>
             <p style={{ margin: 0, fontSize: '0.88rem' }}>
               {publication.bannerMessage}
@@ -117,7 +117,7 @@ export function PublicationStatusBanner({
               fontSize: '0.85rem',
             }}
           >
-            ✕ Retry failed: {retryError}
+            Retry failed: {retryError}
           </p>
         )}
 
@@ -130,7 +130,7 @@ export function PublicationStatusBanner({
               fontSize: '0.85rem',
             }}
           >
-            ✓ {retrySuccessMessage}
+            {retrySuccessMessage}
           </p>
         )}
       </div>
@@ -144,7 +144,7 @@ export function PublicationStatusBanner({
             onClick={() => void handleRetryClick()}
             title={
               isDemoMode
-                ? 'Disabled in Demo Mode — no Supabase backend connected'
+                ? 'Disabled in Demo Mode (no Supabase backend connected)'
                 : 'Retry server-side rating recalculation'
             }
           >

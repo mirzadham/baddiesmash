@@ -25,11 +25,8 @@ export function AdminRatingHealthSection({
   return (
     <div
       data-testid="admin-section-ratings"
-      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden"
+      className="bg-[#121c28] border border-slate-800/80 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
     >
-      {/* Decorative accent glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
@@ -38,7 +35,7 @@ export function AdminRatingHealthSection({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-md">
                 System Engine
               </span>
               <span className="text-xs text-slate-500">Section 6</span>
@@ -79,7 +76,7 @@ export function AdminRatingHealthSection({
       </div>
 
       {/* Metadata footer */}
-      <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 font-mono">
+      <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 tabular-nums">
         <span className="flex items-center gap-1.5">
           <Database size={12} className="text-slate-400" />
           Match State: #{publication.publishedSeq ?? 'none'} / Required #{publication.requiredSeq}

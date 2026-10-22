@@ -58,6 +58,15 @@ export function HomeView({
 
   return (
     <div data-testid="view-home" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="mb-1">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] m-0">
+          Home
+        </h1>
+        <p className="text-xs text-[var(--text-secondary)] mt-0.5 m-0 font-normal">
+          Courtside session tracker &amp; group ratings
+        </p>
+      </div>
+
       {/* Primary Action Button: + Start New Session / Resume Active Session */}
       <button
         type="button"
@@ -136,8 +145,8 @@ export function HomeView({
             >
               <AlertTriangle size={16} />
               <span>
-                ⚠ Active session has been inactive for ≥ 12 hours (never
-                auto-closed — review or finalize in Sessions).
+                Active session has been inactive for ≥ 12 hours (never
+                auto-closed, review or finalize in Sessions).
               </span>
             </div>
           )}
@@ -171,7 +180,7 @@ export function HomeView({
                   marginBottom: '0.25rem',
                 }}
               >
-                <Users size={24} style={{ color: '#22c55e' }} />
+                <Users size={24} style={{ color: 'var(--brand-accent)' }} />
                 <span
                   className="rating-mono"
                   style={{
@@ -368,7 +377,7 @@ export function HomeView({
                           width: '42px',
                           height: '42px',
                           borderRadius: '9999px',
-                          background: 'linear-gradient(135deg, #1e293b, #334155)',
+                          background: 'var(--bg-surface-elevated)',
                           border: '2px solid var(--border-color)',
                           display: 'flex',
                           alignItems: 'center',

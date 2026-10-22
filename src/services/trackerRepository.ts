@@ -304,7 +304,7 @@ export function resolveEffectivePublicationBannerState(
     isVerified: true,
     bannerTitle: isCurrent
       ? null
-      : (derived.bannerTitle ?? 'Ratings out of date — recalculation required'),
+      : (derived.bannerTitle ?? 'Ratings out of date: recalculation required'),
     bannerMessage: isCurrent
       ? null
       : (derived.bannerMessage ??
