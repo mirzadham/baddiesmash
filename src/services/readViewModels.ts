@@ -572,6 +572,7 @@ export function deriveSessionDetailFromSnapshot(
       return {
         playerId: sa.player_id,
         displayName: p?.display_name ?? 'Unknown Player',
+        avatarUrl: p?.avatar_url ?? null,
         isGuest: p?.is_guest ?? false,
       };
     });

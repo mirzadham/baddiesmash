@@ -459,6 +459,7 @@ export function LeaderboardView({
                         </span>
                         <PlayerAvatar
                           displayName={row.displayName}
+                          avatarUrl={row.avatarUrl}
                           playerId={row.playerId}
                           size={36}
                         />

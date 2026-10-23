@@ -281,6 +281,23 @@ When a material decision changes:
   - *Automated Database Integration Verification:* Created `src/domain/__tests__/phase21-avatar-db.test.ts` running against PGlite with migrations 1, 2, and 3. Verified avatar updates, empty string nullification, 365-day cooldown rejections, admin override, and admin avatar resets.
   - *Verification & Quality Gates:* All 20 Vitest test suites (123 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `supabase/migrations/20261022000001_player_avatar_cooldown.sql`, `src/domain/__tests__/phase21-avatar-db.test.ts`, `docs/00-project/decision-register.md`.
+- **2026-10-23 (Owner approval — Phase 26 Stage 1 Google Sign-In Friendly In-App Guidance):**
+  - *In-App Guidance Intercept (`DEC-069`):* In accordance with explicit owner instruction ("since stage 1 this feature is not yet enabled, whenever user click it display a message"), clicking **Continue with Google** on the sign-in gate intercepts navigation before redirecting the browser to Supabase's OAuth endpoint (which produces a raw JSON 400 `Unsupported provider` error when Google OAuth is not yet configured in the Supabase Dashboard).
+  - *Athletic Notice Banner:* Displays an accessible in-app message banner (`data-testid="google-oauth-stage1-notice"`, `role="status"`, `text-amber-300`) directly below the Google button: `"Google sign-in is not yet enabled for Stage 1. Please sign in using your invited email and password below."`.
+  - *Interactive Clearance:* The message features a 1-tap dismiss button (`aria-label="Dismiss notice"`), and automatically clears whenever the user begins typing into the email or password inputs.
+  - *Repository Safeguard:* Guarded `createSupabaseTrackerRepository().signInWithGoogle()` to reject with clear Stage 1 guidance rather than initiating an unhandled external OAuth navigation.
+  - *Verification & Quality Gates:* Added test coverage in `src/domain/__tests__/phase3a-ui-foundation.test.tsx`. All 20 Vitest test suites (124 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/views/AuthMembershipGateView.tsx`, `src/services/trackerRepository.ts`, `src/domain/__tests__/phase3a-ui-foundation.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-23 (Owner approval — Phase 30 Clean Borderless Podium Avatars):**
+  - *Removal of Colored Circle Outer Rings (`DEC-073`):* In accordance with explicit owner instructions ("why is the circle around the profile is not aligned with the profile. im thinking like no need to put the colored circle around it... yes"), removed the artificial outer colored ring wrappers (`background: #f59e0b` / `#94a3b8` / `#d97706` with `p-0.5`) and heavy Tailwind rings (`ring-2 ring-[...] shadow-glow-[...]`) around the 1st, 2nd, and 3rd place podium avatars.
+  - *Layout Alignment & Baseline Descent Resolution:* Eliminated the browser's inline font-descent spacing inside the block wrapper that caused the 12px asymmetrical crescent gap beneath the avatar.
+  - *Sleek Athletic Treatment:* Standardized `PlayerAvatar.tsx` to render a clean, perfectly circular frame with `overflow-hidden` and a subtle neutral border (`border border-slate-700/60`), allowing real player photos to shine naturally without visual obstruction or color clashing.
+  - *Podium Distinction Preserved:* Maintained the regal floating Golden Crown for 1st place and the metallic Olympic Ribbon tails for 2nd and 3rd place, alongside the stepped 3D podium blocks.
+  - *Verification & Quality Gates:* All 21 Vitest test suites (130 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/components/leaderboard/LeaderboardPodium.tsx`, `src/components/leaderboard/PlayerAvatar.tsx`, `docs/00-project/decision-register.md`.
+
+
+
 
 
 

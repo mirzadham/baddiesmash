@@ -143,6 +143,7 @@ export interface SessionCompletedMatchInput {
 export interface SessionAttendeeInput {
   playerId: string;
   displayName: string;
+  avatarUrl?: string | null;
   isGuest: boolean;
 }
 
@@ -151,6 +152,7 @@ export interface SessionStandingRow {
   isTiedRank: boolean;
   playerId: string;
   displayName: string;
+  avatarUrl?: string | null;
   isGuest: boolean;
   matchesPlayed: number;
   wins: number;
@@ -186,6 +188,7 @@ export function computeSessionStandings(params: {
     {
       playerId: string;
       displayName: string;
+      avatarUrl?: string | null;
       isGuest: boolean;
       matchesPlayed: number;
       wins: number;
@@ -199,6 +202,7 @@ export function computeSessionStandings(params: {
     statsMap.set(attendee.playerId, {
       playerId: attendee.playerId,
       displayName: attendee.displayName,
+      avatarUrl: attendee.avatarUrl ?? null,
       isGuest: attendee.isGuest,
       matchesPlayed: 0,
       wins: 0,
@@ -274,6 +278,7 @@ export function computeSessionStandings(params: {
         isTiedRank: false,
         playerId: stat.playerId,
         displayName: stat.displayName,
+        avatarUrl: stat.avatarUrl ?? null,
         isGuest: stat.isGuest,
         matchesPlayed: 0,
         wins: 0,
@@ -287,6 +292,7 @@ export function computeSessionStandings(params: {
       playedList.push({
         playerId: stat.playerId,
         displayName: stat.displayName,
+        avatarUrl: stat.avatarUrl ?? null,
         isGuest: stat.isGuest,
         matchesPlayed: stat.matchesPlayed,
         wins: stat.wins,

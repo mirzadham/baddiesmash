@@ -201,21 +201,13 @@ export function LeaderboardPodium({
                   }}
                 >
                   <PodiumRibbonTails variant="silver" size={54} />
-                  <div
-                    className="relative z-10 rounded-full p-0.5"
-                    style={{
-                      background: '#94a3b8',
-                    }}
-                  >
-                    <PlayerAvatar
-                      displayName={top2.displayName}
-                      playerId={top2.playerId}
-                      size={52}
-                      rank={2}
-                      isCurrentUser={viewerLinkedPlayerId === top2.playerId}
-                      className="transition-transform group-hover:scale-105"
-                    />
-                  </div>
+                  <PlayerAvatar
+                    displayName={top2.displayName}
+                    avatarUrl={top2.avatarUrl}
+                    playerId={top2.playerId}
+                    size={52}
+                    className="relative z-10 shadow-lg transition-transform group-hover:scale-105"
+                  />
                 </div>
               </div>
 
@@ -321,21 +313,13 @@ export function LeaderboardPodium({
                   <div className="translate-y-2 z-20 transition-transform group-hover:scale-110">
                     <PodiumCrownIcon size={46} />
                   </div>
-                  <div
-                    className="relative z-10 rounded-full p-0.5"
-                    style={{
-                      background: '#f59e0b',
-                    }}
-                  >
-                    <PlayerAvatar
-                      displayName={top1.displayName}
-                      playerId={top1.playerId}
-                      size={64}
-                      rank={1}
-                      isCurrentUser={viewerLinkedPlayerId === top1.playerId}
-                      className="transition-transform group-hover:scale-105"
-                    />
-                  </div>
+                  <PlayerAvatar
+                    displayName={top1.displayName}
+                    avatarUrl={top1.avatarUrl}
+                    playerId={top1.playerId}
+                    size={64}
+                    className="shadow-xl transition-transform group-hover:scale-105"
+                  />
                 </div>
               </div>
 
@@ -444,21 +428,13 @@ export function LeaderboardPodium({
                   }}
                 >
                   <PodiumRibbonTails variant="bronze" size={50} />
-                  <div
-                    className="relative z-10 rounded-full p-0.5"
-                    style={{
-                      background: '#d97706',
-                    }}
-                  >
-                    <PlayerAvatar
-                      displayName={top3.displayName}
-                      playerId={top3.playerId}
-                      size={48}
-                      rank={3}
-                      isCurrentUser={viewerLinkedPlayerId === top3.playerId}
-                      className="transition-transform group-hover:scale-105"
-                    />
-                  </div>
+                  <PlayerAvatar
+                    displayName={top3.displayName}
+                    avatarUrl={top3.avatarUrl}
+                    playerId={top3.playerId}
+                    size={48}
+                    className="relative z-10 shadow-lg transition-transform group-hover:scale-105"
+                  />
                 </div>
               </div>
 

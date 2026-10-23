@@ -147,6 +147,28 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
     void loadGateState();
   }, [loadGateState]);
 
+  useEffect(() => {
+    if (!defaultEnvAndClient.client) {
+      return;
+    }
+    const {
+      data: { subscription },
+    } = defaultEnvAndClient.client.auth.onAuthStateChange((event) => {
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'SIGNED_OUT' ||
+        event === 'USER_UPDATED' ||
+        event === 'TOKEN_REFRESHED'
+      ) {
+        void loadGateState();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [defaultEnvAndClient.client, loadGateState]);
+
   // 1. Fail closed on invalid or unsafe environment configuration (e.g. service_role key detected)
   if (envConfig.status === 'invalid_env') {
     return (
@@ -238,9 +260,10 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               setCapturedInviteToken(null);
             }}
             onSignInGoogle={() => repository.signInWithGoogle()}
-            onSignInEmailPassword={(email, pwd) =>
-              repository.signInWithEmailPassword(email, pwd)
-            }
+            onSignInEmailPassword={async (email, pwd) => {
+              await repository.signInWithEmailPassword(email, pwd);
+              await loadGateState();
+            }}
             onRedeemInvitation={(input) =>
               repository.redeemGroupInvitation(input)
             }
@@ -424,9 +447,10 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
               setCapturedInviteToken(null);
             }}
             onSignInGoogle={() => repository.signInWithGoogle()}
-            onSignInEmailPassword={(email, pwd) =>
-              repository.signInWithEmailPassword(email, pwd)
-            }
+            onSignInEmailPassword={async (email, pwd) => {
+              await repository.signInWithEmailPassword(email, pwd);
+              await loadGateState();
+            }}
             onRedeemInvitation={(input) =>
               repository.redeemGroupInvitation(input)
             }

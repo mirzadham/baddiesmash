@@ -111,6 +111,7 @@ This pack contains the following files:
 - [`src/domain/__tests__/phase15-winner-tick-badge.test.tsx`](src/domain/__tests__/phase15-winner-tick-badge.test.tsx)
 - [`src/domain/__tests__/phase16-scroll-management.test.tsx`](src/domain/__tests__/phase16-scroll-management.test.tsx)
 - [`src/domain/__tests__/phase21-avatar-upload-cooldown.test.tsx`](src/domain/__tests__/phase21-avatar-upload-cooldown.test.tsx)
+- [`src/domain/__tests__/phase29-leaderboard-podium-avatar.test.tsx`](src/domain/__tests__/phase29-leaderboard-podium-avatar.test.tsx)
 - [`src/domain/__tests__/scoring.test.ts`](src/domain/__tests__/scoring.test.ts)
 - [`src/domain/__tests__/standings.test.ts`](src/domain/__tests__/standings.test.ts)
 - [`src/lib/inviteToken.ts`](src/lib/inviteToken.ts)

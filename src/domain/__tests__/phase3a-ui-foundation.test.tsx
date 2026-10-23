@@ -14,6 +14,7 @@ import {
 } from '../../services/demoData.ts';
 import {
   createDemoTrackerRepository,
+  createSupabaseTrackerRepository,
   type TrackerRepository,
   type ViewerGateState,
 } from '../../services/trackerRepository.ts';
@@ -188,6 +189,116 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     });
   });
 
+  it('renders BADDIESMASH brand hero icon on unauthenticated gate instead of generic lock', async () => {
+    const repo = createMockRepository({ status: 'unauthenticated' });
+
+    render(<App repository={repo} envConfig={CONFIGURED_ENV} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gate-unauthenticated')).toBeTruthy();
+    });
+
+    const heroIcon = screen.getByTestId('baddiesmash-hero-icon') as HTMLImageElement;
+    expect(heroIcon).toBeTruthy();
+    expect(heroIcon.getAttribute('src')).toBe('/icon-192.png');
+    expect(heroIcon.getAttribute('alt')).toBe('BADDIESMASH');
+  });
+
+  it('displays a friendly in-app notice when Continue with Google is clicked in Stage 1 and clears on dismiss or credential input', async () => {
+    const repo = createMockRepository({ status: 'unauthenticated' });
+
+    render(<App repository={repo} envConfig={CONFIGURED_ENV} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gate-unauthenticated')).toBeTruthy();
+    });
+
+    const googleBtn = screen.getByRole('button', {
+      name: /Continue with Google/i,
+    });
+    expect((googleBtn as HTMLButtonElement).disabled).toBe(false);
+
+    // Initial state: no notice
+    expect(screen.queryByTestId('google-oauth-stage1-notice')).toBeNull();
+
+    // Click Continue with Google
+    fireEvent.click(googleBtn);
+
+    // Notice appears
+    const notice = screen.getByTestId('google-oauth-stage1-notice');
+    expect(notice.textContent).toMatch(
+      /Google sign-in is not yet enabled for Stage 1/i,
+    );
+
+    // Dismiss notice
+    const dismissBtn = screen.getByRole('button', { name: /Dismiss notice/i });
+    fireEvent.click(dismissBtn);
+    expect(screen.queryByTestId('google-oauth-stage1-notice')).toBeNull();
+
+    // Click again -> notice appears
+    fireEvent.click(googleBtn);
+    expect(screen.getByTestId('google-oauth-stage1-notice')).toBeTruthy();
+
+    // Typing email clears notice
+    fireEvent.change(screen.getByLabelText(/Email Address/i), {
+      target: { value: 'user@example.com' },
+    });
+    expect(screen.queryByTestId('google-oauth-stage1-notice')).toBeNull();
+  });
+
+  it('automatically reloads gate state and transitions to approved view upon successful email sign-in without requiring page refresh', async () => {
+    const baseDemo = buildDeterministicDemoSnapshot();
+    let currentGateState: ViewerGateState = { status: 'unauthenticated' };
+
+    const loadViewerGateState = vi.fn().mockImplementation(async () => currentGateState);
+    const signInWithEmailPassword = vi.fn().mockImplementation(async () => {
+      // Simulate Supabase authentication completing and returning session
+      currentGateState = {
+        status: 'approved',
+        userId: baseDemo.viewerMembership.user_id,
+        userEmail: 'member@example.com',
+        membership: baseDemo.viewerMembership,
+        snapshot: { ...baseDemo, isDemoMode: false },
+      };
+    });
+
+    const repo = createMockRepository({ status: 'unauthenticated' }, {
+      loadViewerGateState,
+      signInWithEmailPassword,
+    });
+
+    render(<App repository={repo} envConfig={CONFIGURED_ENV} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gate-unauthenticated')).toBeTruthy();
+    });
+
+    // Enter email and password credentials
+    fireEvent.change(screen.getByLabelText(/Email Address/i), {
+      target: { value: 'member@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/Password/i), {
+      target: { value: 'ValidPassword123' },
+    });
+
+    // Click Sign In with Email
+    const signInBtn = screen.getByRole('button', {
+      name: /Sign In with Email/i,
+    });
+    fireEvent.click(signInBtn);
+
+    // Verify signInWithEmailPassword was called with exact credentials
+    await waitFor(() => {
+      expect(signInWithEmailPassword).toHaveBeenCalledWith('member@example.com', 'ValidPassword123');
+    });
+
+    // Verify UI immediately transitions to approved home view without refreshing the page
+    await waitFor(() => {
+      expect(screen.queryByTestId('gate-unauthenticated')).toBeNull();
+      expect(screen.getByTestId('view-home')).toBeTruthy();
+    });
+  });
+
   it('explicitly labels Demo Mode and disables sign-in and server mutations in Demo Mode (Condition 1A)', async () => {
     const staleDemoSnapshot: GroupReadSnapshot = {
       ...buildDeterministicDemoSnapshot(),
@@ -245,6 +356,10 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
 
     // Direct calls to demo repository mutation/auth methods must reject
     await expect(demoRepo.signInWithGoogle()).rejects.toThrow(/Demo Mode/i);
+    const liveRepo = createSupabaseTrackerRepository({} as any);
+    await expect(liveRepo.signInWithGoogle()).rejects.toThrow(
+      /Google sign-in is not yet enabled for Stage 1/i,
+    );
     await expect(
       demoRepo.retryRatingRecalculation('group-1'),
     ).rejects.toThrow(/Demo Mode/i);

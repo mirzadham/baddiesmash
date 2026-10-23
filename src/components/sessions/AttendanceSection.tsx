@@ -126,6 +126,7 @@ export function AttendanceSection({
             >
               <PlayerAvatar
                 displayName={player.display_name}
+                avatarUrl={player.avatar_url}
                 playerId={player.id}
                 size={30}
               />
@@ -199,6 +200,7 @@ export function AttendanceSection({
                       <div className="flex items-center gap-2 min-w-0">
                         <PlayerAvatar
                           displayName={player.display_name}
+                          avatarUrl={player.avatar_url}
                           playerId={player.id}
                           size={24}
                         />

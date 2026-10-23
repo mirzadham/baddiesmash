@@ -13,6 +13,7 @@ import {
   UserX,
   AlertOctagon,
   AlertTriangle,
+  Info,
   X,
 } from 'lucide-react';
 import {
@@ -61,7 +62,7 @@ export function AuthMembershipGateView({
   isDemoMode,
   capturedInviteToken = null,
   onClearCapturedInviteToken,
-  onSignInGoogle,
+  onSignInGoogle: _onSignInGoogle,
   onSignInEmailPassword,
   onRedeemInvitation,
   onBootstrapGroup,
@@ -95,33 +96,33 @@ export function AuthMembershipGateView({
     useState<string>('');
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
+  const [googleNotice, setGoogleNotice] = useState<string | null>(null);
+
   useEffect(() => {
     if (capturedInviteToken) {
       setRawTokenInput((prev) => (prev ? prev : capturedInviteToken));
     }
   }, [capturedInviteToken]);
 
-  const handleGoogleClick = async () => {
-    if (isDemoMode || isSubmitting) {
+  const handleGoogleClick = () => {
+    if (isDemoMode) {
       return;
     }
-    setIsSubmitting(true);
+    // Stage 1 safeguard: Google OAuth provider is not yet enabled in the backend.
+    // Display in-app guidance directing the user to sign in via verified email and password.
+    setGoogleNotice(
+      'Google sign-in is not yet enabled for Stage 1. Please sign in using your invited email and password below.',
+    );
     setAuthError(null);
-    try {
-      await onSignInGoogle();
-    } catch (err) {
-      setAuthError(
-        err instanceof Error ? err.message : 'Google OAuth sign-in failed.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleEmailSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isDemoMode || isSubmitting) {
       return;
+    }
+    if (googleNotice) {
+      setGoogleNotice(null);
     }
     if (!email.trim() || !password) {
       setAuthError(
@@ -133,6 +134,7 @@ export function AuthMembershipGateView({
     setAuthError(null);
     try {
       await onSignInEmailPassword(email.trim(), password);
+      await onRetryCheck();
     } catch (err) {
       setAuthError(
         err instanceof Error ? err.message : 'Email/password sign-in failed.',
@@ -443,9 +445,14 @@ export function AuthMembershipGateView({
         aria-labelledby="auth-signin-heading"
         data-testid="gate-unauthenticated"
       >
-        {/* Hero Lock Badge */}
-        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-4">
-          <Lock size={26} />
+        {/* BADDIESMASH Brand Hero Icon */}
+        <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4 border border-emerald-500/30 shadow-lg shadow-emerald-950/50 bg-[#090d16] flex items-center justify-center">
+          <img
+            src="/icon-192.png"
+            alt="BADDIESMASH"
+            className="w-full h-full object-cover"
+            data-testid="baddiesmash-hero-icon"
+          />
         </div>
 
         <h2
@@ -488,7 +495,8 @@ export function AuthMembershipGateView({
           <button
             type="button"
             disabled={isDemoMode || isSubmitting}
-            onClick={() => void handleGoogleClick()}
+            onClick={() => handleGoogleClick()}
+            aria-describedby={googleNotice ? 'google-stage1-notice' : undefined}
             className="w-full h-12 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-sm tracking-wide disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center justify-center gap-3 cursor-pointer"
           >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -509,8 +517,31 @@ export function AuthMembershipGateView({
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>{isSubmitting ? 'Connecting...' : 'Continue with Google'}</span>
+            <span>Continue with Google</span>
           </button>
+
+          {googleNotice && (
+            <div
+              id="google-stage1-notice"
+              role="status"
+              data-testid="google-oauth-stage1-notice"
+              className="mt-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-start gap-2.5 text-left leading-relaxed"
+            >
+              <Info size={16} className="text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span>{googleNotice}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGoogleNotice(null)}
+                className="text-amber-400 hover:text-amber-200 transition-colors cursor-pointer -mr-1 -mt-0.5 p-1"
+                aria-label="Dismiss notice"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           <p className="text-[11px] text-slate-400 mt-2">
             Fast 1-tap sign in with your verified Google account
           </p>
@@ -547,7 +578,10 @@ export function AuthMembershipGateView({
                 type="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (googleNotice) setGoogleNotice(null);
+                }}
                 disabled={isDemoMode || isSubmitting}
                 placeholder="you@court.org"
                 className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
@@ -572,7 +606,10 @@ export function AuthMembershipGateView({
                 type="password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (googleNotice) setGoogleNotice(null);
+                }}
                 disabled={isDemoMode || isSubmitting}
                 placeholder="••••••••"
                 className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"

@@ -57,31 +57,25 @@ export function PlayerAvatar({
   avatarUrl,
   playerId = displayName,
   size = 40,
-  rank,
-  isCurrentUser = false,
+  rank: _rank,
+  isCurrentUser: _isCurrentUser = false,
   className = '',
 }: PlayerAvatarProps) {
   const [imgError, setImgError] = useState(false);
-  const palette = getDeterministicPalette(playerId || displayName);
-  const initials = getPlayerInitials(displayName);
+  const [prevUrl, setPrevUrl] = useState(avatarUrl);
 
-  // Border treatment for top-3 or current user
-  let ringStyle = 'border-transparent';
-  if (rank === 1) {
-    ringStyle = 'ring-2 ring-[#f59e0b] shadow-glow-gold';
-  } else if (rank === 2) {
-    ringStyle = 'ring-2 ring-[#94a3b8] shadow-glow-silver';
-  } else if (rank === 3) {
-    ringStyle = 'ring-2 ring-[#d97706] shadow-glow-bronze';
-  } else if (isCurrentUser) {
-    ringStyle = 'ring-2 ring-[#7045c6] shadow-glow-purple';
+  if (prevUrl !== avatarUrl) {
+    setPrevUrl(avatarUrl);
+    setImgError(false);
   }
 
+  const palette = getDeterministicPalette(playerId || displayName);
+  const initials = getPlayerInitials(displayName);
   const hasImage = avatarUrl && !imgError;
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-full flex-shrink-0 transition-transform ${ringStyle} ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden border border-slate-700/60 transition-transform ${className}`}
       style={{
         width: size,
         height: size,
@@ -93,11 +87,11 @@ export function PlayerAvatar({
           src={avatarUrl}
           alt={displayName}
           onError={() => setImgError(true)}
-          className="w-full h-full object-cover rounded-full"
+          className="w-full h-full object-cover"
         />
       ) : (
         <div
-          className="w-full h-full rounded-full flex items-center justify-center select-none font-bold tracking-wider"
+          className="w-full h-full flex items-center justify-center select-none font-bold tracking-wider"
           style={{
             background: palette.bg,
             color: palette.text,

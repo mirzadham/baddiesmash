@@ -880,15 +880,11 @@ export function createSupabaseTrackerRepository(
     },
 
     async signInWithGoogle(): Promise<void> {
-      const { error } = await client.auth.signInWithOAuth({
-        provider: 'google',
-        ...(typeof window !== 'undefined'
-          ? { options: { redirectTo: window.location.origin } }
-          : {}),
-      });
-      if (error) {
-        throw new Error(error.message);
-      }
+      // Stage 1 safeguard: Google OAuth provider is not yet enabled in the backend.
+      // Reject with clear guidance rather than navigating the browser to an unconfigured provider endpoint.
+      throw new Error(
+        'Google sign-in is not yet enabled for Stage 1. Please sign in using your invited email and password.',
+      );
     },
 
     async signInWithEmailPassword(
