@@ -301,6 +301,20 @@ When a material decision changes:
   - *Repository Sign-Up Integration:* Added `signUpWithEmailPassword(email, password)` to `TrackerRepository` backed by `supabase.auth.signUp(...)`.
   - *Verification & Quality Gates:* Added automated test suite `src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx` (5 tests). All 22 Vitest test suites (135 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc --noEmit`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `src/components/admin/AdminInvitationsSection.tsx`, `src/lib/inviteToken.ts`, `src/services/trackerRepository.ts`, `src/views/AuthMembershipGateView.tsx`, `src/App.tsx`, `src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-23 (Owner approval — Phase 32 Membership Approval Pre-Selection & Clarified Invitation Copy):**
+  - *Smart Profile Choice Pre-Selection in Admin Governance (`DEC-075`):* When an admin reviews a pending membership request in `AdminGovernanceView`, the linking mode draft initializes intelligently based on what the user requested:
+    - If `requested_new_player_name` is present, automatically pre-selects Option B (`create_new`) with the requested display name pre-filled.
+    - If `requested_player_id` is present, automatically pre-selects Option A (`link_existing`) with that player selected.
+    - If no preference was provided (`requested_new_player_name` and `requested_player_id` are both null), keeps `unselected` so the admin must make a conscious choice before approval.
+    - This streamlines single-click admin approval when the user already specified their preference, while preserving full admin override control and preventing silent auto-linking.
+  - *Refined User Invitation Profile Copy:* Standardized the 3 radio options in the invitation onboarding setup form:
+    1. "Let Admin choose during approval"
+    2. "Request a new player profile"
+    3. "Link an existing player profile ID provided by Admin"
+  - *Refined Action Button Text:* Updated the setup submission button text from "Set Password & Join Club" to **"Set Password & Request Access"** (with active submitting indicator "Submitting Membership Request..."), accurately reflecting that account setup initiates an access request subject to admin approval.
+  - *Verification & Quality Gates:* All 22 Vitest test suites (136 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc --noEmit`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/views/AdminGovernanceView.tsx`, `src/views/AuthMembershipGateView.tsx`, `src/domain/__tests__/phase3b-admin-onboarding-ui.test.tsx`, `src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx`, `docs/00-project/decision-register.md`.
+
 
 
 

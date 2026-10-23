@@ -8,8 +8,10 @@ import {
 } from '../../lib/inviteToken.ts';
 import {
   buildDeterministicDemoAdminGovernanceSnapshot,
+  buildDeterministicDemoSnapshot,
   DEMO_GROUP_ID,
   DEMO_MEMBERSHIP_IDS,
+  type GroupReadSnapshot,
 } from '../../services/demoData.ts';
 import {
   createDemoTrackerRepository,
@@ -230,9 +232,9 @@ describe('Phase 31 — Single-Use Invitation Link Onboarding & Direct Password S
       target: { value: 'badminton2026' },
     });
 
-    // Request new player profile display name
+    // Request new player profile
     fireEvent.click(
-      screen.getByLabelText(/Request a new player profile display name/i),
+      screen.getByLabelText(/Request a new player profile$/i),
     );
     fireEvent.change(
       screen.getByLabelText(/Requested New Player Display Name/i),
@@ -296,6 +298,103 @@ describe('Phase 31 — Single-Use Invitation Link Onboarding & Direct Password S
 
     await waitFor(() => {
       expect(screen.getByTestId('gate-invitation-setup')).toBeTruthy();
+    });
+  });
+
+  it('displays updated choice copy and submit button text, and automatically pre-selects requested new player profile in Admin Governance', async () => {
+    // 1. Check invitation setup copy
+    const rawSecret = 'e1e2c3c4c5c60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90';
+    window.history.replaceState(
+      null,
+      '',
+      `/?invite=${rawSecret}&email=newuser%40court.org`,
+    );
+
+    const unauthRepo = createLiveMockRepository({ status: 'unauthenticated' });
+    const { unmount } = render(<App repository={unauthRepo} envConfig={CONFIGURED_ENV} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gate-invitation-setup')).toBeTruthy();
+    });
+
+    expect(screen.getByText('Let Admin choose during approval')).toBeTruthy();
+    expect(screen.getByText('Request a new player profile')).toBeTruthy();
+    expect(
+      screen.getByText('Link an existing player profile ID provided by Admin'),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: /Set Password & Request Access/i }),
+    ).toBeTruthy();
+
+    unmount();
+
+    // 2. Check Admin Governance pre-selection when pending membership has requested_new_player_name
+    const baseSnap = buildDeterministicDemoSnapshot();
+    const liveSnap: GroupReadSnapshot = { ...baseSnap, isDemoMode: false };
+    const decideSpy = vi.fn().mockResolvedValue({
+      membership_id: DEMO_MEMBERSHIP_IDS.pendingHannah,
+      status: 'approved',
+      linked_player_id: null,
+    });
+
+    const baseAdminSnap = buildDeterministicDemoAdminGovernanceSnapshot();
+    // In baseAdminSnap, pendingHannah has requested_new_player_name: 'Hannah Tan'
+    const adminRepo = createLiveMockRepository(
+      {
+        status: 'approved',
+        userId: liveSnap.viewerMembership.user_id,
+        userEmail: 'aaron.owner@example.com',
+        membership: liveSnap.viewerMembership,
+        snapshot: liveSnap,
+      },
+      {
+        loadAdminGovernanceSnapshot: vi.fn().mockResolvedValue(baseAdminSnap),
+        decideMembershipRequest: decideSpy,
+      },
+    );
+
+    render(<App repository={adminRepo} envConfig={CONFIGURED_ENV} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('view-home')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId(
+          `pending-membership-card-${DEMO_MEMBERSHIP_IDS.pendingHannah}`,
+        ),
+      ).toBeTruthy();
+    });
+
+    // Check that Option B (Create new player profile) is automatically checked
+    const radioCreateNew = screen.getByTestId(
+      `radio-create-new-${DEMO_MEMBERSHIP_IDS.pendingHannah}`,
+    ) as HTMLInputElement;
+    expect(radioCreateNew.checked).toBe(true);
+
+    // Check that new player name input has 'Hannah Tan'
+    const nameInput = screen.getByLabelText(
+      /New player display name for hannah@example.com/i,
+    ) as HTMLInputElement;
+    expect(nameInput.value).toBe('Hannah Tan');
+
+    // Admin can click Approve directly without manually re-selecting Option B
+    const approveBtn = screen.getByTestId(
+      `approve-membership-btn-${DEMO_MEMBERSHIP_IDS.pendingHannah}`,
+    );
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => {
+      expect(decideSpy).toHaveBeenCalledWith({
+        membershipId: DEMO_MEMBERSHIP_IDS.pendingHannah,
+        decision: 'approve',
+        reason: 'Approved by group administrator',
+        linkedPlayerId: null,
+        createNewPlayer: true,
+        newPlayerDisplayName: 'Hannah Tan',
+      });
     });
   });
 });

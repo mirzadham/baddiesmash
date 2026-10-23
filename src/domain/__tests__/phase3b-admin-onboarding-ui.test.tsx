@@ -188,9 +188,9 @@ describe('Phase 3 Checkpoint 3B — Invitation Redemption, Bootstrap & Admin/Own
     // Pre-filled notice is shown
     expect(screen.getByTestId('invite-url-prefilled-notice')).toBeTruthy();
 
-    // Select "Request a new player profile display name" and enter "Hannah Tan"
+    // Select "Request a new player profile" and enter "Hannah Tan"
     fireEvent.click(
-      screen.getByLabelText(/Request a new player profile display name/i),
+      screen.getByLabelText(/Request a new player profile$/i),
     );
     fireEvent.change(
       screen.getByLabelText(/Requested New Player Display Name/i),
@@ -500,6 +500,20 @@ describe('Phase 3 Checkpoint 3B — Invitation Redemption, Bootstrap & Admin/Own
       linked_player_id: null,
     });
 
+    const baseAdminSnap = buildDeterministicDemoAdminGovernanceSnapshot();
+    const unselectedAdminSnap = {
+      ...baseAdminSnap,
+      memberships: baseAdminSnap.memberships.map((m) =>
+        m.membership_id === DEMO_MEMBERSHIP_IDS.pendingHannah
+          ? {
+              ...m,
+              requested_new_player_name: null,
+              requested_player_id: null,
+            }
+          : m,
+      ),
+    };
+
     const repo = createLiveMockRepository(
       {
         status: 'approved',
@@ -509,6 +523,7 @@ describe('Phase 3 Checkpoint 3B — Invitation Redemption, Bootstrap & Admin/Own
         snapshot: liveSnap,
       },
       {
+        loadAdminGovernanceSnapshot: vi.fn().mockResolvedValue(unselectedAdminSnap),
         decideMembershipRequest: decideSpy,
       },
     );

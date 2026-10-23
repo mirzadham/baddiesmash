@@ -189,7 +189,7 @@ export function AuthMembershipGateView({
     }
     if (playerPref === 'existing_uuid' && !requestedExistingPlayerId.trim()) {
       setAuthError(
-        'Please enter the existing player profile UUID provided by your Admin, or select "Let Admin choose during approval".',
+        'Please enter the existing player profile ID provided by your Admin, or select "Let Admin choose during approval".',
       );
       return;
     }
@@ -260,7 +260,7 @@ export function AuthMembershipGateView({
 
     if (playerPref === 'existing_uuid' && !requestedExistingPlayerId.trim()) {
       setRedeemError(
-        'Please enter the existing player profile UUID provided by your Admin, or select "Decide during Admin approval".',
+        'Please enter the existing player profile ID provided by your Admin, or select "Let Admin choose during approval".',
       );
       return;
     }
@@ -412,7 +412,7 @@ export function AuthMembershipGateView({
             onChange={() => setPlayerPref('none')}
             className="mt-0.5 text-cyan-500"
           />
-          <span>Let Admin choose during approval (or use invitation&apos;s proposed player / Viewer-only)</span>
+          <span>Let Admin choose during approval</span>
         </label>
         <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
           <input
@@ -422,7 +422,7 @@ export function AuthMembershipGateView({
             onChange={() => setPlayerPref('new_name')}
             className="mt-0.5 text-cyan-500"
           />
-          <span>Request a new player profile display name</span>
+          <span>Request a new player profile</span>
         </label>
 
         {playerPref === 'new_name' && (
@@ -453,7 +453,7 @@ export function AuthMembershipGateView({
             onChange={() => setPlayerPref('existing_uuid')}
             className="mt-0.5 text-cyan-500"
           />
-          <span>Link an existing player profile UUID provided by Admin</span>
+          <span>Link an existing player profile ID provided by Admin</span>
         </label>
 
         {playerPref === 'existing_uuid' && (
@@ -462,7 +462,7 @@ export function AuthMembershipGateView({
               htmlFor="invite-existing-player-uuid-input"
               className="block text-[11px] font-medium text-slate-400 mb-1"
             >
-              Existing Player Profile UUID
+              Existing Player Profile ID
             </label>
             <input
               id="invite-existing-player-uuid-input"
@@ -684,7 +684,7 @@ export function AuthMembershipGateView({
                   onChange={() => setPlayerPref('none')}
                   className="mt-0.5 text-cyan-500"
                 />
-                <span>Let Admin choose during approval (or Viewer-only)</span>
+                <span>Let Admin choose during approval</span>
               </label>
               <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
                 <input
@@ -694,7 +694,7 @@ export function AuthMembershipGateView({
                   onChange={() => setPlayerPref('new_name')}
                   className="mt-0.5 text-cyan-500"
                 />
-                <span>Request a new player profile display name</span>
+                <span>Request a new player profile</span>
               </label>
 
               {playerPref === 'new_name' && (
@@ -725,7 +725,7 @@ export function AuthMembershipGateView({
                   onChange={() => setPlayerPref('existing_uuid')}
                   className="mt-0.5 text-cyan-500"
                 />
-                <span>Link an existing player profile UUID provided by Admin</span>
+                <span>Link an existing player profile ID provided by Admin</span>
               </label>
 
               {playerPref === 'existing_uuid' && (
@@ -734,7 +734,7 @@ export function AuthMembershipGateView({
                     htmlFor="invite-setup-existing-player-uuid-input"
                     className="block text-[11px] font-medium text-slate-400 mb-1"
                   >
-                    Existing Player Profile UUID
+                    Existing Player Profile ID
                   </label>
                   <input
                     id="invite-setup-existing-player-uuid-input"
@@ -769,10 +769,10 @@ export function AuthMembershipGateView({
               {isSubmitting ? (
                 <>
                   <RefreshCw size={14} className="animate-spin text-slate-950" />
-                  <span>Activating Account & Joining...</span>
+                  <span>Submitting Membership Request...</span>
                 </>
               ) : (
-                'Set Password & Join Club'
+                'Set Password & Request Access'
               )}
             </button>
           </form>

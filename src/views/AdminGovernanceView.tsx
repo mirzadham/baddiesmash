@@ -225,14 +225,27 @@ export function AdminGovernanceView({
   const getPendingDraft = (
     entry: AdminMembershipDirectoryEntry,
   ): PendingDecisionDraft => {
-    return (
-      pendingDrafts[entry.membership_id] ?? {
-        linkingMode: 'unselected',
-        selectedPlayerId: entry.requested_player_id ?? '',
-        newPlayerDisplayName: entry.requested_new_player_name ?? '',
-        reason: '',
-      }
-    );
+    const existing = pendingDrafts[entry.membership_id];
+    if (existing) {
+      return existing;
+    }
+
+    let defaultLinkingMode: ApprovalLinkingMode = 'unselected';
+    if (
+      entry.requested_new_player_name &&
+      entry.requested_new_player_name.trim().length > 0
+    ) {
+      defaultLinkingMode = 'create_new';
+    } else if (entry.requested_player_id) {
+      defaultLinkingMode = 'link_existing';
+    }
+
+    return {
+      linkingMode: defaultLinkingMode,
+      selectedPlayerId: entry.requested_player_id ?? '',
+      newPlayerDisplayName: entry.requested_new_player_name ?? '',
+      reason: '',
+    };
   };
 
   const updatePendingDraft = (
