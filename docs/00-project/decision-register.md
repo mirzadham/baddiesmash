@@ -276,6 +276,11 @@ When a material decision changes:
   - *Deployment Runbook:* Updated `docs/02-engineering/operations-and-deployment.md` with step-by-step guidance for Supabase project creation, migration order (1 to 3), Vercel GitHub project importing, environment variable configuration (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`), and initial group owner bootstrap (`public.bootstrap_initial_group`).
   - *Verification & Quality Gates:* All 19 Vitest test suites (118 tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `vercel.json`, `docs/02-engineering/operations-and-deployment.md`, `FILE-INDEX.md`, `docs/00-project/decision-register.md`.
+- **2026-10-23 (Owner approval — Phase 25 Hotfix: `update_player_avatar` PostgreSQL NULLIF Syntax Correction):**
+  - *Catalog Function vs SQL Keyword Resolution (`DEC-068`):* Fixed a PostgreSQL runtime error in `public.update_player_avatar` where `NULLIF` was prefixed with `pg_catalog.` (`pg_catalog.nullif(...)`). In PostgreSQL, `NULLIF` is a SQL language syntactic expression construct, not a function routine in the `pg_catalog` schema, which caused Supabase RPC invocations to fail with `function pg_catalog.nullif(text, unknown) does not exist`. Corrected to `NULLIF(pg_catalog.btrim(p_avatar_url), '')`.
+  - *Automated Database Integration Verification:* Created `src/domain/__tests__/phase21-avatar-db.test.ts` running against PGlite with migrations 1, 2, and 3. Verified avatar updates, empty string nullification, 365-day cooldown rejections, admin override, and admin avatar resets.
+  - *Verification & Quality Gates:* All 20 Vitest test suites (123 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `supabase/migrations/20261022000001_player_avatar_cooldown.sql`, `src/domain/__tests__/phase21-avatar-db.test.ts`, `docs/00-project/decision-register.md`.
 
 
 

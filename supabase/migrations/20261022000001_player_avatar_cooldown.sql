@@ -33,7 +33,7 @@ BEGIN
   END IF;
 
   v_now := pg_catalog.clock_timestamp();
-  v_cleaned_url := pg_catalog.nullif(pg_catalog.btrim(p_avatar_url), '');
+  v_cleaned_url := NULLIF(pg_catalog.btrim(p_avatar_url), '');
 
   -- Validate avatar_url format & length
   IF v_cleaned_url IS NOT NULL AND pg_catalog.char_length(v_cleaned_url) > 512 THEN
