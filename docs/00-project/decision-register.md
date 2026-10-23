@@ -288,13 +288,19 @@ When a material decision changes:
   - *Repository Safeguard:* Guarded `createSupabaseTrackerRepository().signInWithGoogle()` to reject with clear Stage 1 guidance rather than initiating an unhandled external OAuth navigation.
   - *Verification & Quality Gates:* Added test coverage in `src/domain/__tests__/phase3a-ui-foundation.test.tsx`. All 20 Vitest test suites (124 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `src/views/AuthMembershipGateView.tsx`, `src/services/trackerRepository.ts`, `src/domain/__tests__/phase3a-ui-foundation.test.tsx`, `docs/00-project/decision-register.md`.
-- **2026-10-23 (Owner approval — Phase 30 Clean Borderless Podium Avatars):**
-  - *Removal of Colored Circle Outer Rings (`DEC-073`):* In accordance with explicit owner instructions ("why is the circle around the profile is not aligned with the profile. im thinking like no need to put the colored circle around it... yes"), removed the artificial outer colored ring wrappers (`background: #f59e0b` / `#94a3b8` / `#d97706` with `p-0.5`) and heavy Tailwind rings (`ring-2 ring-[...] shadow-glow-[...]`) around the 1st, 2nd, and 3rd place podium avatars.
-  - *Layout Alignment & Baseline Descent Resolution:* Eliminated the browser's inline font-descent spacing inside the block wrapper that caused the 12px asymmetrical crescent gap beneath the avatar.
-  - *Sleek Athletic Treatment:* Standardized `PlayerAvatar.tsx` to render a clean, perfectly circular frame with `overflow-hidden` and a subtle neutral border (`border border-slate-700/60`), allowing real player photos to shine naturally without visual obstruction or color clashing.
-  - *Podium Distinction Preserved:* Maintained the regal floating Golden Crown for 1st place and the metallic Olympic Ribbon tails for 2nd and 3rd place, alongside the stepped 3D podium blocks.
-  - *Verification & Quality Gates:* All 21 Vitest test suites (130 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
-  - *Affected Files:* `src/components/leaderboard/LeaderboardPodium.tsx`, `src/components/leaderboard/PlayerAvatar.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-23 (Owner approval — Phase 31 Single-Use Invitation Link Onboarding & Direct Password Setup):**
+  - *Direct Email-Bound Invitation Link Onboarding (`DEC-074`):* Resolved the unauthenticated invitee onboarding dead end where newly invited members arrived with an invitation link but lacked an existing account or password to sign in.
+  - *Admin Manual Share Link Enhancement:* Updated `AdminInvitationsSection.tsx` so generated share links include the invited email: `https://<domain>/?invite=<rawToken>&email=<invitedEmail>`.
+  - *Volatile In-Memory URL Capture & Scrubbing:* Updated `src/lib/inviteToken.ts` (`captureAndStripInviteContextFromUrl`) to extract both `invite` and `email` into volatile memory and immediately remove both query parameters from the visible browser address bar via `history.replaceState`.
+  - *Dedicated Invitation Password Setup Gate:* In `AuthMembershipGateView.tsx`, when an unauthenticated user arrives with a captured invite token:
+    - Renders a dedicated **"Accept Invitation & Set Password"** card (`gate-invitation-setup`) with the invited email pre-filled.
+    - Provides **Create Password** and **Confirm Password** fields (minimum 6 characters) with client-side mismatch validation.
+    - Preserves optional player profile requests (e.g. requested display name on the court).
+    - On submission, executes `signUpWithEmailPassword`, immediately redeems the invitation with the token (`redeemGroupInvitation`), and refreshes gate state directly into **"Membership Pending Approval"** without forcing redundant re-authentication.
+    - Provides a clear toggle (`toggle-to-signin-btn` / `toggle-to-setup-btn`) allowing returning users to switch to standard sign-in if an account was already registered.
+  - *Repository Sign-Up Integration:* Added `signUpWithEmailPassword(email, password)` to `TrackerRepository` backed by `supabase.auth.signUp(...)`.
+  - *Verification & Quality Gates:* Added automated test suite `src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx` (5 tests). All 22 Vitest test suites (135 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`tsc --noEmit`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/components/admin/AdminInvitationsSection.tsx`, `src/lib/inviteToken.ts`, `src/services/trackerRepository.ts`, `src/views/AuthMembershipGateView.tsx`, `src/App.tsx`, `src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx`, `docs/00-project/decision-register.md`.
 
 
 

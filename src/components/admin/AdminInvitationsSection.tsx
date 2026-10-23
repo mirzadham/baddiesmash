@@ -68,7 +68,7 @@ export const AdminInvitationsSection: React.FC<AdminInvitationsSectionProps> = (
   };
 
   const inviteUrl = oneTimeIssuedSecret
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://tracker.local'}/?invite=${oneTimeIssuedSecret.rawToken}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://tracker.local'}/?invite=${oneTimeIssuedSecret.rawToken}&email=${encodeURIComponent(oneTimeIssuedSecret.invitedEmail)}`
     : '';
 
   return (

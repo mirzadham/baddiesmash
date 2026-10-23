@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, Home, Trophy, User } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
 import {
-  captureAndStripInviteTokenFromUrl,
+  captureAndStripInviteContextFromUrl,
   clearCapturedInviteToken,
 } from './lib/inviteToken.ts';
 import {
@@ -73,9 +73,11 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [gateState, setGateState] = useState<ViewerGateState | null>(null);
-  const [capturedInviteToken, setCapturedInviteToken] = useState<string | null>(
-    () => captureAndStripInviteTokenFromUrl(),
+  const [capturedInviteContext, setCapturedInviteContext] = useState(() =>
+    captureAndStripInviteContextFromUrl(),
   );
+  const capturedInviteToken = capturedInviteContext.token;
+  const capturedInviteEmail = capturedInviteContext.email;
   const [activeTab, setActiveTab] = useState<BottomNavTab>(() => {
     if (typeof window !== 'undefined') {
       const qTab = new URLSearchParams(window.location.search).get('tab');
@@ -255,13 +257,18 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             gateState={gateState}
             isDemoMode={false}
             capturedInviteToken={capturedInviteToken}
+            capturedInviteEmail={capturedInviteEmail}
             onClearCapturedInviteToken={() => {
               clearCapturedInviteToken();
-              setCapturedInviteToken(null);
+              setCapturedInviteContext({ token: null, email: null });
             }}
             onSignInGoogle={() => repository.signInWithGoogle()}
             onSignInEmailPassword={async (email, pwd) => {
               await repository.signInWithEmailPassword(email, pwd);
+              await loadGateState();
+            }}
+            onSignUpEmailPassword={async (email, pwd) => {
+              await repository.signUpWithEmailPassword(email, pwd);
               await loadGateState();
             }}
             onRedeemInvitation={(input) =>
@@ -442,13 +449,18 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
             gateState={{ status: 'unauthenticated' }}
             isDemoMode={true}
             capturedInviteToken={capturedInviteToken}
+            capturedInviteEmail={capturedInviteEmail}
             onClearCapturedInviteToken={() => {
               clearCapturedInviteToken();
-              setCapturedInviteToken(null);
+              setCapturedInviteContext({ token: null, email: null });
             }}
             onSignInGoogle={() => repository.signInWithGoogle()}
             onSignInEmailPassword={async (email, pwd) => {
               await repository.signInWithEmailPassword(email, pwd);
+              await loadGateState();
+            }}
+            onSignUpEmailPassword={async (email, pwd) => {
+              await repository.signUpWithEmailPassword(email, pwd);
               await loadGateState();
             }}
             onRedeemInvitation={(input) =>

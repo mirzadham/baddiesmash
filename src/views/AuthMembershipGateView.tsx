@@ -37,9 +37,11 @@ export interface AuthMembershipGateViewProps {
   >;
   isDemoMode: boolean;
   capturedInviteToken?: string | null;
+  capturedInviteEmail?: string | null;
   onClearCapturedInviteToken?: () => void;
   onSignInGoogle: () => Promise<void>;
   onSignInEmailPassword: (email: string, password: string) => Promise<void>;
+  onSignUpEmailPassword?: (email: string, password: string) => Promise<void>;
   onRedeemInvitation?: (
     input: RedeemGroupInvitationInput,
   ) => Promise<RedeemGroupInvitationResponse>;
@@ -61,16 +63,22 @@ export function AuthMembershipGateView({
   gateState,
   isDemoMode,
   capturedInviteToken = null,
+  capturedInviteEmail = null,
   onClearCapturedInviteToken,
   onSignInGoogle: _onSignInGoogle,
   onSignInEmailPassword,
+  onSignUpEmailPassword,
   onRedeemInvitation,
   onBootstrapGroup,
   onSignOut,
   onRetryCheck,
 }: AuthMembershipGateViewProps) {
-  const [email, setEmail] = useState('');
+  const [authMode, setAuthMode] = useState<'invite_setup' | 'signin'>(
+    capturedInviteToken ? 'invite_setup' : 'signin',
+  );
+  const [email, setEmail] = useState(capturedInviteEmail ?? '');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -101,8 +109,15 @@ export function AuthMembershipGateView({
   useEffect(() => {
     if (capturedInviteToken) {
       setRawTokenInput((prev) => (prev ? prev : capturedInviteToken));
+      setAuthMode('invite_setup');
     }
   }, [capturedInviteToken]);
+
+  useEffect(() => {
+    if (capturedInviteEmail) {
+      setEmail((prev) => (prev ? prev : capturedInviteEmail));
+    }
+  }, [capturedInviteEmail]);
 
   const handleGoogleClick = () => {
     if (isDemoMode) {
@@ -139,6 +154,86 @@ export function AuthMembershipGateView({
       setAuthError(
         err instanceof Error ? err.message : 'Email/password sign-in failed.',
       );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleInviteSetupSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (isDemoMode || isSubmitting) {
+      return;
+    }
+    const targetEmail = (email || capturedInviteEmail || '').trim();
+    if (!targetEmail) {
+      setAuthError('Please enter your invited email address.');
+      return;
+    }
+    if (!password) {
+      setAuthError('Please choose a password (at least 6 characters).');
+      return;
+    }
+    if (password.length < 6) {
+      setAuthError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setAuthError('Passwords do not match. Please re-enter your password.');
+      return;
+    }
+    if (playerPref === 'new_name' && !requestedNewPlayerName.trim()) {
+      setAuthError(
+        'Please enter a display name for your requested new player profile, or select "Let Admin choose during approval".',
+      );
+      return;
+    }
+    if (playerPref === 'existing_uuid' && !requestedExistingPlayerId.trim()) {
+      setAuthError(
+        'Please enter the existing player profile UUID provided by your Admin, or select "Let Admin choose during approval".',
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAuthError(null);
+
+    try {
+      if (onSignUpEmailPassword) {
+        await onSignUpEmailPassword(targetEmail, password);
+      } else {
+        await onSignInEmailPassword(targetEmail, password);
+      }
+
+      if (capturedInviteToken && onRedeemInvitation) {
+        await onRedeemInvitation({
+          rawToken: capturedInviteToken.trim(),
+          requestedPlayerId:
+            playerPref === 'existing_uuid'
+              ? requestedExistingPlayerId.trim()
+              : null,
+          requestedNewPlayerName:
+            playerPref === 'new_name'
+              ? requestedNewPlayerName.trim()
+              : null,
+        });
+      }
+
+      await onRetryCheck();
+    } catch (err) {
+      const rawMsg = err instanceof Error ? err.message : String(err);
+      const lower = rawMsg.toLowerCase();
+      if (
+        lower.includes('already registered') ||
+        lower.includes('already been registered') ||
+        lower.includes('user already exists')
+      ) {
+        setAuthError(
+          'An account with this email already exists. Please sign in with your password below.',
+        );
+        setAuthMode('signin');
+      } else {
+        setAuthError(sanitizeInvitationRpcError(err, capturedInviteToken));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -437,8 +532,268 @@ export function AuthMembershipGateView({
     );
   }
 
-  // 2. Unauthenticated state (Sign-in form)
+  // 2. Unauthenticated state (Invitation Setup or Sign-in form)
   if (gateState.status === 'unauthenticated') {
+    if (authMode === 'invite_setup' && capturedInviteToken) {
+      return (
+        <section
+          className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
+          aria-labelledby="auth-invitation-heading"
+          data-testid="gate-invitation-setup"
+        >
+          {/* BADDIESMASH Brand Hero Icon */}
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4 border border-emerald-500/30 shadow-lg shadow-emerald-950/50 bg-[#090d16] flex items-center justify-center">
+            <img
+              src="/icon-192.png"
+              alt="BADDIESMASH"
+              className="w-full h-full object-cover"
+              data-testid="baddiesmash-hero-icon"
+            />
+          </div>
+
+          <h2
+            id="auth-invitation-heading"
+            className="text-xl sm:text-2xl font-black text-white tracking-tight"
+          >
+            Accept Invitation
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-5 leading-relaxed max-w-xs mx-auto">
+            You&apos;ve been invited to join the private club. Set your password to activate your account and request membership.
+          </p>
+
+          <div
+            role="status"
+            data-testid="invite-url-captured-notice"
+            className="p-3 mb-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 text-left leading-relaxed"
+          >
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span>
+              Single-use invitation token detected. Complete password setup below to join.
+            </span>
+          </div>
+
+          {isDemoMode && (
+            <div
+              role="note"
+              className="p-3.5 mb-5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-start gap-2.5 text-left leading-relaxed"
+            >
+              <ShieldAlert size={14} className="text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                Demo Mode Notice: Live authentication and membership mutations are disabled because no Supabase backend is configured.
+              </span>
+            </div>
+          )}
+
+          <form
+            onSubmit={(e) => void handleInviteSetupSubmit(e)}
+            noValidate
+            className="text-left space-y-4"
+            data-testid="invitation-setup-form"
+          >
+            <div>
+              <label
+                htmlFor="auth-invite-email-input"
+                className="block text-xs font-semibold text-slate-300 mb-1.5"
+              >
+                Invited Email Address
+              </label>
+              <div className="relative">
+                <Mail
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                />
+                <input
+                  id="auth-invite-email-input"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isDemoMode || isSubmitting}
+                  placeholder="you@court.org"
+                  className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Must match the email address where your invitation was issued.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="auth-setup-password-input"
+                className="block text-xs font-semibold text-slate-300 mb-1.5"
+              >
+                Create Password
+              </label>
+              <div className="relative">
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                />
+                <input
+                  id="auth-setup-password-input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isDemoMode || isSubmitting}
+                  placeholder="At least 6 characters"
+                  className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="auth-confirm-password-input"
+                className="block text-xs font-semibold text-slate-300 mb-1.5"
+              >
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                />
+                <input
+                  id="auth-confirm-password-input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isDemoMode || isSubmitting}
+                  placeholder="Re-enter your password"
+                  className="w-full h-12 pl-10 pr-3.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            {/* Profile preference fieldset */}
+            <fieldset
+              className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2 text-xs"
+              disabled={isDemoMode || isSubmitting}
+            >
+              <legend className="text-xs font-semibold text-slate-300 px-1">
+                Player Profile Request (Optional)
+              </legend>
+              <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
+                <input
+                  type="radio"
+                  name="invite-setup-player-pref"
+                  checked={playerPref === 'none'}
+                  onChange={() => setPlayerPref('none')}
+                  className="mt-0.5 text-cyan-500"
+                />
+                <span>Let Admin choose during approval (or Viewer-only)</span>
+              </label>
+              <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
+                <input
+                  type="radio"
+                  name="invite-setup-player-pref"
+                  checked={playerPref === 'new_name'}
+                  onChange={() => setPlayerPref('new_name')}
+                  className="mt-0.5 text-cyan-500"
+                />
+                <span>Request a new player profile display name</span>
+              </label>
+
+              {playerPref === 'new_name' && (
+                <div className="pl-6 pt-1">
+                  <label
+                    htmlFor="invite-setup-new-player-name-input"
+                    className="block text-[11px] font-medium text-slate-400 mb-1"
+                  >
+                    Requested New Player Display Name
+                  </label>
+                  <input
+                    id="invite-setup-new-player-name-input"
+                    type="text"
+                    value={requestedNewPlayerName}
+                    onChange={(e) => setRequestedNewPlayerName(e.target.value)}
+                    disabled={isDemoMode || isSubmitting}
+                    placeholder="e.g. Hannah Tan"
+                    className="w-full h-10 px-3 bg-[#0b121b] border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              )}
+
+              <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white select-none">
+                <input
+                  type="radio"
+                  name="invite-setup-player-pref"
+                  checked={playerPref === 'existing_uuid'}
+                  onChange={() => setPlayerPref('existing_uuid')}
+                  className="mt-0.5 text-cyan-500"
+                />
+                <span>Link an existing player profile UUID provided by Admin</span>
+              </label>
+
+              {playerPref === 'existing_uuid' && (
+                <div className="pl-6 pt-1">
+                  <label
+                    htmlFor="invite-setup-existing-player-uuid-input"
+                    className="block text-[11px] font-medium text-slate-400 mb-1"
+                  >
+                    Existing Player Profile UUID
+                  </label>
+                  <input
+                    id="invite-setup-existing-player-uuid-input"
+                    type="text"
+                    value={requestedExistingPlayerId}
+                    onChange={(e) => setRequestedExistingPlayerId(e.target.value)}
+                    disabled={isDemoMode || isSubmitting}
+                    placeholder="e.g. 00000000-0000-4000-8000-000000000201"
+                    className="w-full h-10 px-3 bg-[#0b121b] border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              )}
+            </fieldset>
+
+            {authError && (
+              <div
+                role="alert"
+                data-testid="auth-action-error"
+                className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed"
+              >
+                <X size={14} className="shrink-0 mt-0.5" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isDemoMode || isSubmitting}
+              data-testid="create-account-and-join-btn"
+              className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-xs disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {isSubmitting ? (
+                <>
+                  <RefreshCw size={14} className="animate-spin text-slate-950" />
+                  <span>Activating Account & Joining...</span>
+                </>
+              ) : (
+                'Set Password & Join Club'
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+            <button
+              type="button"
+              data-testid="toggle-to-signin-btn"
+              onClick={() => {
+                setAuthError(null);
+                setAuthMode('signin');
+              }}
+              className="text-xs text-slate-400 hover:text-emerald-400 transition-colors font-medium cursor-pointer"
+            >
+              Already have an account? <strong className="text-white underline">Sign in with existing password →</strong>
+            </button>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section
         className="max-w-md mx-auto my-6 p-6 sm:p-8 rounded-3xl bg-[#121c28] border border-slate-800/90 relative overflow-hidden text-center"
@@ -642,6 +997,22 @@ export function AuthMembershipGateView({
             )}
           </button>
         </form>
+
+        {capturedInviteToken && (
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              data-testid="toggle-to-setup-btn"
+              onClick={() => {
+                setAuthError(null);
+                setAuthMode('invite_setup');
+              }}
+              className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer underline"
+            >
+              ← Need to set up your password for this invitation?
+            </button>
+          </div>
+        )}
 
         {/* Demo Mode Link */}
         {!isDemoMode && (

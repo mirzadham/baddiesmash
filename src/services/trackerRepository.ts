@@ -350,6 +350,7 @@ export interface TrackerRepository {
   loadViewerGateState(): Promise<ViewerGateState>;
   signInWithGoogle(): Promise<void>;
   signInWithEmailPassword(email: string, password: string): Promise<void>;
+  signUpWithEmailPassword(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
   retryRatingRecalculation(
     groupId: string,
@@ -454,6 +455,11 @@ export function createDemoTrackerRepository(
     async signInWithEmailPassword(): Promise<void> {
       throw new Error(
         'Demo Mode is active because Supabase environment variables are not configured. Live email/password sign-in is disabled.',
+      );
+    },
+    async signUpWithEmailPassword(): Promise<void> {
+      throw new Error(
+        'Demo Mode is active because Supabase environment variables are not configured. Live email/password registration is disabled.',
       );
     },
     async signOut(): Promise<void> {
@@ -892,6 +898,19 @@ export function createSupabaseTrackerRepository(
       password: string,
     ): Promise<void> {
       const { error } = await client.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+
+    async signUpWithEmailPassword(
+      email: string,
+      password: string,
+    ): Promise<void> {
+      const { error } = await client.auth.signUp({
         email: email.trim(),
         password,
       });

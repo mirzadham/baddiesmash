@@ -22,6 +22,72 @@ export interface HistoryLike {
 }
 
 let volatileCapturedUrlInviteToken: string | null = null;
+let volatileCapturedUrlInviteEmail: string | null = null;
+
+export interface CapturedInviteContext {
+  token: string | null;
+  email: string | null;
+}
+
+/**
+ * Extracts `?invite=` and optional `?email=` from the current URL once, stores them in
+ * volatile module memory, and removes both parameters from the visible address bar
+ * using `history.replaceState`.
+ */
+export function captureAndStripInviteContextFromUrl(
+  loc: LocationLike | undefined = typeof window !== 'undefined'
+    ? window.location
+    : undefined,
+  hist: HistoryLike | undefined = typeof window !== 'undefined'
+    ? window.history
+    : undefined,
+): CapturedInviteContext {
+  if (!loc || !loc.search) {
+    return {
+      token: volatileCapturedUrlInviteToken,
+      email: volatileCapturedUrlInviteEmail,
+    };
+  }
+
+  const params = new URLSearchParams(loc.search);
+  const rawInvite = params.get('invite');
+  const rawEmail = params.get('email');
+
+  let modified = false;
+
+  if (rawInvite) {
+    const trimmed = rawInvite.trim();
+    if (trimmed.length > 0) {
+      volatileCapturedUrlInviteToken = trimmed;
+    }
+    params.delete('invite');
+    modified = true;
+  }
+
+  if (rawEmail) {
+    const trimmedEmail = rawEmail.trim();
+    if (trimmedEmail.length > 0) {
+      volatileCapturedUrlInviteEmail = trimmedEmail;
+    }
+    params.delete('email');
+    modified = true;
+  }
+
+  if (modified && hist && typeof hist.replaceState === 'function') {
+    const remainingQuery = params.toString();
+    const cleanUrl = `${loc.pathname}${remainingQuery ? `?${remainingQuery}` : ''}${loc.hash || ''}`;
+    try {
+      hist.replaceState(hist.state ?? null, '', cleanUrl);
+    } catch {
+      // Ignore if environment restricts replaceState
+    }
+  }
+
+  return {
+    token: volatileCapturedUrlInviteToken,
+    email: volatileCapturedUrlInviteEmail,
+  };
+}
 
 /**
  * Extracts `?invite=` from the current URL once, stores it in volatile module memory,
@@ -35,42 +101,15 @@ export function captureAndStripInviteTokenFromUrl(
     ? window.history
     : undefined,
 ): string | null {
-  if (!loc || !loc.search) {
-    return volatileCapturedUrlInviteToken;
-  }
-
-  const params = new URLSearchParams(loc.search);
-  const rawInvite = params.get('invite');
-  if (!rawInvite) {
-    return volatileCapturedUrlInviteToken;
-  }
-
-  const trimmed = rawInvite.trim();
-  if (trimmed.length > 0) {
-    volatileCapturedUrlInviteToken = trimmed;
-  }
-
-  // Strip `invite` from the visible URL query string where feasible
-  params.delete('invite');
-  const remainingQuery = params.toString();
-  const cleanUrl = `${loc.pathname}${remainingQuery ? `?${remainingQuery}` : ''}${loc.hash || ''}`;
-
-  if (hist && typeof hist.replaceState === 'function') {
-    try {
-      hist.replaceState(hist.state ?? null, '', cleanUrl);
-    } catch {
-      // Ignore if environment restricts replaceState
-    }
-  }
-
-  return volatileCapturedUrlInviteToken;
+  return captureAndStripInviteContextFromUrl(loc, hist).token;
 }
 
 /**
- * Clears the volatile in-memory invitation token (e.g., after successful redemption or manual clear).
+ * Clears volatile in-memory invitation tokens and email (e.g., after successful redemption or manual clear).
  */
 export function clearCapturedInviteToken(): void {
   volatileCapturedUrlInviteToken = null;
+  volatileCapturedUrlInviteEmail = null;
 }
 
 /**
@@ -78,6 +117,7 @@ export function clearCapturedInviteToken(): void {
  */
 export function resetCapturedInviteTokenForTesting(): void {
   volatileCapturedUrlInviteToken = null;
+  volatileCapturedUrlInviteEmail = null;
 }
 
 /**
