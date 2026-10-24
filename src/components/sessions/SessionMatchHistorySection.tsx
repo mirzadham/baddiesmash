@@ -157,23 +157,22 @@ export function SessionMatchHistorySection({
                 <div className="flex items-center justify-between gap-2 sm:gap-4 bg-[#101722] p-3 rounded-xl border border-slate-800/80">
                   {/* Left Team */}
                   <div className="flex-1 min-w-0 flex items-center justify-start gap-1.5 text-left">
-                    <span className={`text-xs sm:text-sm leading-snug truncate ${teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                    <div className={`flex flex-col gap-0.5 min-w-0 ${teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                       <button
                         type="button"
                         onClick={() => card.teamA[0] && onSelectPlayer(card.teamA[0].playerId)}
-                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer inline"
+                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer text-left truncate text-xs sm:text-sm leading-tight block"
                       >
                         {card.teamA[0]?.displayName}
                       </button>
-                      <span className="mx-1 text-slate-500 font-normal">&amp;</span>
                       <button
                         type="button"
                         onClick={() => card.teamA[1] && onSelectPlayer(card.teamA[1].playerId)}
-                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer inline"
+                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer text-left truncate text-xs sm:text-sm leading-tight block"
                       >
                         {card.teamA[1]?.displayName}
                       </button>
-                    </span>
+                    </div>
                     {teamAWon && (
                       <CheckCircle2
                         size={15}
@@ -205,23 +204,22 @@ export function SessionMatchHistorySection({
                         data-testid="winner-tick"
                       />
                     )}
-                    <span className={`text-xs sm:text-sm leading-snug truncate ${!teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                    <div className={`flex flex-col gap-0.5 min-w-0 ${!teamAWon ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                       <button
                         type="button"
                         onClick={() => card.teamB[0] && onSelectPlayer(card.teamB[0].playerId)}
-                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer inline"
+                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer text-right truncate text-xs sm:text-sm leading-tight block"
                       >
                         {card.teamB[0]?.displayName}
                       </button>
-                      <span className="mx-1 text-slate-500 font-normal">&amp;</span>
                       <button
                         type="button"
                         onClick={() => card.teamB[1] && onSelectPlayer(card.teamB[1].playerId)}
-                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer inline"
+                        className="hover:text-emerald-400 transition-colors bg-transparent border-0 p-0 cursor-pointer text-right truncate text-xs sm:text-sm leading-tight block"
                       >
                         {card.teamB[1]?.displayName}
                       </button>
-                    </span>
+                    </div>
                   </div>
                 </div>
 

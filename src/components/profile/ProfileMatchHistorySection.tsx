@@ -161,16 +161,20 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                 <div className="flex items-center justify-between gap-2 sm:gap-4 bg-[#101722] p-2.5 rounded-xl border border-slate-800/80">
                   {/* Left Team */}
                   <div className="flex-1 min-w-0 flex items-center justify-start gap-1.5 text-left">
-                    <span
-                      className={`text-xs sm:text-sm leading-snug truncate ${
+                    <div
+                      className={`flex flex-col gap-0.5 min-w-0 ${
                         teamAWon
                           ? 'font-bold text-white'
                           : 'font-medium text-slate-300'
                       }`}
                     >
-                      {card.teamA[0]?.displayName} &amp;{' '}
-                      {card.teamA[1]?.displayName}
-                    </span>
+                      <span className="truncate text-xs sm:text-sm leading-tight block">
+                        {card.teamA[0]?.displayName}
+                      </span>
+                      <span className="truncate text-xs sm:text-sm leading-tight block">
+                        {card.teamA[1]?.displayName}
+                      </span>
+                    </div>
                     {teamAWon && (
                       <CheckCircle2
                         size={15}
@@ -214,16 +218,20 @@ export const ProfileMatchHistorySection: React.FC<ProfileMatchHistorySectionProp
                         data-testid="winner-tick"
                       />
                     )}
-                    <span
-                      className={`text-xs sm:text-sm leading-snug truncate ${
+                    <div
+                      className={`flex flex-col gap-0.5 min-w-0 ${
                         !teamAWon
                           ? 'font-bold text-white'
                           : 'font-medium text-slate-300'
                       }`}
                     >
-                      {card.teamB[0]?.displayName} &amp;{' '}
-                      {card.teamB[1]?.displayName}
-                    </span>
+                      <span className="truncate text-xs sm:text-sm leading-tight block">
+                        {card.teamB[0]?.displayName}
+                      </span>
+                      <span className="truncate text-xs sm:text-sm leading-tight block">
+                        {card.teamB[1]?.displayName}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

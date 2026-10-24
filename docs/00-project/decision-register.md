@@ -339,6 +339,21 @@ When a material decision changes:
   - *Repository & Demo Mode Support:* Added `updatePlayerDisplayName` to `TrackerRepository`, with in-memory snapshot updates in Demo Mode and Supabase RPC execution in Live Mode.
   - *Verification & Quality Gates:* Added database integration tests in `src/domain/__tests__/update-player-name-db.test.ts` (7 tests) and frontend UI integration tests in `src/domain/__tests__/update-player-name-ui.test.tsx` (9 tests). All 25 Vitest test suites (157 automated tests) pass with 100% success rate; TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `supabase/migrations/20261024000001_update_player_display_name.sql`, `src/types/database.ts`, `src/services/trackerRepository.ts`, `src/components/profile/EditPlayerNameModal.tsx`, `src/components/profile/ProfileHeroCard.tsx`, `src/views/ProfileView.tsx`, `src/App.tsx`, `src/domain/__tests__/update-player-name-db.test.ts`, `src/domain/__tests__/update-player-name-ui.test.tsx`, `FILE-INDEX.md`, `docs/00-project/decision-register.md`.
+- **2026-10-24 (Owner approval — Phase 35 Mobile-First Stacked Doubles Partner Names in Match Cards):**
+  - *Context & Problem Statement:* In mobile viewports (widths 360px–430px), rendering doubles partner pairs on a single horizontal line separated by `&` caused severe truncation with ellipses (e.g. `Alip_cutie & ...`), obscuring partner identities.
+  - *Resolution & Architecture:*
+    - Replaced the single-line truncated span with a vertical stack container (`flex flex-col gap-0.5 min-w-0`) in all match card representations.
+    - Each partner in a doubles pair receives their own line with full column width, preventing premature truncation of player names.
+    - Team A (Left) renders left-aligned stacked buttons/labels with the green circular winner checkmark vertically centered beside the pair.
+    - Team B (Right) renders right-aligned stacked buttons/labels with the green circular winner checkmark vertically centered to the left of the pair.
+    - Interactivity is preserved: individual player buttons remain accessible and clickable to navigate to their respective player profile views.
+  - *Affected Files:*
+    - `src/components/sessions/PastSessionAccordionCard.tsx`
+    - `src/components/sessions/SessionMatchHistorySection.tsx`
+    - `src/components/profile/ProfileMatchHistorySection.tsx`
+    - `src/domain/__tests__/phase35-stacked-partner-names.test.tsx`
+    - `docs/00-project/decision-register.md`
+  - *Verification:* Added automated test suite `phase35-stacked-partner-names.test.tsx` (3 tests). All 26 test suites (160 tests) pass with 100% success rate; TypeScript static typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
 
 
 

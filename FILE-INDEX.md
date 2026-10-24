@@ -116,6 +116,7 @@ This pack contains the following files:
 - [`src/domain/__tests__/phase29-leaderboard-podium-avatar.test.tsx`](src/domain/__tests__/phase29-leaderboard-podium-avatar.test.tsx)
 - [`src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx`](src/domain/__tests__/phase31-invitation-onboarding-ui.test.tsx)
 - [`src/domain/__tests__/phase33-performance-pwa.test.tsx`](src/domain/__tests__/phase33-performance-pwa.test.tsx)
+- [`src/domain/__tests__/phase35-stacked-partner-names.test.tsx`](src/domain/__tests__/phase35-stacked-partner-names.test.tsx)
 - [`src/domain/__tests__/scoring.test.ts`](src/domain/__tests__/scoring.test.ts)
 - [`src/domain/__tests__/standings.test.ts`](src/domain/__tests__/standings.test.ts)
 - [`src/domain/__tests__/update-player-name-db.test.ts`](src/domain/__tests__/update-player-name-db.test.ts)
