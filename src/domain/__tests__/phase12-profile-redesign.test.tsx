@@ -35,12 +35,22 @@ describe('Phase 12 — SMASHTRACK Profile Interface Redesign', () => {
     expect(within(heroCard).getByRole('heading', { name: /Aaron Tan/i })).toBeTruthy();
     expect(within(heroCard).getByText(/Rank #/i)).toBeTruthy();
 
-    // 2. 2x2 Performance Metrics Grid
-    expect(screen.getByText(/Recent Form/i)).toBeTruthy();
-    expect(screen.getByText(/Win Rate:/i)).toBeTruthy();
-    expect(screen.getByText(/Win Streak:/i)).toBeTruthy();
-    expect(screen.getByText(/Total Points:/i)).toBeTruthy();
+    // 2. 2x2 Performance Metrics Grid (Total Points is Card 1, Recent Form is Card 4)
+    const totalPointsLabel = screen.getByText(/Total Points:/i);
+    const winRateLabel = screen.getByText(/Win Rate:/i);
+    const winStreakLabel = screen.getByText(/Win Streak:/i);
+    const recentFormLabel = screen.getByText(/Recent Form/i);
+    expect(totalPointsLabel).toBeTruthy();
+    expect(winRateLabel).toBeTruthy();
+    expect(winStreakLabel).toBeTruthy();
+    expect(recentFormLabel).toBeTruthy();
     expect(screen.getByText(/Attendance Rate:/i)).toBeTruthy();
+
+    // Verify DOM order: Total Points appears before Recent Form
+    expect(
+      totalPointsLabel.compareDocumentPosition(recentFormLabel) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     // 3. H2H Rivalry & Partnerships Section
     const h2hSection = screen.getByTestId('profile-h2h-section');

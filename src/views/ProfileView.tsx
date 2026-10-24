@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Settings, LogOut } from 'lucide-react';
+import { Download, LogOut, Settings, Share, Smartphone } from 'lucide-react';
 import { ProfileHeroCard } from '../components/profile/ProfileHeroCard.tsx';
 import { AvatarUploadModal } from '../components/profile/AvatarUploadModal.tsx';
 import { PerformanceMetricsGrid } from '../components/profile/PerformanceMetricsGrid.tsx';
@@ -17,6 +17,7 @@ import {
   deriveLeaderboardFromSnapshot,
   formatMalaysiaDate,
 } from '../services/readViewModels.ts';
+import { usePwaInstall } from '../lib/pwa.ts';
 
 export interface ProfileViewProps {
   snapshot: GroupReadSnapshot;
@@ -33,7 +34,7 @@ export interface ProfileViewProps {
  * - Exposes the signed-in user's linked player profile first (or explains Viewer-only status
  *   when `linked_player_id === null` per `ID-01`).
  * - Exposes the publication health banner (`Current`, `Recalculating`, `Stale/Failed`).
- * - Displays 2x2 Performance Grid (Recent Form, Win Rate, Win Streak, Elo points, Attendance Rate).
+ * - Displays 2x2 Performance Grid (Total Points, Win Rate, Win Streak, Recent Form, Attendance Rate).
  * - Displays H2H Rivalry & Partnerships with visual split comparison bars.
  * - Displays mobile-first Match History cards with filters.
  */
@@ -49,6 +50,8 @@ export function ProfileView({
   const [sessionFilter, setSessionFilter] = useState<string>('all');
   const [selectedOpponentId, setSelectedOpponentId] = useState<string>('');
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState<boolean>(false);
+
+  const { canInstall, isStandalone, isIos, triggerInstallPrompt } = usePwaInstall();
 
   const leaderboardAll = deriveLeaderboardFromSnapshot(snapshot, true);
   const viewerLinkedPlayerId = snapshot.viewerMembership.linked_player_id;
@@ -284,6 +287,87 @@ export function ProfileView({
         </div>
 
         <div className="flex flex-col gap-3">
+          {/* PWA Home Screen Installation Guidance (DEC-056, DEC-066, Phase 33) */}
+          {isStandalone ? (
+            <div
+              className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3"
+              data-testid="pwa-installed-card"
+            >
+              <div className="flex items-center gap-2.5">
+                <Smartphone size={18} className="text-emerald-400" />
+                <div>
+                  <strong className="text-xs sm:text-sm font-semibold text-white block">
+                    App Installed
+                  </strong>
+                  <span className="text-[11px] text-emerald-400/90 block">
+                    Running as standalone mobile app
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30">
+                Active
+              </span>
+            </div>
+          ) : canInstall ? (
+            <div
+              className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3"
+              data-testid="pwa-install-prompt-card"
+            >
+              <div className="flex items-center gap-2.5">
+                <Download size={18} className="text-emerald-400" />
+                <div>
+                  <strong className="text-xs sm:text-sm font-semibold text-white block">
+                    Install BADDIESMASH
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    Install to home screen for 1-tap courtside access
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={triggerInstallPrompt}
+                data-testid="pwa-install-btn"
+                className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
+              >
+                Install
+              </button>
+            </div>
+          ) : isIos ? (
+            <div
+              className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex flex-col gap-1.5"
+              data-testid="pwa-ios-instructions-card"
+            >
+              <div className="flex items-center gap-2.5">
+                <Share size={18} className="text-sky-400" />
+                <strong className="text-xs sm:text-sm font-semibold text-white">
+                  Install on iPhone / iPad
+                </strong>
+              </div>
+              <span className="text-[11px] text-slate-400 leading-relaxed">
+                Tap <span className="font-semibold text-slate-200">Share</span> in Safari, then select{' '}
+                <span className="font-semibold text-emerald-400">Add to Home Screen</span> for 1-tap access.
+              </span>
+            </div>
+          ) : (
+            <div
+              className="p-3 rounded-xl bg-[#16202e] border border-slate-800 flex items-center justify-between gap-3"
+              data-testid="pwa-supported-card"
+            >
+              <div className="flex items-center gap-2.5">
+                <Smartphone size={18} className="text-slate-400" />
+                <div>
+                  <strong className="text-xs sm:text-sm font-semibold text-white block">
+                    Mobile Web App (PWA)
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    Optimized for fast courtside mobile browser use
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Admin Tools Button (Restricted to Admin/Owner only) */}
           {(snapshot.viewerMembership.role === 'admin' ||
             snapshot.viewerMembership.role === 'owner') &&

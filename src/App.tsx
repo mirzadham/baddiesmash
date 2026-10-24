@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, Home, Trophy, User } from 'lucide-react';
 import { StatusBadge } from './components/StatusBadge.tsx';
 import {
@@ -21,12 +21,18 @@ import {
   type TrackerRepository,
   type ViewerGateState,
 } from './services/trackerRepository.ts';
-import { AdminGovernanceView } from './views/AdminGovernanceView.tsx';
 import { AuthMembershipGateView } from './views/AuthMembershipGateView.tsx';
 import { HomeView } from './views/HomeView.tsx';
 import { LeaderboardView } from './views/LeaderboardView.tsx';
 import { ProfileView } from './views/ProfileView.tsx';
 import { SessionsView } from './views/SessionsView.tsx';
+
+// Code-split heavy Admin Governance machinery into separate chunk (Phase 33, DEC-076)
+const AdminGovernanceView = lazy(() =>
+  import('./views/AdminGovernanceView.tsx').then((module) => ({
+    default: module.AdminGovernanceView,
+  })),
+);
 
 export type BottomNavTab = 'home' | 'leaderboard' | 'sessions' | 'profile';
 const TAB_INDEX_MAP: Record<BottomNavTab, number> = {
@@ -434,14 +440,29 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
         {showAdminContextualModal &&
           (snapshot.viewerMembership.role === 'admin' ||
             snapshot.viewerMembership.role === 'owner') && (
-            <AdminGovernanceView
-              snapshot={snapshot}
-              repository={repository}
-              publication={publication}
-              onRetryRecalculation={handleRetryRecalculation}
-              onRefreshGroupState={loadGateState}
-              onClose={() => setShowAdminContextualModal(false)}
-            />
+            <Suspense
+              fallback={
+                <section
+                  className="card"
+                  role="status"
+                  aria-live="polite"
+                  data-testid="admin-loading-state"
+                >
+                  <p style={{ margin: 0, fontWeight: 600 }}>
+                    ↻ Loading Admin Tools &amp; Governance...
+                  </p>
+                </section>
+              }
+            >
+              <AdminGovernanceView
+                snapshot={snapshot}
+                repository={repository}
+                publication={publication}
+                onRetryRecalculation={handleRetryRecalculation}
+                onRefreshGroupState={loadGateState}
+                onClose={() => setShowAdminContextualModal(false)}
+              />
+            </Suspense>
           )}
 
         {isDemoMode && showDemoSignInPreview ? (

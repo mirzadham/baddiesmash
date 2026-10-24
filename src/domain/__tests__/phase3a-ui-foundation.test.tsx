@@ -330,7 +330,7 @@ describe('Phase 3 Checkpoint 3A — Frontend Foundation, Auth/Membership Gates &
     fireEvent.click(screen.getByTestId('toggle-admin-tools-btn'));
 
     // Retry button on stale banner must be disabled in Demo Mode
-    const retryBtn = screen.getByRole('button', {
+    const retryBtn = await screen.findByRole('button', {
       name: /Retry Recalculation \(Disabled in Demo Mode\)/i,
     });
     expect((retryBtn as HTMLButtonElement).disabled).toBe(true);
