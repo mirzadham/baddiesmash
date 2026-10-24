@@ -53,6 +53,7 @@
    - `20261018000001_phase1_foundation_schema_and_rls.sql`
    - `20261018000002_phase2_sessions_matches_and_elo_replay.sql`
    - `20261022000001_player_avatar_cooldown.sql`
+   - `20261024000001_update_player_display_name.sql`
 6. Explicit owner approval obtained prior to applying migrations to staging or production.
 
 ---
@@ -67,6 +68,7 @@
    - File 1: `supabase/migrations/20261018000001_phase1_foundation_schema_and_rls.sql`
    - File 2: `supabase/migrations/20261018000002_phase2_sessions_matches_and_elo_replay.sql`
    - File 3: `supabase/migrations/20261022000001_player_avatar_cooldown.sql`
+   - File 4: `supabase/migrations/20261024000001_update_player_display_name.sql`
 5. Navigate to **Project Settings -> API** to copy credentials:
    - **Project URL:** e.g. `https://xxxxxxxxxxxxxxxxxxxx.supabase.co`
    - **Project API Keys -> `anon` (public):** copy this key.
