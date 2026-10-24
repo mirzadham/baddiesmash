@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, Pencil } from 'lucide-react';
 import { StatusBadge } from '../StatusBadge.tsx';
 import type { deriveLeaderboardFromSnapshot } from '../../services/readViewModels.ts';
 import type { DbPlayerRow } from '../../types/database.ts';
@@ -15,6 +15,8 @@ export interface ProfileHeroCardProps {
   onSelectPlayer: (playerId: string) => void;
   formatMalaysiaDate: (iso: string) => string;
   onOpenAvatarUpload?: () => void;
+  onOpenEditName?: () => void;
+  isAdmin?: boolean;
 }
 
 export function getPlayerTier(
@@ -70,8 +72,11 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   onSelectPlayer,
   formatMalaysiaDate,
   onOpenAvatarUpload,
+  onOpenEditName,
+  isAdmin = false,
 }) => {
   const isLinkedViewer = selectedRow.playerId === viewerLinkedPlayerId;
+  const canEditName = (isLinkedViewer || isAdmin) && !selectedPlayerRecord.merged_into_player_id;
   const ratingNum = parseFloat(selectedRow.ratingNumeric4) || 1200;
   const tierInfo = getPlayerTier(ratingNum, selectedRow.isProvisional);
 
@@ -154,9 +159,23 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
 
         {/* Player Identity & Tier */}
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg sm:text-xl font-extrabold text-white truncate tracking-tight">
-            {selectedRow.displayName}
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-extrabold text-white truncate tracking-tight">
+              {selectedRow.displayName}
+            </h2>
+            {canEditName && onOpenEditName && (
+              <button
+                type="button"
+                onClick={onOpenEditName}
+                data-testid="edit-player-name-btn"
+                title="Change Display Name"
+                aria-label="Change display name"
+                className="p-1 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
+          </div>
 
           {/* Tier & Rank Badge matching profile.jfif */}
           <div className="mt-1 flex items-center gap-2 flex-wrap">

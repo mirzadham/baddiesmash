@@ -550,6 +550,18 @@ export function App({ repository: injectedRepo, envConfig: injectedEnv }: AppPro
                   });
                   await loadGateState();
                 }}
+                onUpdateDisplayName={async (playerId: string, newName: string) => {
+                  const isAdmin =
+                    snapshot.viewerMembership.role === 'admin' ||
+                    snapshot.viewerMembership.role === 'owner';
+                  await repository.updatePlayerDisplayName({
+                    groupId: snapshot.group.id,
+                    playerId,
+                    displayName: newName,
+                    adminOverride: isAdmin,
+                  });
+                  await loadGateState();
+                }}
                 onSignOut={async () => {
                   await repository.signOut();
                   await loadGateState();

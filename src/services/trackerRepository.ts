@@ -158,6 +158,19 @@ export interface SetPlayerActiveStatusInput {
   reason: string;
 }
 
+export interface UpdatePlayerDisplayNameInput {
+  groupId: string;
+  playerId: string;
+  displayName: string;
+  adminOverride?: boolean;
+}
+
+export interface UpdatePlayerDisplayNameResponse {
+  playerId: string;
+  displayName: string;
+  updatedAt: string;
+}
+
 export interface UpdatePlayerAvatarInput {
   groupId: string;
   playerId: string;
@@ -380,6 +393,9 @@ export interface TrackerRepository {
   linkMemberPlayerProfile(input: LinkMemberPlayerProfileInput): Promise<void>;
   createPlayerProfile(input: CreatePlayerProfileInput): Promise<string>;
   setPlayerActiveStatus(input: SetPlayerActiveStatusInput): Promise<void>;
+  updatePlayerDisplayName(
+    input: UpdatePlayerDisplayNameInput,
+  ): Promise<UpdatePlayerDisplayNameResponse>;
   uploadAvatarImage(input: UploadAvatarFileInput): Promise<string>;
   updatePlayerAvatar(
     input: UpdatePlayerAvatarInput,
@@ -519,6 +535,29 @@ export function createDemoTrackerRepository(
       throw new Error(
         'Demo Mode is read-only and cannot change player active status.',
       );
+    },
+    async updatePlayerDisplayName(
+      input: UpdatePlayerDisplayNameInput,
+    ): Promise<UpdatePlayerDisplayNameResponse> {
+      const player = snapshot.players.find((p) => p.id === input.playerId);
+      if (!player) {
+        throw new Error('player not found in specified group');
+      }
+      const trimmed = input.displayName.trim();
+      if (!trimmed || trimmed.length > 80) {
+        throw new Error('display name must be between 1 and 80 characters');
+      }
+      if (player.merged_into_player_id) {
+        throw new Error('cannot update display name of a merged guest profile');
+      }
+      const nowIso = new Date().toISOString();
+      player.display_name = trimmed;
+      player.updated_at = nowIso;
+      return {
+        playerId: input.playerId,
+        displayName: trimmed,
+        updatedAt: nowIso,
+      };
     },
     async uploadAvatarImage(input: UploadAvatarFileInput): Promise<string> {
       return `https://demo-storage.local/avatars/${input.playerId}-${Date.now()}.jpg`;
@@ -1126,6 +1165,27 @@ export function createSupabaseTrackerRepository(
       if (error) {
         throw new Error(error.message);
       }
+    },
+
+    async updatePlayerDisplayName(
+      input: UpdatePlayerDisplayNameInput,
+    ): Promise<UpdatePlayerDisplayNameResponse> {
+      const { data, error } = await client.rpc('update_player_display_name', {
+        p_group_id: input.groupId,
+        p_player_id: input.playerId,
+        p_display_name: input.displayName,
+        p_admin_override: input.adminOverride ?? false,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return {
+        playerId: data.player_id,
+        displayName: data.display_name,
+        updatedAt: data.updated_at,
+      };
     },
 
     async uploadAvatarImage(input: UploadAvatarFileInput): Promise<string> {

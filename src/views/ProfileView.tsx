@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Download, LogOut, Settings, Share, Smartphone } from 'lucide-react';
 import { ProfileHeroCard } from '../components/profile/ProfileHeroCard.tsx';
 import { AvatarUploadModal } from '../components/profile/AvatarUploadModal.tsx';
+import { EditPlayerNameModal } from '../components/profile/EditPlayerNameModal.tsx';
 import { PerformanceMetricsGrid } from '../components/profile/PerformanceMetricsGrid.tsx';
 import {
   H2HRivalrySection,
@@ -25,6 +26,7 @@ export interface ProfileViewProps {
   onSelectPlayer: (playerId: string) => void;
   onOpenAdminTools?: () => void;
   onUpdateAvatar?: (file: File) => Promise<void>;
+  onUpdateDisplayName?: (playerId: string, newName: string) => Promise<void>;
   onSignOut?: () => void;
 }
 
@@ -44,12 +46,14 @@ export function ProfileView({
   onSelectPlayer,
   onOpenAdminTools,
   onUpdateAvatar,
+  onUpdateDisplayName,
   onSignOut,
 }: ProfileViewProps) {
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all');
   const [sessionFilter, setSessionFilter] = useState<string>('all');
   const [selectedOpponentId, setSelectedOpponentId] = useState<string>('');
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState<boolean>(false);
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState<boolean>(false);
 
   const { canInstall, isStandalone, isIos, triggerInstallPrompt } = usePwaInstall();
 
@@ -225,6 +229,27 @@ export function ProfileView({
             onSelectPlayer={onSelectPlayer}
             formatMalaysiaDate={formatMalaysiaDate}
             onOpenAvatarUpload={() => setIsAvatarModalOpen(true)}
+            onOpenEditName={() => setIsEditNameModalOpen(true)}
+            isAdmin={
+              snapshot.viewerMembership.role === 'admin' ||
+              snapshot.viewerMembership.role === 'owner'
+            }
+          />
+
+          {/* Edit Display Name Modal */}
+          <EditPlayerNameModal
+            player={selectedPlayerRecord}
+            isOpen={isEditNameModalOpen}
+            onClose={() => setIsEditNameModalOpen(false)}
+            onSaveName={async (newName) => {
+              if (onUpdateDisplayName) {
+                await onUpdateDisplayName(selectedPlayerRecord.id, newName);
+              }
+            }}
+            isAdmin={
+              snapshot.viewerMembership.role === 'admin' ||
+              snapshot.viewerMembership.role === 'owner'
+            }
           />
 
           {/* Avatar Upload Modal with 1-Year Cooldown */}

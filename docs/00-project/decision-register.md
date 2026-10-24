@@ -323,6 +323,23 @@ When a material decision changes:
   - *In-App PWA Install Guidance:* Added responsive install guidance in `ProfileView.tsx` under Preferences: 1-tap install trigger on Android/Chrome (`beforeinstallprompt`), clear "Add to Home Screen" instructions for iOS Safari, and active standalone badge when running as an installed PWA.
   - *Verification & Quality Gates:* Added automated test suite `src/domain/__tests__/phase33-performance-pwa.test.tsx` (5 tests). All 23 Vitest test suites (141 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors and zero chunk size warnings.
   - *Affected Files:* `vite.config.ts`, `src/styles/index.css`, `src/App.tsx`, `src/main.tsx`, `src/lib/pwa.ts`, `public/sw.js`, `src/views/ProfileView.tsx`, `src/domain/__tests__/phase3a-ui-foundation.test.tsx`, `src/domain/__tests__/phase33-performance-pwa.test.tsx`, `docs/00-project/decision-register.md`.
+- **2026-10-24 (Owner approval — Phase 34 Self-Service & Admin Player Display Name Updates):**
+  - *Player Display Name Updates (`DEC-077`):* In accordance with canonical access & identity invariants (`ID-01`, `ID-02`, line 33 of `docs/01-product/access-and-identity.md` stating "Display names can change; stable IDs preserve history. Duplicate display names are allowed."), introduced self-service player display name updating for linked members and administrative name management for group Admins and Owners.
+  - *Database Stored Procedure (`public.update_player_display_name`):* Added PostgreSQL `SECURITY DEFINER` function with `SET search_path = ''`:
+    - Requires caller authentication (`auth.uid() IS NOT NULL`) and approved group membership.
+    - Authorizes caller if they are linked to the player profile (`group_memberships.linked_player_id = p_player_id AND status = 'approved'`) OR if they hold an `admin` / `owner` role in the group.
+    - Sanitizes and validates `btrim(p_display_name)` to be between 1 and 80 characters, adhering strictly to PostgreSQL check constraint `players_display_name_check`.
+    - Prohibits updating the display name of merged guest profiles (`merged_into_player_id IS NOT NULL`).
+    - Updates `public.players.display_name` and `updated_at`.
+    - Writes an append-only audit event in `public.audit_events` with `action_type = 'update_player_display_name'`, capturing previous and new display names and caller authorization mode (`self_update` vs `admin_update`).
+  - *UI Experience (`EditPlayerNameModal.tsx` & `ProfileHeroCard.tsx`):*
+    - Added an accessible edit button (`edit-player-name-btn`) next to the player display name in `ProfileHeroCard` whenever the viewer is inspecting their own linked profile or is an Admin/Owner.
+    - Implemented `EditPlayerNameModal` with character counter (`/80`), validation against empty/whitespace input, unchanged name disablement, loading spinner, error alert banner, and keyboard accessibility (Escape key and backdrop handling).
+    - Integrated with `ProfileView` and `App.tsx` through `repository.updatePlayerDisplayName(...)`, triggering group gate reload (`loadGateState()`) to immediately refresh leaderboards, standings, and history with the updated name.
+  - *Repository & Demo Mode Support:* Added `updatePlayerDisplayName` to `TrackerRepository`, with in-memory snapshot updates in Demo Mode and Supabase RPC execution in Live Mode.
+  - *Verification & Quality Gates:* Added database integration tests in `src/domain/__tests__/update-player-name-db.test.ts` (7 tests) and frontend UI integration tests in `src/domain/__tests__/update-player-name-ui.test.tsx` (9 tests). All 25 Vitest test suites (157 automated tests) pass with 100% success rate; TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `supabase/migrations/20261024000001_update_player_display_name.sql`, `src/types/database.ts`, `src/services/trackerRepository.ts`, `src/components/profile/EditPlayerNameModal.tsx`, `src/components/profile/ProfileHeroCard.tsx`, `src/views/ProfileView.tsx`, `src/App.tsx`, `src/domain/__tests__/update-player-name-db.test.ts`, `src/domain/__tests__/update-player-name-ui.test.tsx`, `FILE-INDEX.md`, `docs/00-project/decision-register.md`.
+
 
 
 

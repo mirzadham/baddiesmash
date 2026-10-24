@@ -273,6 +273,12 @@ export interface RecalculationExecutionOutcome {
   error_message?: string;
 }
 
+export interface UpdatePlayerDisplayNameResponse {
+  player_id: string;
+  display_name: string;
+  updated_at: string;
+}
+
 export interface StartGroupSessionResponse {
   session_id: string;
   group_id: string;
