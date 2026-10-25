@@ -55,3 +55,8 @@
 - Pairs earn a dedicated **Pair Elo** starting from baseline `1000` (`1000.0000` `NUMERIC(10,4)`), replayed chronologically against opposing partnerships' Pair Elo using the group's `default_k_factor` (`K = 24`).
 - Pairs Leaderboard defaults to sorting by **Pair Elo**, with user-selectable sort modes for **Most Wins** and **Win Rate** (showing highest win rate and most wins together separately).
 - Minimum partnership sample threshold is **1 completed match together**, with partnerships having `< 3` completed matches marked **`Provisional`** so small samples are clearly labelled and not overstated.
+
+## Supplemental Fixed-Points Section ("Ammar's Style 🤙🏻")
+- Rendered as a dedicated supplemental card section directly below the primary Elo leaderboard on the **Players** view (`All Time` and `Weekly` scopes), leaving official Elo ratings, podiums, and profile metrics completely untouched.
+- Every player starts at `0 pts`. Each completed match **Win** awards `+3 pts` and each **Loss** deducts `-3 pts` (`fixedPoints = (wins * 3) - (losses * 3)`), ignoring partner and opponent strength.
+- Ranked strictly by `fixedPoints DESC`; players with identical `fixedPoints` share exact competition rank (`1, 2, 3, 3, 5`) with a visible `(T)` badge.

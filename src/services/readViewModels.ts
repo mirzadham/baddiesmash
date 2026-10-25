@@ -3,15 +3,20 @@ import {
   parseNumeric4,
   type PlayerRatingSnapshot,
   type ReplayMatchRecord,
+  type ReplayPlayerIdentity,
   type ReplaySessionRecord,
+  resolveMergedPlayerId,
   roundScaledToOneDecimalNumber,
   roundScaledToWholeNumber,
 } from '../domain/elo.ts';
 import {
   type AllTimeLeaderboardRow,
   buildAllTimeLeaderboard,
+  buildFixedPointsLeaderboard,
   buildPairsLeaderboard,
   computeSessionStandings,
+  type FixedPointsLeaderboardRow,
+  type FixedPointsPlayerRecordInput,
   type LeaderboardPlayerProfile,
   type PairLeaderboardRow,
   type PairPlayerIdentityInput,
@@ -835,4 +840,169 @@ export function getAvatarCooldownStatus(
     nextAvailableDate: nextDateFormatted,
     lastUpdatedAt: avatarUpdatedAt,
   };
+}
+
+/**
+ * Derives the "Ammar's Style 🤙🏻" Fixed-Points Leaderboard (+3W / -3L, starting at 0)
+ * from a `GroupReadSnapshot`, supporting both All-Time and Weekly scopes.
+ */
+export function deriveFixedPointsLeaderboardFromSnapshot(
+  snapshot: GroupReadSnapshot,
+  options?: {
+    scope?: 'all_time' | 'weekly';
+    includeInactive?: boolean;
+  },
+): FixedPointsLeaderboardRow[] {
+  const scope = options?.scope ?? 'all_time';
+  const includeInactive = options?.includeInactive ?? false;
+
+  const eligiblePlayers = snapshot.players.filter(
+    (p) => p.merged_into_player_id === null,
+  );
+
+  if (scope === 'all_time') {
+    const recordMap = new Map<string, { wins: number; losses: number }>();
+    for (const row of snapshot.ratingSnapshots) {
+      recordMap.set(row.player_id, {
+        wins: row.wins,
+        losses: row.losses,
+      });
+    }
+
+    const inputs: FixedPointsPlayerRecordInput[] = eligiblePlayers.map((p) => {
+      const rec = recordMap.get(p.id);
+      return {
+        id: p.id,
+        displayName: p.display_name,
+        avatarUrl: p.avatar_url,
+        isGuest: p.is_guest,
+        isActive: p.is_active,
+        wins: rec?.wins ?? 0,
+        losses: rec?.losses ?? 0,
+      };
+    });
+
+    return buildFixedPointsLeaderboard({
+      players: inputs,
+      includeInactive,
+    });
+  }
+
+  // scope === 'weekly'
+  const completedMatches = snapshot.matches.filter(
+    (m) =>
+      m.status === 'completed' &&
+      m.team_a_score !== null &&
+      m.team_b_score !== null,
+  );
+
+  if (completedMatches.length === 0) {
+    return [];
+  }
+
+  const sessionMap = new Map<string, DbSessionRow>();
+  for (const s of snapshot.sessions) {
+    sessionMap.set(s.id, s);
+  }
+
+  let weekBounds = getMalaysiaWeekBounds(new Date());
+  let weekMatches = completedMatches.filter((m) => {
+    const s = sessionMap.get(m.session_id);
+    const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+    return timeMs >= weekBounds.startMs && timeMs <= weekBounds.endMs;
+  });
+
+  if (weekMatches.length === 0) {
+    let latestMs = 0;
+    for (const m of completedMatches) {
+      const s = sessionMap.get(m.session_id);
+      const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+      if (timeMs > latestMs) {
+        latestMs = timeMs;
+      }
+    }
+    if (latestMs > 0) {
+      weekBounds = getMalaysiaWeekBounds(new Date(latestMs));
+      weekMatches = completedMatches.filter((m) => {
+        const s = sessionMap.get(m.session_id);
+        const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+        return timeMs >= weekBounds.startMs && timeMs <= weekBounds.endMs;
+      });
+    }
+  }
+
+  const identityMap = new Map<string, ReplayPlayerIdentity>();
+  for (const p of snapshot.players) {
+    identityMap.set(p.id, {
+      id: p.id,
+      displayName: p.display_name,
+      isGuest: p.is_guest,
+      mergedIntoPlayerId: p.merged_into_player_id,
+    });
+  }
+
+  const weeklyStats = new Map<string, { wins: number; losses: number }>();
+  for (const match of weekMatches) {
+    const parts = snapshot.matchParticipants.filter(
+      (mp) => mp.match_id === match.id,
+    );
+    const teamA = parts
+      .filter((p) => p.team_side === 'A')
+      .map((p) => resolveMergedPlayerId(p.player_id, identityMap));
+    const teamB = parts
+      .filter((p) => p.team_side === 'B')
+      .map((p) => resolveMergedPlayerId(p.player_id, identityMap));
+
+    const aScore = match.team_a_score ?? 0;
+    const bScore = match.team_b_score ?? 0;
+
+    if (aScore > bScore) {
+      for (const pid of teamA) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.wins += 1;
+        weeklyStats.set(pid, stat);
+      }
+      for (const pid of teamB) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.losses += 1;
+        weeklyStats.set(pid, stat);
+      }
+    } else if (bScore > aScore) {
+      for (const pid of teamB) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.wins += 1;
+        weeklyStats.set(pid, stat);
+      }
+      for (const pid of teamA) {
+        const stat = weeklyStats.get(pid) ?? { wins: 0, losses: 0 };
+        stat.losses += 1;
+        weeklyStats.set(pid, stat);
+      }
+    }
+  }
+
+  const playerById = new Map<string, DbPlayerRow>();
+  for (const p of eligiblePlayers) {
+    playerById.set(p.id, p);
+  }
+
+  const inputs: FixedPointsPlayerRecordInput[] = [];
+  for (const [playerId, stats] of weeklyStats.entries()) {
+    const player = playerById.get(playerId);
+    if (!player) continue;
+    inputs.push({
+      id: player.id,
+      displayName: player.display_name,
+      avatarUrl: player.avatar_url,
+      isGuest: player.is_guest,
+      isActive: player.is_active,
+      wins: stats.wins,
+      losses: stats.losses,
+    });
+  }
+
+  return buildFixedPointsLeaderboard({
+    players: inputs,
+    includeInactive,
+  });
 }

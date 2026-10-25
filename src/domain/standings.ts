@@ -139,6 +139,114 @@ export function buildAllTimeLeaderboard(params: {
   return rows;
 }
 
+export const FIXED_POINTS_WIN_DELTA = 3;
+export const FIXED_POINTS_LOSS_DELTA = -3;
+
+export interface FixedPointsPlayerRecordInput {
+  id: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  isGuest: boolean;
+  isActive: boolean;
+  wins: number;
+  losses: number;
+}
+
+export interface FixedPointsLeaderboardRow {
+  rank: number;
+  isTiedRank: boolean;
+  playerId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isGuest: boolean;
+  isActive: boolean;
+  wins: number;
+  losses: number;
+  matchesPlayed: number;
+  fixedPoints: number;
+  fixedPointsDisplay: string;
+  winRatePercentDisplay: string;
+}
+
+/**
+ * Builds the "Ammar's Style" Fixed-Points Leaderboard:
+ * - Every player starts at `0` points (`0 pts`).
+ * - Each completed match Win awards `+3` points; each Loss deducts `-3` points.
+ * - Ranks strictly by pure win/loss point total (`fixedPoints DESC`).
+ * - Players with identical `fixedPoints` share the exact same competition rank (e.g. 1, 2, 3, 3, 5)
+ *   and receive `isTiedRank = true`.
+ */
+export function buildFixedPointsLeaderboard(params: {
+  players: readonly FixedPointsPlayerRecordInput[];
+  includeInactive?: boolean;
+}): FixedPointsLeaderboardRow[] {
+  const includeInactive = params.includeInactive ?? false;
+  const eligible = params.players.filter(
+    (player) => includeInactive || player.isActive,
+  );
+
+  const unranked = eligible.map((player) => {
+    const matchesPlayed = player.wins + player.losses;
+    const rawPoints =
+      player.wins * FIXED_POINTS_WIN_DELTA +
+      player.losses * FIXED_POINTS_LOSS_DELTA;
+    const fixedPoints = Object.is(rawPoints, -0) ? 0 : rawPoints;
+    const fixedPointsDisplay =
+      fixedPoints > 0 ? `+${fixedPoints}` : `${fixedPoints}`;
+    const winRatePercentDisplay =
+      matchesPlayed > 0
+        ? `${((player.wins / matchesPlayed) * 100).toFixed(1)}%`
+        : '0.0%';
+
+    return {
+      playerId: player.id,
+      displayName: player.displayName,
+      avatarUrl: player.avatarUrl ?? null,
+      isGuest: player.isGuest,
+      isActive: player.isActive,
+      wins: player.wins,
+      losses: player.losses,
+      matchesPlayed,
+      fixedPoints,
+      fixedPointsDisplay,
+      winRatePercentDisplay,
+    };
+  });
+
+  // Sort strictly by fixedPoints DESC; alphabetical displayName & playerId are presentation stability only
+  unranked.sort((a, b) => {
+    if (a.fixedPoints !== b.fixedPoints) {
+      return b.fixedPoints - a.fixedPoints;
+    }
+    const nameCmp = a.displayName.localeCompare(b.displayName, 'en');
+    if (nameCmp !== 0) {
+      return nameCmp;
+    }
+    return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
+  });
+
+  const rows: FixedPointsLeaderboardRow[] = [];
+  for (let i = 0; i < unranked.length; i++) {
+    const current = unranked[i]!;
+    const prev = i > 0 ? unranked[i - 1] : undefined;
+    const next = i + 1 < unranked.length ? unranked[i + 1] : undefined;
+
+    const sameAsPrev =
+      prev !== undefined && prev.fixedPoints === current.fixedPoints;
+    const sameAsNext =
+      next !== undefined && current.fixedPoints === next.fixedPoints;
+
+    const rank = sameAsPrev ? rows[i - 1]!.rank : i + 1;
+    rows.push({
+      rank,
+      isTiedRank: sameAsPrev || sameAsNext,
+      ...current,
+    });
+  }
+
+  return rows;
+}
+
 export interface SessionCompletedMatchInput {
   id: string;
   teamA: readonly [string, string];

@@ -13,10 +13,12 @@ import { LeaderboardPodium } from '../components/leaderboard/LeaderboardPodium.t
 import { PairsPodium } from '../components/leaderboard/PairsPodium.tsx';
 import { RankingRow } from '../components/leaderboard/RankingRow.tsx';
 import { PairRankingRow } from '../components/leaderboard/PairRankingRow.tsx';
+import { FixedPointsSection } from '../components/leaderboard/FixedPointsSection.tsx';
 import { PlayerAvatar } from '../components/leaderboard/PlayerAvatar.tsx';
 import type { PairSortMode } from '../domain/standings.ts';
 import type { GroupReadSnapshot } from '../services/demoData.ts';
 import {
+  deriveFixedPointsLeaderboardFromSnapshot,
   deriveLeaderboardFromSnapshot,
   derivePairsLeaderboardFromSnapshot,
   deriveSessionDetailFromSnapshot,
@@ -94,6 +96,15 @@ export function LeaderboardView({
   const top2 = activePlayerRows[1] ?? null;
   const top3 = activePlayerRows[2] ?? null;
   const listRows = activePlayerRows.slice(3);
+
+  const fixedPointsRows =
+    formatMode === 'players' &&
+    (filterMode === 'all_time' || filterMode === 'weekly')
+      ? deriveFixedPointsLeaderboardFromSnapshot(snapshot, {
+          scope: filterMode === 'weekly' ? 'weekly' : 'all_time',
+          includeInactive,
+        })
+      : [];
 
   // Doubles Pairs rankings
   const activePairRows =
@@ -683,6 +694,14 @@ export function LeaderboardView({
                       </div>
                     )}
                   </div>
+
+                  {/* Separate "Ammar's Style 🤙🏻" Fixed-Points (+3W / -3L) Section */}
+                  <FixedPointsSection
+                    rows={fixedPointsRows}
+                    viewerLinkedPlayerId={viewerLinkedPlayerId}
+                    scope={filterMode === 'weekly' ? 'weekly' : 'all_time'}
+                    onSelectPlayer={onSelectPlayer}
+                  />
                 </>
               )}
             </div>

@@ -364,6 +364,16 @@ When a material decision changes:
   - *Pairs 3D Podium & Ranking Rows:* Created `PairsPodium.tsx` and `PairRankingRow.tsx` featuring overlapping dual partner avatars, mobile-friendly vertically stacked clickable partner names (navigating directly to either player's profile), and `You`, `(T)`, `Guest`, and `Provisional` badges.
   - *Verification & Quality Gates:* Added automated test suite `src/domain/__tests__/phase36-pairs-leaderboard.test.tsx` (3 tests) and updated `phase10-leaderboard-redesign.test.tsx` and `phase13-interface-accessibility.test.tsx`. All 27 Vitest test suites (163 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
   - *Affected Files:* `src/domain/standings.ts`, `src/services/readViewModels.ts`, `src/components/leaderboard/PairsPodium.tsx`, `src/components/leaderboard/PairRankingRow.tsx`, `src/views/LeaderboardView.tsx`, `src/domain/__tests__/phase10-leaderboard-redesign.test.tsx`, `src/domain/__tests__/phase13-interface-accessibility.test.tsx`, `src/domain/__tests__/phase36-pairs-leaderboard.test.tsx`, `docs/01-product/ratings-leaderboards.md`, `docs/00-project/decision-register.md`, `FILE-INDEX.md`.
+- **2026-10-25 (Owner approval — Phase 37 `"Ammar's Style 🤙🏻"` Supplemental Fixed-Points Leaderboard Section):**
+  - *Supplemental Fixed-Points Section (`DEC-080`):* Added a dedicated card section titled **`Ammar's Style 🤙🏻`** directly below the primary Elo Leaderboard inside `LeaderboardView.tsx` (`Players` mode for `All Time` and `Weekly` scopes), leaving all existing Elo podiums, `#4+` Elo ranking rows, filters, pairs rankings, and profile metrics 100% untouched.
+  - *Pure Win/Loss Scoring & Shared Ties:* Implemented `buildFixedPointsLeaderboard` in `src/domain/standings.ts` and `deriveFixedPointsLeaderboardFromSnapshot` in `src/services/readViewModels.ts`:
+    - Baseline: every player starts at `0 pts`.
+    - Completed match Win = `+3 pts`; Loss = `-3 pts` (`fixedPoints = (wins * 3) - (losses * 3)`), ignoring partner and opponent strength.
+    - Sorted strictly by `fixedPoints DESC`; players with identical point totals share exact competition rank (`1, 2, 3, 3, 5`) with a visible `(T)` badge.
+    - Syncs automatically with `All Time` / `Weekly` scope selection and `Include inactive`, with accessible profile navigation (`Enter`/`Space` and tap) and an expandable `Rules` drawer.
+  - *Zero Database / Elo Impact:* Purely derived in TypeScript from authoritative match records and snapshots; zero database schema changes or migrations.
+  - *Verification & Quality Gates:* Added automated test suite `src/domain/__tests__/phase37-ammars-style-leaderboard.test.tsx` (2 tests). All 28 Vitest test suites (165 automated tests) pass with 100% success rate (`npm test -- --run`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/domain/standings.ts`, `src/services/readViewModels.ts`, `src/components/leaderboard/FixedPointsSection.tsx`, `src/views/LeaderboardView.tsx`, `src/domain/__tests__/phase37-ammars-style-leaderboard.test.tsx`, `docs/01-product/ratings-leaderboards.md`, `docs/00-project/decision-register.md`, `FILE-INDEX.md`.
 
 
 
