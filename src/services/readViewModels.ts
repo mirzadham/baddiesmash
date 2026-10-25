@@ -2,14 +2,20 @@ import {
   formatDeltaOneDecimal,
   parseNumeric4,
   type PlayerRatingSnapshot,
+  type ReplayMatchRecord,
+  type ReplaySessionRecord,
   roundScaledToOneDecimalNumber,
   roundScaledToWholeNumber,
 } from '../domain/elo.ts';
 import {
   type AllTimeLeaderboardRow,
   buildAllTimeLeaderboard,
+  buildPairsLeaderboard,
   computeSessionStandings,
   type LeaderboardPlayerProfile,
+  type PairLeaderboardRow,
+  type PairPlayerIdentityInput,
+  type PairSortMode,
   type SessionAttendeeInput,
   type SessionCompletedMatchInput,
   type SessionStandingsResult,
@@ -433,6 +439,155 @@ export function deriveWeeklyLeaderboardFromSnapshot(
   }
 
   return rows;
+}
+
+export type PairsLeaderboardScope = 'all_time' | 'weekly' | 'session';
+
+/**
+ * Derives the Doubles Pairs (Partnership) Leaderboard from a `GroupReadSnapshot`,
+ * replaying Pair Elo chronologically at `NUMERIC(10,4)` precision and supporting
+ * All-Time, Weekly, and Single-Session scopes as well as `'elo'`, `'wins'`, and `'win_rate'` sorting.
+ */
+export function derivePairsLeaderboardFromSnapshot(
+  snapshot: GroupReadSnapshot,
+  options?: {
+    scope?: PairsLeaderboardScope;
+    sessionId?: string;
+    sortMode?: PairSortMode;
+    includeInactive?: boolean;
+  },
+): PairLeaderboardRow[] {
+  const scope: PairsLeaderboardScope = options?.scope ?? 'all_time';
+  const sortMode: PairSortMode = options?.sortMode ?? 'elo';
+  const includeInactive = options?.includeInactive ?? false;
+
+  const replaySessions: ReplaySessionRecord[] = snapshot.sessions.map((s) => ({
+    id: s.id,
+    groupId: s.group_id,
+    seasonId: s.season_id,
+    sessionStartedAtUtcMs: Date.parse(s.session_started_at),
+    createdAtUtcMs: Date.parse(s.created_at),
+  }));
+
+  const sessionMap = new Map<string, DbSessionRow>();
+  for (const s of snapshot.sessions) {
+    sessionMap.set(s.id, s);
+  }
+
+  const replayPlayers: PairPlayerIdentityInput[] = snapshot.players.map((p) => ({
+    id: p.id,
+    displayName: p.display_name,
+    avatarUrl: p.avatar_url,
+    isGuest: p.is_guest,
+    isActive: p.is_active,
+    mergedIntoPlayerId: p.merged_into_player_id,
+  }));
+
+  const participantsByMatchId = new Map<
+    string,
+    Array<(typeof snapshot.matchParticipants)[number]>
+  >();
+  for (const mp of snapshot.matchParticipants) {
+    let list = participantsByMatchId.get(mp.match_id);
+    if (!list) {
+      list = [];
+      participantsByMatchId.set(mp.match_id, list);
+    }
+    list.push(mp);
+  }
+
+  const replayMatches: ReplayMatchRecord[] = [];
+  for (const m of snapshot.matches) {
+    const pRows = participantsByMatchId.get(m.id);
+    if (!pRows) {
+      continue;
+    }
+    const a1 = pRows.find((r) => r.team_side === 'A' && r.slot_number === 1);
+    const a2 = pRows.find((r) => r.team_side === 'A' && r.slot_number === 2);
+    const b1 = pRows.find((r) => r.team_side === 'B' && r.slot_number === 1);
+    const b2 = pRows.find((r) => r.team_side === 'B' && r.slot_number === 2);
+    if (!a1 || !a2 || !b1 || !b2) {
+      continue;
+    }
+
+    replayMatches.push({
+      id: m.id,
+      groupId: m.group_id,
+      sessionId: m.session_id,
+      sequenceNumber: m.sequence_number,
+      teamA: [a1.player_id, a2.player_id] as const,
+      teamB: [b1.player_id, b2.player_id] as const,
+      teamAScore: m.team_a_score ?? 0,
+      teamBScore: m.team_b_score ?? 0,
+      status: m.status,
+      isDisputed: m.is_disputed,
+    });
+  }
+
+  let eligibleMatchIds: Set<string> | undefined;
+
+  if (scope === 'session') {
+    const targetSessionId = options?.sessionId ?? '';
+    eligibleMatchIds = new Set(
+      snapshot.matches
+        .filter((m) => m.session_id === targetSessionId && m.status === 'completed')
+        .map((m) => m.id),
+    );
+  } else if (scope === 'weekly') {
+    const completedMatches = snapshot.matches.filter(
+      (m) =>
+        m.status === 'completed' &&
+        m.team_a_score !== null &&
+        m.team_b_score !== null,
+    );
+    if (completedMatches.length === 0) {
+      return [];
+    }
+
+    let weekBounds = getMalaysiaWeekBounds(new Date());
+    let weekMatches = completedMatches.filter((m) => {
+      const s = sessionMap.get(m.session_id);
+      const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+      return timeMs >= weekBounds.startMs && timeMs <= weekBounds.endMs;
+    });
+
+    if (weekMatches.length === 0) {
+      let latestMs = 0;
+      for (const m of completedMatches) {
+        const s = sessionMap.get(m.session_id);
+        const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+        if (timeMs > latestMs) {
+          latestMs = timeMs;
+        }
+      }
+      if (latestMs > 0) {
+        weekBounds = getMalaysiaWeekBounds(new Date(latestMs));
+        weekMatches = completedMatches.filter((m) => {
+          const s = sessionMap.get(m.session_id);
+          const timeMs = Date.parse(s?.session_started_at ?? m.created_at);
+          return timeMs >= weekBounds.startMs && timeMs <= weekBounds.endMs;
+        });
+      }
+    }
+
+    eligibleMatchIds = new Set(weekMatches.map((m) => m.id));
+  }
+
+  const buildParams: Parameters<typeof buildPairsLeaderboard>[0] = {
+    groupId: snapshot.group.id,
+    sessions: replaySessions,
+    matches: replayMatches,
+    players: replayPlayers,
+    kFactor: snapshot.group.default_k_factor,
+    sortMode,
+    includeInactive,
+  };
+
+  if (eligibleMatchIds !== undefined) {
+    buildParams.eligibleMatchIds = eligibleMatchIds;
+  }
+
+  return buildPairsLeaderboard(buildParams);
 }
 
 /**

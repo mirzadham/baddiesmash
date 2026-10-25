@@ -354,6 +354,16 @@ When a material decision changes:
     - `src/domain/__tests__/phase35-stacked-partner-names.test.tsx`
     - `docs/00-project/decision-register.md`
   - *Verification:* Added automated test suite `phase35-stacked-partner-names.test.tsx` (3 tests). All 26 test suites (160 tests) pass with 100% success rate; TypeScript static typecheck (`tsc -b`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+- **2026-10-25 (Owner approval — Phase 36 Doubles Pairs / Partnership Leaderboard & Pair Elo Ranking):**
+  - *Leaderboard Switcher (`DEC-079`):* Updated the Leaderboard top-right format switcher to **`Players | Pairs | Singles`** (with `Players` active by default and `Singles` preserving its Stage 2 preview banner).
+  - *Slot-Order-Invariant Pair Elo & Standings:* Implemented `canonicalizePairKey`, `calculatePairMatchEloDelta`, and `buildPairsLeaderboard` in `src/domain/standings.ts` plus `derivePairsLeaderboardFromSnapshot` in `src/services/readViewModels.ts`:
+    - Canonicalizes every 2-player partnership by resolved player UUIDs (`firstId < secondId`) so slot 1 / slot 2 court assignment never splits a duo's record.
+    - Replays completed matches in canonical chronological order starting each unique partnership at `1000.0000` (`NUMERIC(10,4)`) Pair Elo, updating zero-sum (`K = 24`) against opposing partnerships' Pair Elo.
+    - Includes all partnerships with `>= 1` completed match together and labels pairs with `< 3` all-time completed matches together as **`Provisional`**.
+    - Supports sorting pairs by **`Pair Elo`** (default), **`Most Wins`**, and **`Win Rate`** with exact competition rank sharing (`1, 1, 3`), as well as `All Time`, `Weekly`, and `Current Session` filter scopes and `Include inactive`.
+  - *Pairs 3D Podium & Ranking Rows:* Created `PairsPodium.tsx` and `PairRankingRow.tsx` featuring overlapping dual partner avatars, mobile-friendly vertically stacked clickable partner names (navigating directly to either player's profile), and `You`, `(T)`, `Guest`, and `Provisional` badges.
+  - *Verification & Quality Gates:* Added automated test suite `src/domain/__tests__/phase36-pairs-leaderboard.test.tsx` (3 tests) and updated `phase10-leaderboard-redesign.test.tsx` and `phase13-interface-accessibility.test.tsx`. All 27 Vitest test suites (163 automated tests) pass with 100% success rate (`npm test`); TypeScript static typecheck (`npm run typecheck`) and Vite production build (`npm run build`) pass cleanly with 0 errors.
+  - *Affected Files:* `src/domain/standings.ts`, `src/services/readViewModels.ts`, `src/components/leaderboard/PairsPodium.tsx`, `src/components/leaderboard/PairRankingRow.tsx`, `src/views/LeaderboardView.tsx`, `src/domain/__tests__/phase10-leaderboard-redesign.test.tsx`, `src/domain/__tests__/phase13-interface-accessibility.test.tsx`, `src/domain/__tests__/phase36-pairs-leaderboard.test.tsx`, `docs/01-product/ratings-leaderboards.md`, `docs/00-project/decision-register.md`, `FILE-INDEX.md`.
 
 
 

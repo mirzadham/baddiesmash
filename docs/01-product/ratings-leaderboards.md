@@ -49,6 +49,9 @@
 - Point difference per player = total points scored by that player's teams minus points conceded across completed matches.
 - Current-session standings remain provisional until session finalization.
 
-## Partnership stats
-- Show highest win rate and most wins together separately.
-- Minimum partnership sample threshold is one match, but label the small sample clearly and do not overstate evidence.
+## Partnership stats & Pairs Leaderboard
+- Leaderboard supports switching between **Players**, **Pairs**, and **Singles** (Stage 2 preview), always defaulting to **Players** and **All-time**.
+- Each unique 2-player partnership is canonicalized by resolved player UUIDs (`playerA < playerB`) so slot 1 / slot 2 court assignment never splits a duo's record.
+- Pairs earn a dedicated **Pair Elo** starting from baseline `1000` (`1000.0000` `NUMERIC(10,4)`), replayed chronologically against opposing partnerships' Pair Elo using the group's `default_k_factor` (`K = 24`).
+- Pairs Leaderboard defaults to sorting by **Pair Elo**, with user-selectable sort modes for **Most Wins** and **Win Rate** (showing highest win rate and most wins together separately).
+- Minimum partnership sample threshold is **1 completed match together**, with partnerships having `< 3` completed matches marked **`Provisional`** so small samples are clearly labelled and not overstated.

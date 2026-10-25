@@ -38,7 +38,7 @@ describe('Phase 13 — Cross-Discipline Interface & Accessibility Remediation', 
     expect(themeBtn).toBeNull();
   });
 
-  it('exposes aria-pressed states and minimum hit targets on Leaderboard Singles/Doubles toggle', async () => {
+  it('exposes aria-pressed states and minimum hit targets on Leaderboard Players/Pairs/Singles toggle', async () => {
     const repo = createDemoTrackerRepository();
     render(<App repository={repo} />);
 
@@ -53,21 +53,31 @@ describe('Phase 13 — Cross-Discipline Interface & Accessibility Remediation', 
       expect(screen.getByTestId('view-leaderboard')).toBeTruthy();
     });
 
-    const doublesBtn = screen.getByRole('button', { name: /^Doubles$/i });
+    const playersBtn = screen.getByRole('button', { name: /^Players$/i });
+    const pairsBtn = screen.getByRole('button', { name: /^Pairs$/i });
     const singlesBtn = screen.getByRole('button', { name: /^Singles$/i });
 
-    // Initial state: doubles is active
-    expect(doublesBtn.getAttribute('aria-pressed')).toBe('true');
+    // Initial state: players is active
+    expect(playersBtn.getAttribute('aria-pressed')).toBe('true');
+    expect(pairsBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(singlesBtn.getAttribute('aria-pressed')).toBe('false');
+
+    // Switch to pairs
+    fireEvent.click(pairsBtn);
+    expect(playersBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(pairsBtn.getAttribute('aria-pressed')).toBe('true');
     expect(singlesBtn.getAttribute('aria-pressed')).toBe('false');
 
     // Switch to singles
     fireEvent.click(singlesBtn);
-    expect(doublesBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(playersBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(pairsBtn.getAttribute('aria-pressed')).toBe('false');
     expect(singlesBtn.getAttribute('aria-pressed')).toBe('true');
 
-    // Switch back to doubles
-    fireEvent.click(doublesBtn);
-    expect(doublesBtn.getAttribute('aria-pressed')).toBe('true');
+    // Switch back to players
+    fireEvent.click(playersBtn);
+    expect(playersBtn.getAttribute('aria-pressed')).toBe('true');
+    expect(pairsBtn.getAttribute('aria-pressed')).toBe('false');
     expect(singlesBtn.getAttribute('aria-pressed')).toBe('false');
   });
 

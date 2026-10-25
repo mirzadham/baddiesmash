@@ -1,9 +1,17 @@
 import {
+  compareCanonicalMatchOrder,
+  DEFAULT_BASELINE_RATING_SCALED,
+  DEFAULT_PROVISIONAL_THRESHOLD,
   formatNumeric4,
   type PlayerRatingSnapshot,
+  type ReplayMatchRecord,
+  type ReplayPlayerIdentity,
+  type ReplaySessionRecord,
+  resolveMergedPlayerId,
+  roundFloatToScaled4HalfAwayFromZero,
   roundScaledToWholeNumber,
 } from './elo.ts';
-import { validateMatchScore } from './scoring.ts';
+import { validateMatchParticipants, validateMatchScore } from './scoring.ts';
 
 export interface LeaderboardPlayerProfile {
   id: string;
@@ -364,4 +372,430 @@ export function computeSessionStandings(params: {
     playedRows,
     nonPlayingAttendees,
   };
+}
+
+export type PairSortMode = 'elo' | 'wins' | 'win_rate';
+
+export interface PairPlayerIdentityInput extends ReplayPlayerIdentity {
+  avatarUrl?: string | null;
+  isActive: boolean;
+}
+
+export interface PairPartnerInfo {
+  playerId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isGuest: boolean;
+  isActive: boolean;
+}
+
+export interface PairLeaderboardRow {
+  rank: number;
+  isTiedRank: boolean;
+  pairKey: string;
+  player1: PairPartnerInfo;
+  player2: PairPartnerInfo;
+  includesGuest: boolean;
+  isActive: boolean;
+  ratingScaled: bigint;
+  ratingNumeric4: string;
+  ratingDisplay: number;
+  matchesPlayed: number;
+  allTimeMatchesPlayed: number;
+  wins: number;
+  losses: number;
+  winRatePercent: number;
+  winRatePercentDisplay: string;
+  pointsScored: number;
+  pointsConceded: number;
+  pointDifference: number;
+  isProvisional: boolean;
+}
+
+/**
+ * Produces a deterministic, slot-order-invariant canonical key for a 2-player partnership.
+ */
+export function canonicalizePairKey(
+  playerAId: string,
+  playerBId: string,
+): { pairKey: string; firstId: string; secondId: string } {
+  if (playerAId === playerBId) {
+    throw new Error(`Invalid partnership: duplicate player ID '${playerAId}'`);
+  }
+  if (playerAId < playerBId) {
+    return {
+      pairKey: `${playerAId}:${playerBId}`,
+      firstId: playerAId,
+      secondId: playerBId,
+    };
+  }
+  return {
+    pairKey: `${playerBId}:${playerAId}`,
+    firstId: playerBId,
+    secondId: playerAId,
+  };
+}
+
+/**
+ * Calculates zero-sum Pair Elo delta at exact NUMERIC(10,4) fixed-point precision
+ * when Pair A plays directly against Pair B.
+ */
+export function calculatePairMatchEloDelta(params: {
+  pairARatingScaled: bigint;
+  pairBRatingScaled: bigint;
+  winner: 'A' | 'B';
+  kFactor: number;
+}): {
+  pairADeltaScaled: bigint;
+  pairBDeltaScaled: bigint;
+  expectedScoreA: number;
+} {
+  if (!Number.isFinite(params.kFactor) || params.kFactor <= 0) {
+    throw new Error(`Invalid K-factor: ${params.kFactor}`);
+  }
+  const diffBMinusA =
+    Number(params.pairBRatingScaled - params.pairARatingScaled) / 10_000;
+  const expectedScoreA = 1 / (1 + Math.pow(10, diffBMinusA / 400));
+  const actualScoreA = params.winner === 'A' ? 1 : 0;
+  const rawDeltaA = params.kFactor * (actualScoreA - expectedScoreA);
+  const pairADeltaScaled = roundFloatToScaled4HalfAwayFromZero(rawDeltaA);
+  const pairBDeltaScaled = -pairADeltaScaled;
+
+  return {
+    pairADeltaScaled,
+    pairBDeltaScaled,
+    expectedScoreA,
+  };
+}
+
+/**
+ * Deterministically replays completed matches in canonical chronological order to compute
+ * Pair Elo ratings (`1000.0000` baseline) and partnership W-L / Win Rate / Point Difference records.
+ *
+ * - Slot-order invariant: `(P1, P2)` and `(P2, P1)` map to the exact same partnership.
+ * - Includes only pairs with `>= 1` completed match in the target scope (`eligibleMatchIds` if provided, or all-time).
+ * - Marks pairs with `< 3` all-time completed matches together as `Provisional`.
+ * - Supports sorting by `'elo'` (default), `'wins'`, or `'win_rate'` with exact competition rank sharing (`1, 1, 3`).
+ */
+export function buildPairsLeaderboard(params: {
+  groupId: string;
+  sessions: readonly ReplaySessionRecord[];
+  matches: readonly ReplayMatchRecord[];
+  players: readonly PairPlayerIdentityInput[];
+  kFactor: number;
+  sortMode?: PairSortMode;
+  includeInactive?: boolean;
+  eligibleMatchIds?: ReadonlySet<string>;
+  baselineRatingScaled?: bigint;
+  provisionalThreshold?: number;
+}): PairLeaderboardRow[] {
+  const baseline = params.baselineRatingScaled ?? DEFAULT_BASELINE_RATING_SCALED;
+  const provisionalThreshold =
+    params.provisionalThreshold ?? DEFAULT_PROVISIONAL_THRESHOLD;
+  const sortMode: PairSortMode = params.sortMode ?? 'elo';
+  const includeInactive = params.includeInactive ?? false;
+
+  const sessionMap = new Map<string, ReplaySessionRecord>();
+  for (const session of params.sessions) {
+    if (session.groupId !== params.groupId) {
+      throw new Error(
+        `Cross-group session '${session.id}' detected in pair replay for group '${params.groupId}'`,
+      );
+    }
+    sessionMap.set(session.id, session);
+  }
+
+  const identityMap = new Map<string, PairPlayerIdentityInput>();
+  for (const player of params.players) {
+    identityMap.set(player.id, player);
+  }
+
+  const completedEntries: Array<{
+    match: ReplayMatchRecord;
+    session: ReplaySessionRecord;
+  }> = [];
+
+  for (const match of params.matches) {
+    if (match.groupId !== params.groupId) {
+      throw new Error(
+        `Cross-group match '${match.id}' detected in pair replay for group '${params.groupId}'`,
+      );
+    }
+    if (match.status !== 'completed') {
+      continue;
+    }
+    const session = sessionMap.get(match.sessionId);
+    if (!session) {
+      continue;
+    }
+    completedEntries.push({ match, session });
+  }
+
+  completedEntries.sort((a, b) =>
+    compareCanonicalMatchOrder(a.match, a.session, b.match, b.session),
+  );
+
+  interface PairAccumulator {
+    pairKey: string;
+    firstId: string;
+    secondId: string;
+    ratingScaled: bigint;
+    allTimeMatchesPlayed: number;
+    scopedMatchesPlayed: number;
+    scopedWins: number;
+    scopedLosses: number;
+    scopedPointsScored: number;
+    scopedPointsConceded: number;
+  }
+
+  const pairMap = new Map<string, PairAccumulator>();
+
+  const ensurePair = (pA: string, pB: string): PairAccumulator => {
+    const { pairKey, firstId, secondId } = canonicalizePairKey(pA, pB);
+    let acc = pairMap.get(pairKey);
+    if (!acc) {
+      acc = {
+        pairKey,
+        firstId,
+        secondId,
+        ratingScaled: baseline,
+        allTimeMatchesPlayed: 0,
+        scopedMatchesPlayed: 0,
+        scopedWins: 0,
+        scopedLosses: 0,
+        scopedPointsScored: 0,
+        scopedPointsConceded: 0,
+      };
+      pairMap.set(pairKey, acc);
+    }
+    return acc;
+  };
+
+  for (const { match } of completedEntries) {
+    const scoreValidation = validateMatchScore(
+      match.teamAScore,
+      match.teamBScore,
+    );
+    if (!scoreValidation.valid || !scoreValidation.winner) {
+      continue;
+    }
+
+    const resolvedTeamA: [string, string] = [
+      resolveMergedPlayerId(match.teamA[0], identityMap),
+      resolveMergedPlayerId(match.teamA[1], identityMap),
+    ];
+    const resolvedTeamB: [string, string] = [
+      resolveMergedPlayerId(match.teamB[0], identityMap),
+      resolveMergedPlayerId(match.teamB[1], identityMap),
+    ];
+
+    const participantValidation = validateMatchParticipants({
+      teamA: resolvedTeamA,
+      teamB: resolvedTeamB,
+    });
+    if (!participantValidation.valid) {
+      continue;
+    }
+
+    const pairA = ensurePair(resolvedTeamA[0], resolvedTeamA[1]);
+    const pairB = ensurePair(resolvedTeamB[0], resolvedTeamB[1]);
+
+    const { pairADeltaScaled, pairBDeltaScaled } = calculatePairMatchEloDelta({
+      pairARatingScaled: pairA.ratingScaled,
+      pairBRatingScaled: pairB.ratingScaled,
+      winner: scoreValidation.winner,
+      kFactor: params.kFactor,
+    });
+
+    pairA.ratingScaled += pairADeltaScaled;
+    pairB.ratingScaled += pairBDeltaScaled;
+    pairA.allTimeMatchesPlayed += 1;
+    pairB.allTimeMatchesPlayed += 1;
+
+    const inScope =
+      !params.eligibleMatchIds || params.eligibleMatchIds.has(match.id);
+    if (inScope) {
+      const aWon = scoreValidation.winner === 'A';
+      pairA.scopedMatchesPlayed += 1;
+      pairA.scopedWins += aWon ? 1 : 0;
+      pairA.scopedLosses += aWon ? 0 : 1;
+      pairA.scopedPointsScored += match.teamAScore;
+      pairA.scopedPointsConceded += match.teamBScore;
+
+      pairB.scopedMatchesPlayed += 1;
+      pairB.scopedWins += !aWon ? 1 : 0;
+      pairB.scopedLosses += !aWon ? 0 : 1;
+      pairB.scopedPointsScored += match.teamBScore;
+      pairB.scopedPointsConceded += match.teamAScore;
+    }
+  }
+
+  const buildPartnerInfo = (playerId: string): PairPartnerInfo => {
+    const p = identityMap.get(playerId);
+    return {
+      playerId,
+      displayName: p?.displayName ?? 'Unknown Player',
+      avatarUrl: p?.avatarUrl ?? null,
+      isGuest: p?.isGuest ?? false,
+      isActive: p?.isActive ?? true,
+    };
+  };
+
+  type UnrankedPairRow = Omit<PairLeaderboardRow, 'rank' | 'isTiedRank'>;
+  const unranked: UnrankedPairRow[] = [];
+
+  for (const acc of pairMap.values()) {
+    if (acc.scopedMatchesPlayed < 1) {
+      continue;
+    }
+
+    const pFirst = buildPartnerInfo(acc.firstId);
+    const pSecond = buildPartnerInfo(acc.secondId);
+
+    // Order partner display names alphabetically for clean, predictable presentation
+    const firstBeforeSecond =
+      pFirst.displayName.localeCompare(pSecond.displayName, 'en') < 0 ||
+      (pFirst.displayName.localeCompare(pSecond.displayName, 'en') === 0 &&
+        pFirst.playerId < pSecond.playerId);
+
+    const player1 = firstBeforeSecond ? pFirst : pSecond;
+    const player2 = firstBeforeSecond ? pSecond : pFirst;
+
+    const isPairActive = player1.isActive && player2.isActive;
+    if (!includeInactive && !isPairActive) {
+      continue;
+    }
+
+    const winRateRaw =
+      acc.scopedMatchesPlayed > 0
+        ? (acc.scopedWins / acc.scopedMatchesPlayed) * 100
+        : 0;
+    const winRateRounded = Math.round(winRateRaw * 10) / 10;
+
+    unranked.push({
+      pairKey: acc.pairKey,
+      player1,
+      player2,
+      includesGuest: player1.isGuest || player2.isGuest,
+      isActive: isPairActive,
+      ratingScaled: acc.ratingScaled,
+      ratingNumeric4: formatNumeric4(acc.ratingScaled),
+      ratingDisplay: roundScaledToWholeNumber(acc.ratingScaled),
+      matchesPlayed: acc.scopedMatchesPlayed,
+      allTimeMatchesPlayed: acc.allTimeMatchesPlayed,
+      wins: acc.scopedWins,
+      losses: acc.scopedLosses,
+      winRatePercent: winRateRounded,
+      winRatePercentDisplay: `${winRateRounded.toFixed(1)}%`,
+      pointsScored: acc.scopedPointsScored,
+      pointsConceded: acc.scopedPointsConceded,
+      pointDifference: acc.scopedPointsScored - acc.scopedPointsConceded,
+      isProvisional: acc.allTimeMatchesPlayed < provisionalThreshold,
+    });
+  }
+
+  const compareExactWinRateDesc = (
+    a: UnrankedPairRow,
+    b: UnrankedPairRow,
+  ): number => {
+    const lhs = a.wins * b.matchesPlayed;
+    const rhs = b.wins * a.matchesPlayed;
+    if (lhs !== rhs) {
+      return rhs - lhs;
+    }
+    return 0;
+  };
+
+  const compareSortMetrics = (
+    a: UnrankedPairRow,
+    b: UnrankedPairRow,
+  ): number => {
+    if (sortMode === 'elo') {
+      if (a.ratingScaled !== b.ratingScaled) {
+        return a.ratingScaled > b.ratingScaled ? -1 : 1;
+      }
+      return 0;
+    }
+
+    if (sortMode === 'wins') {
+      if (a.wins !== b.wins) {
+        return b.wins - a.wins;
+      }
+      const wrCmp = compareExactWinRateDesc(a, b);
+      if (wrCmp !== 0) {
+        return wrCmp;
+      }
+      if (a.pointDifference !== b.pointDifference) {
+        return b.pointDifference - a.pointDifference;
+      }
+      if (a.ratingScaled !== b.ratingScaled) {
+        return a.ratingScaled > b.ratingScaled ? -1 : 1;
+      }
+      return 0;
+    }
+
+    // sortMode === 'win_rate'
+    const wrCmp = compareExactWinRateDesc(a, b);
+    if (wrCmp !== 0) {
+      return wrCmp;
+    }
+    if (a.wins !== b.wins) {
+      return b.wins - a.wins;
+    }
+    if (a.pointDifference !== b.pointDifference) {
+      return b.pointDifference - a.pointDifference;
+    }
+    if (a.ratingScaled !== b.ratingScaled) {
+      return a.ratingScaled > b.ratingScaled ? -1 : 1;
+    }
+    return 0;
+  };
+
+  unranked.sort((a, b) => {
+    const metricCmp = compareSortMetrics(a, b);
+    if (metricCmp !== 0) {
+      return metricCmp;
+    }
+    // Presentation tie-breakers (do not break competition rank sharing)
+    if (a.wins !== b.wins) {
+      return b.wins - a.wins;
+    }
+    const wrCmp = compareExactWinRateDesc(a, b);
+    if (wrCmp !== 0) {
+      return wrCmp;
+    }
+    if (a.pointDifference !== b.pointDifference) {
+      return b.pointDifference - a.pointDifference;
+    }
+    const p1Cmp = a.player1.displayName.localeCompare(b.player1.displayName, 'en');
+    if (p1Cmp !== 0) {
+      return p1Cmp;
+    }
+    const p2Cmp = a.player2.displayName.localeCompare(b.player2.displayName, 'en');
+    if (p2Cmp !== 0) {
+      return p2Cmp;
+    }
+    return a.pairKey < b.pairKey ? -1 : a.pairKey > b.pairKey ? 1 : 0;
+  });
+
+  const rows: PairLeaderboardRow[] = [];
+  for (let i = 0; i < unranked.length; i++) {
+    const current = unranked[i]!;
+    const prev = i > 0 ? unranked[i - 1] : undefined;
+    const next = i + 1 < unranked.length ? unranked[i + 1] : undefined;
+
+    const sameAsPrev =
+      prev !== undefined && compareSortMetrics(prev, current) === 0;
+    const sameAsNext =
+      next !== undefined && compareSortMetrics(current, next) === 0;
+
+    const rank = sameAsPrev ? rows[i - 1]!.rank : i + 1;
+    rows.push({
+      rank,
+      isTiedRank: sameAsPrev || sameAsNext,
+      ...current,
+    });
+  }
+
+  return rows;
 }

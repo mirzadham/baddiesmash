@@ -36,9 +36,10 @@ describe('Phase 10 — SMASHTRACK Leaderboard Interface Redesign', () => {
     expect(filterBtn).toBeTruthy();
     expect(within(filterBtn).getByText(/^Filter$/i)).toBeTruthy();
 
-    // Check Singles | Doubles switcher
+    // Check Players | Pairs | Singles switcher
+    expect(screen.getByRole('button', { name: /^Players$/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Pairs$/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Singles$/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^Doubles$/i })).toBeTruthy();
   });
 
   it('renders 3D podium with 1st Gold Crown, 2nd Silver, and 3rd Bronze blocks with points and W-L', async () => {
@@ -130,8 +131,8 @@ describe('Phase 10 — SMASHTRACK Leaderboard Interface Redesign', () => {
       expect(screen.queryByTestId('leaderboard-podium')).toBeNull();
     });
 
-    // Switch back to Doubles
-    fireEvent.click(screen.getByRole('button', { name: /View Official Doubles Leaderboard/i }));
+    // Switch back to Players
+    fireEvent.click(screen.getByRole('button', { name: /View Players Leaderboard/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId('leaderboard-podium')).toBeTruthy();

@@ -75,7 +75,7 @@ export function PlayerAvatar({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden border border-slate-700/60 transition-transform ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden align-middle leading-none transition-transform ${className}`}
       style={{
         width: size,
         height: size,
@@ -87,16 +87,15 @@ export function PlayerAvatar({
           src={avatarUrl}
           alt={displayName}
           onError={() => setImgError(true)}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover block"
         />
       ) : (
         <div
-          className="w-full h-full flex items-center justify-center select-none font-bold tracking-wider"
+          className="w-full h-full flex items-center justify-center select-none font-bold tracking-wider leading-none"
           style={{
             background: palette.bg,
             color: palette.text,
             fontSize: Math.max(11, Math.round(size * 0.38)),
-            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.4)',
           }}
         >
           {initials}
