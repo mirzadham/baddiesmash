@@ -8,7 +8,11 @@ import {
   buildDeterministicDemoSnapshot,
   DEMO_PLAYER_IDS,
 } from '../../services/demoData.ts';
-import { createDemoTrackerRepository } from '../../services/trackerRepository.ts';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  createDemoTrackerRepository,
+  createSupabaseTrackerRepository,
+} from '../../services/trackerRepository.ts';
 import type { DbPlayerRow } from '../../types/database.ts';
 import type { LeaderboardRow } from '../../components/profile/ProfileHeroCard.tsx';
 
@@ -294,6 +298,40 @@ describe('Phase 21 — Player Display Picture Upload & 1-Year Cooldown', () => {
 
       expect(updated.avatarUrl).toBe('https://example.com/new.jpg');
       expect(aaron.avatar_url).toBe('https://example.com/new.jpg');
+    });
+
+    it('uploads avatars with upsert: false and a clean 3-segment <groupId>/<playerId>/<file> storage key', async () => {
+      const uploadMock = vi.fn().mockResolvedValue({ data: { path: 'ok' }, error: null });
+      const getPublicUrlMock = vi.fn().mockImplementation((path: string) => ({
+        data: { publicUrl: `https://example.supabase.co/storage/v1/object/public/avatars/${path}` },
+      }));
+      const mockClient = {
+        storage: {
+          from: vi.fn().mockReturnValue({
+            upload: uploadMock,
+            getPublicUrl: getPublicUrlMock,
+          }),
+        },
+      } as unknown as SupabaseClient;
+
+      const repo = createSupabaseTrackerRepository(mockClient);
+      const file = new File(['avatar-bytes'], 'profile.W/E!B*P', { type: 'image/webp' });
+      const groupId = '11111111-1111-4111-8111-111111111111';
+      const playerId = '22222222-2222-4222-8222-222222222222';
+
+      const publicUrl = await repo.uploadAvatarImage({ groupId, playerId, file });
+
+      expect(uploadMock).toHaveBeenCalledTimes(1);
+      const [uploadedPath, uploadedFile, uploadOptions] = uploadMock.mock.calls[0]!;
+      expect(uploadedFile).toBe(file);
+      expect(uploadOptions).toEqual({ cacheControl: '3600', upsert: false });
+      expect(uploadedPath).toMatch(
+        new RegExp(`^${groupId}/${playerId}/\\d+-[a-z0-9-]+\\.webp$`),
+      );
+      expect(uploadedPath.split('/')).toHaveLength(3);
+      expect(publicUrl).toBe(
+        `https://example.supabase.co/storage/v1/object/public/avatars/${uploadedPath}`,
+      );
     });
   });
 });

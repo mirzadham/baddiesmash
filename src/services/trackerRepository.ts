@@ -1189,13 +1189,20 @@ export function createSupabaseTrackerRepository(
     },
 
     async uploadAvatarImage(input: UploadAvatarFileInput): Promise<string> {
-      const fileExt = input.file.name.split('.').pop() || 'jpg';
-      const fileName = `${input.groupId}/${input.playerId}/${Date.now()}.${fileExt}`;
+      const safeExt =
+        (input.file.name.split('.').pop() || 'jpg')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '') || 'jpg';
+      const uniqueSuffix =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID().slice(0, 8)
+          : Math.random().toString(36).slice(2, 10);
+      const fileName = `${input.groupId}/${input.playerId}/${Date.now()}-${uniqueSuffix}.${safeExt}`;
       const { error: uploadError } = await client.storage
         .from('avatars')
         .upload(fileName, input.file, {
           cacheControl: '3600',
-          upsert: true,
+          upsert: false,
         });
 
       if (uploadError) {

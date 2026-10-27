@@ -54,6 +54,7 @@
    - `20261018000002_phase2_sessions_matches_and_elo_replay.sql`
    - `20261022000001_player_avatar_cooldown.sql`
    - `20261024000001_update_player_display_name.sql`
+   - `20261027000001_security_advisor_hardening.sql`
 6. Explicit owner approval obtained prior to applying migrations to staging or production.
 
 ---
@@ -69,6 +70,8 @@
    - File 2: `supabase/migrations/20261018000002_phase2_sessions_matches_and_elo_replay.sql`
    - File 3: `supabase/migrations/20261022000001_player_avatar_cooldown.sql`
    - File 4: `supabase/migrations/20261024000001_update_player_display_name.sql`
+   - File 5: `supabase/migrations/20261027000001_security_advisor_hardening.sql`
+   - *Security Advisor Expected Baseline (Free Plan):* After running File 5, `public_bucket_allows_listing` (`0025`) and `rls_auto_enable` (`0028`/`0029`) are cleared. The remaining `0029` (`authenticated_security_definer_function_executable`) notices on the 30 app RPCs and 2 RLS helpers (`is_approved_group_member`, `has_group_role`) are intentional serverless write/RLS guards, and `auth_leaked_password_protection` remains disabled because HaveIBeenPwned checks require Supabase Pro ($25/mo).
 5. Navigate to **Project Settings -> API** to copy credentials:
    - **Project URL:** e.g. `https://xxxxxxxxxxxxxxxxxxxx.supabase.co`
    - **Project API Keys -> `anon` (public):** copy this key.

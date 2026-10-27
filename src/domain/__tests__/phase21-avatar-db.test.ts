@@ -60,15 +60,28 @@ CREATE TABLE IF NOT EXISTS storage.objects (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-GRANT ALL ON SCHEMA storage TO postgres, authenticated;
+GRANT USAGE ON SCHEMA storage TO postgres, anon, authenticated;
 GRANT ALL ON TABLE storage.buckets TO postgres, authenticated;
+GRANT SELECT ON TABLE storage.objects TO anon;
 GRANT ALL ON TABLE storage.objects TO postgres, authenticated;
+
+-- Simulate Supabase hosted auto-RLS helper function before hardening migration runs
+CREATE OR REPLACE FUNCTION public.rls_auto_enable()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- no-op stub representing Supabase's hosted DDL helper
+END;
+$$;
 `;
 
 describe('Phase 21 — PostgreSQL update_player_avatar RPC & Cooldown Invariants Suite', () => {
   let db: PGlite;
   const ownerUserId = '11111111-1111-4111-8111-111111111101';
   const memberUserId = '11111111-1111-4111-8111-111111111104';
+  const pendingUserId = '11111111-1111-4111-8111-111111111109';
   let groupId: string;
   let ownerPlayerId: string;
   let memberPlayerId: string;
@@ -117,12 +130,27 @@ describe('Phase 21 — PostgreSQL update_player_avatar RPC & Cooldown Invariants
     );
     await db.exec(phase21Sql);
 
+    // Run Migration 4 (Update Player Display Name)
+    const phase24Sql = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261024000001_update_player_display_name.sql'),
+      'utf8',
+    );
+    await db.exec(phase24Sql);
+
+    // Run Migration 5 (Security Advisor Hardening)
+    const hardeningSql = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261027000001_security_advisor_hardening.sql'),
+      'utf8',
+    );
+    await db.exec(hardeningSql);
+
     // Seed auth users
     await db.query(
       `INSERT INTO auth.users (id, email, email_confirmed_at) VALUES
        ($1, 'owner@test.local', clock_timestamp()),
-       ($2, 'member@test.local', clock_timestamp());`,
-      [ownerUserId, memberUserId],
+       ($2, 'member@test.local', clock_timestamp()),
+       ($3, 'pending@test.local', clock_timestamp());`,
+      [ownerUserId, memberUserId, pendingUserId],
     );
 
     // Bootstrap initial group with owner
@@ -233,5 +261,147 @@ describe('Phase 21 — PostgreSQL update_player_avatar RPC & Cooldown Invariants
     );
     expect(playerRows[0]!.avatar_url).toBeNull();
     expect(playerRows[0]!.avatar_updated_at).toBeNull();
+  });
+
+  describe('Security Advisor Hardening (Migration 20261027000001)', () => {
+    it('revokes EXECUTE on public.rls_auto_enable() from PUBLIC, anon, and authenticated', async () => {
+      const res = await db.query<{
+        anon_can_exec: boolean;
+        auth_can_exec: boolean;
+      }>(`
+        SELECT
+          pg_catalog.has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE') AS anon_can_exec,
+          pg_catalog.has_function_privilege('authenticated', 'public.rls_auto_enable()', 'EXECUTE') AS auth_can_exec;
+      `);
+
+      expect(res.rows[0]!.anon_can_exec).toBe(false);
+      expect(res.rows[0]!.auth_can_exec).toBe(false);
+
+      await expect(
+        queryAs('anon', null, `SELECT public.rls_auto_enable();`),
+      ).rejects.toThrow(/permission denied/i);
+
+      // Also verify migration remains safe when rls_auto_enable() does not exist
+      await db.exec(`DROP FUNCTION public.rls_auto_enable();`);
+      const hardeningSql = readFileSync(
+        resolve(process.cwd(), 'supabase/migrations/20261027000001_security_advisor_hardening.sql'),
+        'utf8',
+      );
+      await expect(db.exec(hardeningSql)).resolves.not.toThrow();
+    });
+
+    it('switches public.is_valid_badminton_score(int, int) to SECURITY INVOKER while preserving exact score validation', async () => {
+      const meta = await db.query<{ prosecdef: boolean }>(`
+        SELECT p.prosecdef
+        FROM pg_catalog.pg_proc p
+        JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public' AND p.proname = 'is_valid_badminton_score';
+      `);
+      expect(meta.rows[0]!.prosecdef).toBe(false);
+
+      const checks = await queryAs<{
+        valid_21_19: boolean;
+        valid_30_29: boolean;
+        invalid_21_20: boolean;
+        invalid_30_30: boolean;
+      }>(
+        'authenticated',
+        memberUserId,
+        `SELECT
+          public.is_valid_badminton_score(21, 19) AS valid_21_19,
+          public.is_valid_badminton_score(30, 29) AS valid_30_29,
+          public.is_valid_badminton_score(21, 20) AS invalid_21_20,
+          public.is_valid_badminton_score(30, 30) AS invalid_30_30;`,
+      );
+
+      expect(checks[0]!).toEqual({
+        valid_21_19: true,
+        valid_30_29: true,
+        invalid_21_20: false,
+        invalid_30_30: false,
+      });
+    });
+
+    it('blocks bucket listing on storage.objects while allowing authorized <groupId>/<playerId>/<file> INSERTs only', async () => {
+      // 1. Linked member can INSERT into their own player folder
+      await expect(
+        queryAs(
+          'authenticated',
+          memberUserId,
+          `INSERT INTO storage.objects (bucket_id, name, owner)
+           VALUES ('avatars', $1, $2::uuid);`,
+          [`${groupId}/${memberPlayerId}/1761547200000-abcd1234.jpg`, memberUserId],
+        ),
+      ).resolves.toEqual([]);
+
+      // 2. Group owner/admin can INSERT into a member player's folder
+      await expect(
+        queryAs(
+          'authenticated',
+          ownerUserId,
+          `INSERT INTO storage.objects (bucket_id, name, owner)
+           VALUES ('avatars', $1, $2::uuid);`,
+          [`${groupId}/${memberPlayerId}/1761547200001-adminovr.webp`, ownerUserId],
+        ),
+      ).resolves.toEqual([]);
+
+      // 3. Ordinary member CANNOT INSERT into another player's folder
+      await expect(
+        queryAs(
+          'authenticated',
+          memberUserId,
+          `INSERT INTO storage.objects (bucket_id, name, owner)
+           VALUES ('avatars', $1, $2::uuid);`,
+          [`${groupId}/${ownerPlayerId}/spoof.jpg`, memberUserId],
+        ),
+      ).rejects.toThrow(/row-level security/i);
+
+      // 4. Unapproved user CANNOT INSERT into avatars bucket at all
+      await expect(
+        queryAs(
+          'authenticated',
+          pendingUserId,
+          `INSERT INTO storage.objects (bucket_id, name, owner)
+           VALUES ('avatars', $1, $2::uuid);`,
+          [`${groupId}/${memberPlayerId}/unapproved.jpg`, pendingUserId],
+        ),
+      ).rejects.toThrow(/row-level security/i);
+
+      // 5. Malformed non-UUID or multi-segment traversal paths fail closed via RLS without cast crash
+      await expect(
+        queryAs(
+          'authenticated',
+          memberUserId,
+          `INSERT INTO storage.objects (bucket_id, name, owner)
+           VALUES ('avatars', 'not-a-uuid/also-bad/photo.jpg', $1::uuid);`,
+          [memberUserId],
+        ),
+      ).rejects.toThrow(/row-level security/i);
+
+      await expect(
+        queryAs(
+          'authenticated',
+          ownerUserId,
+          `INSERT INTO storage.objects (bucket_id, name, owner)
+           VALUES ('avatars', $1, $2::uuid);`,
+          [`${groupId}/${memberPlayerId}/nested/extra.jpg`, ownerUserId],
+        ),
+      ).rejects.toThrow(/row-level security/i);
+
+      // 6. Neither anon nor authenticated can list objects in the public 'avatars' bucket
+      const anonList = await queryAs(
+        'anon',
+        null,
+        `SELECT id, name FROM storage.objects WHERE bucket_id = 'avatars';`,
+      );
+      expect(anonList).toHaveLength(0);
+
+      const authList = await queryAs(
+        'authenticated',
+        memberUserId,
+        `SELECT id, name FROM storage.objects WHERE bucket_id = 'avatars';`,
+      );
+      expect(authList).toHaveLength(0);
+    });
   });
 });
